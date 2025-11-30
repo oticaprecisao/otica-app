@@ -41,7 +41,13 @@ import {
   Camera, 
   CalendarCheck, 
   MoreHorizontal, 
-  MessageSquare 
+  MessageSquare,
+  Scale, 
+  ArrowRightLeft,
+  Plus,
+  LogOut,
+  Shield,
+  Key
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -58,7 +64,9 @@ import {
   LineChart, 
   Line, 
   AreaChart, 
-  Area 
+  Area,
+  ComposedChart,
+  LabelList
 } from 'recharts';
 import { initializeApp } from 'firebase/app';
 import { 
@@ -103,24 +111,25 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// ID fixo para o app não perder os dados entre sessões
-const appId = 'otica-precisao-main-app'; 
-
-// --- SENHA DO GESTOR ---
-const MANAGER_PIN = '2025';
+const appId = 'otica-precisao-main-app';
 
 // --- Constantes Iniciais ---
-const DEFAULT_STORES = {
-  TC: {
-    id: 'TC',
-    name: 'Três Corações',
-    staff: ['Ana Laura', 'Elaine', 'Ketlin', 'Eleonora']
-  },
-  SGS: {
-    id: 'SGS',
-    name: 'São Gonçalo do Sapucaí',
-    staff: ['Vitoria', 'Roberta', 'Fernanda']
-  }
+const DEFAULT_CONFIG = {
+    managerPassword: '2025',
+    stores: {
+        TC: {
+            id: 'TC',
+            name: 'Três Corações',
+            staff: ['Ana Laura', 'Elaine', 'Ketlin', 'Eleonora'],
+            password: '0000'
+        },
+        SGS: {
+            id: 'SGS',
+            name: 'São Gonçalo do Sapucaí',
+            staff: ['Vitoria', 'Roberta', 'Fernanda'],
+            password: '0000'
+        }
+    }
 };
 
 // --- Paleta de Cores ---
@@ -151,7 +160,6 @@ const COMMERCIAL_ACTIONS = [
   { id: 'retorno', label: 'Retorno Orç.', icon: Calendar }
 ];
 
-// --- NOVAS AÇÕES DO WHATSAPP ---
 const WHATSAPP_ACTIONS = [
   { id: 'fotos', label: 'Fotos Armações', icon: Camera },
   { id: 'duvidas_zap', label: 'Tirou Dúvidas', icon: HelpCircle },
@@ -180,7 +188,7 @@ const Button = ({ onClick, children, variant = 'primary', className = '', disabl
     secondary: `${THEME.bgCard} ${THEME.textDark} border ${THEME.border} hover:bg-stone-50`,
     outline: `border-2 border-orange-600 ${THEME.accentText} hover:bg-orange-50`,
     danger: `bg-red-50 text-red-600 border border-red-200 hover:bg-red-100`,
-    marketing: `border-2 border-blue-100 bg-blue-50 text-blue-700 hover:border-blue-300 hover:bg-blue-100`,
+    marketing: `border-2 border-stone-100 bg-stone-50 text-stone-700 hover:border-stone-300 hover:bg-stone-100`,
     whatsapp: `bg-green-600 text-white hover:bg-green-700 shadow-md shadow-green-200`
   };
   
@@ -195,7 +203,6 @@ const Button = ({ onClick, children, variant = 'primary', className = '', disabl
   );
 };
 
-// --- Componente de Notificação (Toast) ---
 function NotificationToast({ notification, onClose }) {
     if (!notification) return null;
 
@@ -215,12 +222,12 @@ function NotificationToast({ notification, onClose }) {
 
 // --- Componentes Secundários ---
 
-function PinModal({ onClose, onSuccess }) {
+function PinModal({ onClose, onSuccess, managerPin }) {
     const [pin, setPin] = useState('');
     const [error, setError] = useState(false);
 
     const handleVerify = () => {
-        if (pin === MANAGER_PIN) {
+        if (pin === managerPin) {
             onSuccess();
             onClose();
         } else {
@@ -252,7 +259,7 @@ function PinModal({ onClose, onSuccess }) {
                         onChange={(e) => setPin(e.target.value)}
                         className="w-full text-center text-3xl font-black tracking-widest py-3 border-b-2 border-stone-200 focus:border-orange-500 outline-none text-stone-800 bg-transparent"
                         placeholder="••••"
-                        maxLength={4}
+                        maxLength={8}
                         autoFocus
                     />
 
@@ -265,115 +272,224 @@ function PinModal({ onClose, onSuccess }) {
     );
 }
 
-function SettingsModal({ store, onClose, onUpdate, onClearToday }) {
+function SettingsModal({ config, onClose, onUpdateConfig, onClearToday, currentStore }) {
+    const [activeTab, setActiveTab] = useState('staff'); // 'staff' or 'security'
     const [newStaffName, setNewStaffName] = useState("");
     const [confirmDeleteStaff, setConfirmDeleteStaff] = useState(null); 
     const [confirmClearToday, setConfirmClearToday] = useState(false); 
 
-    const handleAdd = () => {
+    // Security States
+    const [managerPass, setManagerPass] = useState(config.managerPassword);
+    const [tcPass, setTcPass] = useState(config.stores.TC.password);
+    const [sgsPass, setSgsPass] = useState(config.stores.SGS.password);
+
+    const store = config.stores[currentStore];
+
+    const handleAddStaff = () => {
         if (newStaffName.trim()) {
-            onUpdate([...store.staff, newStaffName.trim()]);
+            const updatedStore = { ...store, staff: [...store.staff, newStaffName.trim()] };
+            const newConfig = { ...config, stores: { ...config.stores, [currentStore]: updatedStore } };
+            onUpdateConfig(newConfig);
             setNewStaffName("");
         }
     };
 
-    const handleRemoveRequest = (name) => {
-        setConfirmDeleteStaff(name);
-    }
-
-    const confirmRemove = (nameToRemove) => {
-        onUpdate(store.staff.filter(name => name !== nameToRemove));
+    const confirmRemoveStaff = (nameToRemove) => {
+        const updatedStaff = store.staff.filter(name => name !== nameToRemove);
+        const updatedStore = { ...store, staff: updatedStaff };
+        const newConfig = { ...config, stores: { ...config.stores, [currentStore]: updatedStore } };
+        onUpdateConfig(newConfig);
         setConfirmDeleteStaff(null);
+    };
+
+    const handleSaveSecurity = () => {
+        const newConfig = {
+            ...config,
+            managerPassword: managerPass,
+            stores: {
+                TC: { ...config.stores.TC, password: tcPass },
+                SGS: { ...config.stores.SGS, password: sgsPass }
+            }
+        };
+        onUpdateConfig(newConfig);
+        alert("Senhas atualizadas com sucesso!");
     };
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
-            <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden">
-                <div className="bg-orange-600 p-4 flex justify-between items-center">
+            <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                <div className="bg-orange-600 p-4 flex justify-between items-center flex-shrink-0">
                     <h3 className="text-white font-bold text-lg flex items-center gap-2">
-                        <Users className="w-5 h-5" /> Configuração {store.name}
+                        <Settings className="w-5 h-5" /> Configurações
                     </h3>
                     <button onClick={onClose} className="text-white/80 hover:text-white">✕</button>
                 </div>
-                <div className="p-4 space-y-4">
-                    <div className="flex gap-2">
-                        <input 
-                            type="text" 
-                            value={newStaffName}
-                            onChange={(e) => setNewStaffName(e.target.value)}
-                            placeholder="Nome..."
-                            className="flex-1 border border-stone-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
-                        />
-                        <button 
-                            onClick={handleAdd}
-                            className="bg-orange-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-orange-700"
-                        >
-                            Add
-                        </button>
-                    </div>
-                    
-                    <div className="max-h-48 overflow-y-auto space-y-2">
-                        {store.staff.map(name => (
-                            <div key={name} className="flex justify-between items-center p-3 bg-stone-50 rounded-lg border border-stone-100">
-                                <span className="font-medium text-stone-700">{name}</span>
-                                {confirmDeleteStaff === name ? (
-                                    <div className="flex gap-2">
-                                        <button onClick={() => confirmRemove(name)} className="text-xs bg-red-600 text-white px-2 py-1 rounded">Sim</button>
-                                        <button onClick={() => setConfirmDeleteStaff(null)} className="text-xs bg-stone-300 text-stone-700 px-2 py-1 rounded">Não</button>
+                
+                {/* Tabs */}
+                <div className="flex border-b border-stone-200">
+                    <button 
+                        onClick={() => setActiveTab('staff')}
+                        className={`flex-1 py-3 text-sm font-bold ${activeTab === 'staff' ? 'text-orange-600 border-b-2 border-orange-600' : 'text-stone-400'}`}
+                    >
+                        Equipe {store.name}
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('security')}
+                        className={`flex-1 py-3 text-sm font-bold ${activeTab === 'security' ? 'text-orange-600 border-b-2 border-orange-600' : 'text-stone-400'}`}
+                    >
+                        Senhas e Acesso
+                    </button>
+                </div>
+
+                <div className="p-4 overflow-y-auto">
+                    {activeTab === 'staff' && (
+                        <div className="space-y-4">
+                            <div className="flex gap-2">
+                                <input 
+                                    type="text" 
+                                    value={newStaffName}
+                                    onChange={(e) => setNewStaffName(e.target.value)}
+                                    placeholder="Nome..."
+                                    className="flex-1 border border-stone-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                                />
+                                <button 
+                                    onClick={handleAddStaff}
+                                    className="bg-orange-600 text-white px-4 py-2 rounded-lg font-bold text-xl hover:bg-orange-700 flex items-center justify-center"
+                                >
+                                    <Plus className="w-5 h-5" />
+                                </button>
+                            </div>
+                            
+                            <div className="max-h-48 overflow-y-auto space-y-2">
+                                {store.staff.map(name => (
+                                    <div key={name} className="flex justify-between items-center p-3 bg-stone-50 rounded-lg border border-stone-100">
+                                        <span className="font-medium text-stone-700">{name}</span>
+                                        {confirmDeleteStaff === name ? (
+                                            <div className="flex gap-2">
+                                                <button onClick={() => confirmRemoveStaff(name)} className="text-xs bg-red-600 text-white px-2 py-1 rounded">Sim</button>
+                                                <button onClick={() => setConfirmDeleteStaff(null)} className="text-xs bg-stone-300 text-stone-700 px-2 py-1 rounded">Não</button>
+                                            </div>
+                                        ) : (
+                                            <button 
+                                                onClick={() => setConfirmDeleteStaff(name)}
+                                                className="text-red-400 hover:text-red-600 p-1"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        )}
                                     </div>
-                                ) : (
+                                ))}
+                            </div>
+                            
+                            <div className="pt-4 border-t border-stone-200 mt-4">
+                                <h4 className="text-xs font-bold text-red-600 uppercase mb-2 flex items-center gap-1">
+                                    <AlertTriangle className="w-3 h-3" /> Zona de Testes
+                                </h4>
+                                {!confirmClearToday ? (
                                     <button 
-                                        onClick={() => handleRemoveRequest(name)}
-                                        className="text-red-400 hover:text-red-600 p-1"
+                                        onClick={() => setConfirmClearToday(true)}
+                                        className="w-full py-3 rounded-lg bg-red-50 text-red-600 border border-red-200 font-bold text-sm flex items-center justify-center gap-2 hover:bg-red-100 transition-colors"
                                     >
-                                        <Trash2 className="w-4 h-4" />
+                                        <Trash2 className="w-4 h-4" /> Zerar Dados de Hoje
                                     </button>
+                                ) : (
+                                    <div className="animate-in fade-in slide-in-from-bottom-2 bg-red-50 p-3 rounded-xl border border-red-200 text-center">
+                                        <p className="text-xs font-bold text-red-800 mb-3">Tem certeza? Isso apaga tudo de hoje ({new Date().toLocaleDateString()}).</p>
+                                        <div className="flex gap-2">
+                                            <button 
+                                                onClick={() => { onClearToday(); setConfirmClearToday(false); }}
+                                                className="flex-1 bg-red-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-red-700"
+                                            >
+                                                Sim, Zerar
+                                            </button>
+                                            <button 
+                                                onClick={() => setConfirmClearToday(false)}
+                                                className="flex-1 bg-white text-stone-600 border border-stone-300 py-2 rounded-lg text-xs font-bold hover:bg-stone-50"
+                                            >
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    </div>
                                 )}
                             </div>
-                        ))}
-                    </div>
-                    
-                    <div className="pt-4 border-t border-stone-200 mt-4">
-                        <h4 className="text-xs font-bold text-red-600 uppercase mb-2 flex items-center gap-1">
-                            <AlertTriangle className="w-3 h-3" /> Zona de Testes
-                        </h4>
-                        
-                        {!confirmClearToday ? (
-                            <button 
-                                onClick={() => setConfirmClearToday(true)}
-                                className="w-full py-3 rounded-lg bg-red-50 text-red-600 border border-red-200 font-bold text-sm flex items-center justify-center gap-2 hover:bg-red-100 transition-colors"
-                            >
-                                <Trash2 className="w-4 h-4" /> Zerar Dados de Hoje
-                            </button>
-                        ) : (
-                            <div className="animate-in fade-in slide-in-from-bottom-2 bg-red-50 p-3 rounded-xl border border-red-200 text-center">
-                                <p className="text-xs font-bold text-red-800 mb-3">Tem certeza? Isso apaga tudo de hoje ({new Date().toLocaleDateString()}).</p>
-                                <div className="flex gap-2">
-                                    <button 
-                                        onClick={() => { onClearToday(); setConfirmClearToday(false); }}
-                                        className="flex-1 bg-red-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-red-700"
-                                    >
-                                        Sim, Zerar
-                                    </button>
-                                    <button 
-                                        onClick={() => setConfirmClearToday(false)}
-                                        className="flex-1 bg-white text-stone-600 border border-stone-300 py-2 rounded-lg text-xs font-bold hover:bg-stone-50"
-                                    >
-                                        Cancelar
-                                    </button>
+                        </div>
+                    )}
+
+                    {activeTab === 'security' && (
+                        <div className="space-y-5">
+                            <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100 mb-2">
+                                <p className="text-xs text-yellow-800 flex gap-2">
+                                    <Shield className="w-4 h-4 flex-shrink-0" />
+                                    Defina senhas seguras para cada loja e para o acesso geral.
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-stone-500 uppercase mb-1 block">Senha Geral (Gestor)</label>
+                                <div className="flex items-center gap-2 border border-stone-300 rounded-lg px-3 py-2 bg-stone-50">
+                                    <Key className="w-4 h-4 text-stone-400" />
+                                    <input 
+                                        type="text" 
+                                        value={managerPass} 
+                                        onChange={(e) => setManagerPass(e.target.value)}
+                                        className="bg-transparent outline-none w-full text-stone-800 font-mono font-bold"
+                                    />
                                 </div>
                             </div>
-                        )}
-                        
-                        <p className="text-[10px] text-stone-400 text-center mt-2">
-                            Use para limpar dados após demonstrações.
-                        </p>
-                    </div>
+
+                            <div className="pt-2 border-t border-stone-100">
+                                <label className="text-xs font-bold text-stone-500 uppercase mb-1 block">Senha Loja TC</label>
+                                <input 
+                                    type="text" 
+                                    value={tcPass} 
+                                    onChange={(e) => setTcPass(e.target.value)}
+                                    className="w-full border border-stone-300 rounded-lg px-3 py-2 text-stone-800 font-mono font-bold focus:ring-2 focus:ring-orange-500 outline-none"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-stone-500 uppercase mb-1 block">Senha Loja SGS</label>
+                                <input 
+                                    type="text" 
+                                    value={sgsPass} 
+                                    onChange={(e) => setSgsPass(e.target.value)}
+                                    className="w-full border border-stone-300 rounded-lg px-3 py-2 text-stone-800 font-mono font-bold focus:ring-2 focus:ring-orange-500 outline-none"
+                                />
+                            </div>
+
+                            <Button onClick={handleSaveSecurity} className="w-full mt-4">
+                                Salvar Novas Senhas
+                            </Button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     );
 }
+
+// --- Sub-Componente: Tooltip Customizado (Definido antes do uso) ---
+const CustomEfficiencyTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+        const data = payload[0].payload;
+        return (
+            <div className="bg-white p-3 border border-stone-200 shadow-xl rounded-lg z-50">
+                <p className="font-bold text-stone-800 text-xs mb-1">{label} ({data.store})</p>
+                <div className="space-y-1">
+                    <p className="text-[10px] text-orange-700 font-bold">
+                        Cliente: {data.rateCli}% <span className="font-normal text-stone-500">({data.vendaCli} vds / {data.valCli.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})})</span>
+                    </p>
+                    <p className="text-[10px] text-stone-600 font-bold">
+                        Novo: {data.rateNew}% <span className="font-normal text-stone-500">({data.vendaNew} vds / {data.valNew.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})})</span>
+                    </p>
+                </div>
+            </div>
+        );
+    }
+    return null;
+};
+
+// --- Componentes de Dados (Definidos antes do uso) ---
 
 function InsightsPanel({ stats }) {
     const insights = useMemo(() => {
@@ -384,8 +500,8 @@ function InsightsPanel({ stats }) {
             if (clientRatio > 0.7) {
                 tips.push({
                     icon: Users,
-                    color: "text-blue-600",
-                    bg: "bg-blue-50",
+                    color: "text-orange-800",
+                    bg: "bg-orange-100",
                     title: "Fidelização Alta!",
                     text: "Mais de 70% das vendas são para clientes antigos. Excelente retenção! Tente pedir indicações."
                 });
@@ -400,52 +516,10 @@ function InsightsPanel({ stats }) {
             }
         }
 
-        const totalOpp = stats.totalVendas + stats.totalOrcamentos;
-        if (totalOpp > 10) {
-            const conversionRate = stats.totalVendas / totalOpp;
-            if (conversionRate < 0.3) {
-                tips.push({
-                    icon: AlertCircle,
-                    color: "text-red-600",
-                    bg: "bg-red-50",
-                    title: "Atenção à Conversão",
-                    text: `A taxa global está em ${(conversionRate*100).toFixed(0)}%. Que tal revisar as técnicas de fechamento com a equipe?`
-                });
-            } else if (conversionRate > 0.6) {
-                tips.push({
-                    icon: Award,
-                    color: "text-orange-600",
-                    bg: "bg-orange-50",
-                    title: "Máquina de Vendas!",
-                    text: "Taxa de conversão acima de 60%. O time está aproveitando muito bem as oportunidades."
-                });
-            }
-        }
-
-        if (stats.morningCount > 0 && stats.afternoonCount > 0) {
-            if (stats.morningCount < stats.afternoonCount * 0.5) {
-                tips.push({
-                    icon: Sun,
-                    color: "text-yellow-600",
-                    bg: "bg-yellow-50",
-                    title: "Manhãs Tranquilas",
-                    text: "O movimento da manhã está baixo. Bom momento para ligar para orçamentos em aberto."
-                });
-            }
-        }
-
-        if (tips.length === 0) {
-            tips.push({
-                icon: Lightbulb,
-                color: "text-purple-600",
-                bg: "bg-purple-50",
-                title: "Dica do Especialista",
-                text: "Mantenha os lançamentos em dia para gerar insights mais precisos sobre sua loja!"
-            });
-        }
-
         return tips;
     }, [stats]);
+
+    if (insights.length === 0) return null;
 
     return (
         <div className="space-y-3">
@@ -541,281 +615,99 @@ function YearlyAnalysis({ data }) {
     );
 }
 
-// --- Telas Principais ---
+// --- Tela de Login (LoginScreen) ---
 
-export default function OpticalApp() {
-  const [user, setUser] = useState(null);
-  const [currentStore, setCurrentStore] = useState('TC'); 
-  const [view, setView] = useState('entry'); 
-  const [entries, setEntries] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [notification, setNotification] = useState(null); 
-  
-  const [storeConfig, setStoreConfig] = useState(DEFAULT_STORES);
-  const [showSettings, setShowSettings] = useState(false);
+function LoginScreen({ config, onLogin }) {
+    const [selectedStore, setSelectedStore] = useState('TC');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
 
-  // Controle de Acesso e Gestão
-  const [isManager, setIsManager] = useState(false);
-  const [showPinModal, setShowPinModal] = useState(false);
-  const [pendingAction, setPendingAction] = useState(null); 
-  const [pendingStore, setPendingStore] = useState(null); 
+    const handleLogin = () => {
+        const storePass = config.stores[selectedStore].password;
+        const managerPass = config.managerPassword;
 
-  useEffect(() => {
-    const savedConfig = localStorage.getItem('optical_store_config');
-    if (savedConfig) {
-      setStoreConfig(JSON.parse(savedConfig));
-    }
-  }, []);
-
-  const updateStoreStaff = (storeId, newStaffList) => {
-    const newConfig = {
-      ...storeConfig,
-      [storeId]: {
-        ...storeConfig[storeId],
-        staff: newStaffList
-      }
+        if (password === storePass) {
+            onLogin(selectedStore, false); // Logged as staff
+        } else if (password === managerPass) {
+            onLogin(selectedStore, true); // Logged as manager (Master Key)
+        } else {
+            setError('Senha incorreta');
+            setPassword('');
+            setTimeout(() => setError(''), 2000);
+        }
     };
-    setStoreConfig(newConfig);
-    localStorage.setItem('optical_store_config', JSON.stringify(newConfig));
-  };
 
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        await signInAnonymously(auth);
-      } catch (error) {
-        console.error("Auth error:", error);
-      }
-    };
-    initAuth();
-    return onAuthStateChanged(auth, setUser);
-  }, []);
+    return (
+        <div className="min-h-screen bg-orange-600 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+            {/* Background Decoration */}
+            <div className="absolute top-[-10%] left-[-10%] w-64 h-64 bg-orange-500 rounded-full opacity-50 blur-3xl"></div>
+            <div className="absolute bottom-[-10%] right-[-10%] w-64 h-64 bg-orange-700 rounded-full opacity-50 blur-3xl"></div>
 
-  useEffect(() => {
-    if (!user) return;
-    const q = query(
-      collection(db, 'artifacts', appId, 'public', 'data', 'optical_records_final_v11')
-    );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        date: doc.data().createdAt ? doc.data().createdAt.toDate() : new Date()
-      }));
-      data.sort((a, b) => b.date - a.date);
-      setEntries(data);
-      setLoading(false);
-    }, (error) => {
-      console.error("Firestore Error:", error);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, [user]);
+            <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 relative z-10 animate-in fade-in zoom-in duration-500">
+                <div className="text-center mb-8">
+                    <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-orange-600 shadow-inner">
+                        <Eye className="w-8 h-8" />
+                    </div>
+                    <h1 className="text-2xl font-extrabold text-stone-800 tracking-tight">Bem-vindo</h1>
+                    <p className="text-stone-500 text-sm font-medium">App de Gestão Ótica</p>
+                </div>
 
-  const handleAddEntry = async (entryData) => {
-    if (!user) return;
-    try {
-      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'optical_records_final_v11'), {
-        ...entryData,
-        store: currentStore,
-        createdAt: serverTimestamp(),
-        userId: user.uid,
-        dateString: new Date().toLocaleDateString('pt-BR')
-      });
-      return true;
-    } catch (error) {
-      console.error("Error adding document: ", error);
-      return false;
-    }
-  };
+                <div className="space-y-5">
+                    <div>
+                        <label className="block text-xs font-bold text-stone-400 uppercase mb-1 ml-1">Selecione sua Unidade</label>
+                        <div className="relative">
+                            <Store className="absolute left-3 top-3.5 w-5 h-5 text-stone-400" />
+                            <select 
+                                value={selectedStore} 
+                                onChange={(e) => setSelectedStore(e.target.value)}
+                                className="w-full pl-10 pr-4 py-3 border-2 border-stone-200 rounded-xl font-bold text-stone-700 appearance-none focus:border-orange-500 outline-none transition-colors bg-white"
+                            >
+                                <option value="TC">Três Corações (TC)</option>
+                                <option value="SGS">São Gonçalo (SGS)</option>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-3.5 w-5 h-5 text-stone-400 pointer-events-none" />
+                        </div>
+                    </div>
 
-  const showNotification = (message, type = 'success') => {
-      setNotification({ message, type });
-      setTimeout(() => setNotification(null), 3500);
-  };
+                    <div>
+                        <label className="block text-xs font-bold text-stone-400 uppercase mb-1 ml-1">Senha de Acesso</label>
+                        <div className="relative">
+                            <Lock className="absolute left-3 top-3.5 w-5 h-5 text-stone-400" />
+                            <input 
+                                type="password" 
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="••••"
+                                className="w-full pl-10 pr-4 py-3 border-2 border-stone-200 rounded-xl font-bold text-stone-800 focus:border-orange-500 outline-none transition-colors placeholder:text-stone-300"
+                                inputMode="numeric"
+                            />
+                        </div>
+                        {error && <p className="text-red-500 text-xs font-bold mt-2 text-center animate-pulse">{error}</p>}
+                    </div>
 
-  const handleClearToday = async () => {
-    const today = new Date();
-    
-    const entriesToDelete = entries.filter(entry => {
-        const entryDate = entry.date; 
-        return entry.store === currentStore && 
-               entryDate.getDate() === today.getDate() &&
-               entryDate.getMonth() === today.getMonth() &&
-               entryDate.getFullYear() === today.getFullYear();
-    });
-
-    if (entriesToDelete.length === 0) {
-        showNotification('Nenhum dado de hoje para limpar.', 'error');
-        setShowSettings(false); 
-        return;
-    }
-
-    try {
-        const batch = writeBatch(db);
-        entriesToDelete.forEach(entry => {
-            const ref = doc(db, 'artifacts', appId, 'public', 'data', 'optical_records_final_v11', entry.id);
-            batch.delete(ref);
-        });
-        await batch.commit();
-        showNotification(`${entriesToDelete.length} registros apagados com sucesso!`);
-        setShowSettings(false);
-    } catch (error) {
-        console.error("Erro ao limpar dados:", error);
-        showNotification('Erro ao apagar dados. Tente novamente.', 'error');
-    }
-  };
-
-  const filteredEntries = useMemo(() => {
-    return entries.filter(e => e.store === currentStore);
-  }, [entries, currentStore]);
-
-  // --- Lógica de Bloqueio ---
-  const requestAccess = (action, payload = null) => {
-    if (isManager) {
-        if (action === 'dashboard') setView('dashboard');
-        if (action === 'settings') setShowSettings(true);
-        if (action === 'storeChange') setCurrentStore(payload);
-    } else {
-        setPendingAction(action);
-        setPendingStore(payload);
-        setShowPinModal(true);
-    }
-  };
-
-  const handlePinSuccess = () => {
-    setIsManager(true);
-    if (pendingAction === 'dashboard') setView('dashboard');
-    if (pendingAction === 'settings') setShowSettings(true);
-    if (pendingAction === 'storeChange') setCurrentStore(pendingStore);
-    
-    setPendingAction(null);
-    setPendingStore(null);
-  };
-
-  return (
-    <div className={`min-h-screen ${THEME.bgMain} font-sans ${THEME.textDark} pb-24`}>
-      {/* Componente de Notificação */}
-      <NotificationToast notification={notification} onClose={() => setNotification(null)} />
-
-      {/* Header */}
-      <header className={`${THEME.primary} shadow-lg sticky top-0 z-30`}>
-        <div className="max-w-md mx-auto px-3 py-3 flex justify-between items-center">
-          <div>
-            <h1 className="font-extrabold text-lg leading-tight text-white tracking-wide">ÓTICA PRECISÃO</h1>
-            <p className="text-[10px] text-orange-100 font-medium tracking-wider opacity-90 flex items-center gap-1">
-              Painel de Controle 
-              {isManager ? <Unlock className="w-3 h-3 text-green-300"/> : <Lock className="w-3 h-3 text-orange-200"/>}
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-1">
-            {/* Seletor de Loja Protegido - Ícones menores */}
-            <div className="relative group">
-                <select 
-                    value={currentStore}
-                    onChange={(e) => requestAccess('storeChange', e.target.value)}
-                    className="appearance-none bg-orange-800/50 border border-orange-400/30 text-sm font-bold text-white rounded-xl py-1.5 pl-3 pr-8 focus:ring-2 focus:ring-white focus:border-transparent uppercase tracking-wide transition-all cursor-pointer"
-                >
-                    <option className="text-stone-800" value="TC">TC</option>
-                    <option className="text-stone-800" value="SGS">SGS</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
-                      {isManager ? <Store className="h-4 w-4" /> : <Lock className="h-3 w-3 opacity-70" />}
+                    <button 
+                        onClick={handleLogin}
+                        className="w-full bg-orange-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-orange-200 hover:bg-orange-700 active:scale-95 transition-all"
+                    >
+                        Entrar
+                    </button>
+                </div>
+                
+                <div className="mt-8 text-center">
+                    <p className="text-[10px] text-stone-300">Ótica Precisão</p>
                 </div>
             </div>
-            
-            {/* Botão Configuração Protegido - Menor */}
-            <button 
-                onClick={() => requestAccess('settings')}
-                className="bg-orange-800/50 p-1.5 rounded-xl text-white border border-orange-400/30 hover:bg-orange-700 transition-colors"
-            >
-                {isManager ? <Settings className="w-4 h-4" /> : <Lock className="w-4 h-4 opacity-70" />}
-            </button>
-            
-            {/* Botão Sair (Manager) - Menor */}
-            {isManager && (
-                <button 
-                    onClick={() => { setIsManager(false); setView('entry'); }}
-                    className="bg-red-600/80 p-1.5 rounded-xl text-white border border-red-400/30 hover:bg-red-700 transition-colors"
-                    title="Sair do modo Gerente"
-                >
-                    <Lock className="w-4 h-4" />
-                </button>
-            )}
-          </div>
         </div>
-      </header>
-
-      {/* Modais de Sistema */}
-      {showPinModal && (
-          <PinModal 
-            onClose={() => setShowPinModal(false)} 
-            onSuccess={handlePinSuccess} 
-          />
-      )}
-
-      {showSettings && (
-        <SettingsModal 
-            store={storeConfig[currentStore]} 
-            onClose={() => setShowSettings(false)}
-            onUpdate={(newStaff) => updateStoreStaff(currentStore, newStaff)}
-            onClearToday={handleClearToday}
-        />
-      )}
-
-      <main className="max-w-md mx-auto px-4 py-6">
-        {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-orange-600"></div>
-          </div>
-        ) : view === 'entry' ? (
-          <EntryScreen 
-            storeData={storeConfig[currentStore]} 
-            onSave={handleAddEntry} 
-          />
-        ) : (
-          <DashboardScreen 
-            data={filteredEntries} 
-            storeData={storeConfig[currentStore]}
-          />
-        )}
-      </main>
-
-      {/* Navegação Inferior */}
-      <div className={`fixed bottom-0 left-0 right-0 ${THEME.bgCard} border-t ${THEME.border} px-6 py-3 flex justify-around z-30 shadow-[0_-4px_10px_-2px_rgba(0,0,0,0.05)]`}>
-        <button 
-          onClick={() => setView('entry')}
-          className={`flex flex-col items-center gap-1.5 p-2 rounded-xl w-full transition-all active:scale-95 ${view === 'entry' ? THEME.accentText : THEME.textLight}`}
-        >
-          <PlusCircle className="w-7 h-7" />
-          <span className="text-[11px] font-bold uppercase tracking-wider">Novo Lançamento</span>
-        </button>
-        
-        {/* Botão Relatórios Protegido */}
-        <button 
-          onClick={() => requestAccess('dashboard')}
-          className={`flex flex-col items-center gap-1.5 p-2 rounded-xl w-full transition-all active:scale-95 ${view === 'dashboard' ? THEME.accentText : THEME.textLight}`}
-        >
-          {isManager ? <BarChart2 className="w-7 h-7" /> : <Lock className="w-7 h-7 opacity-60" />}
-          <span className="text-[11px] font-bold uppercase tracking-wider">
-            {isManager ? "Relatórios" : "Restrito"}
-          </span>
-        </button>
-      </div>
-    </div>
-  );
+    );
 }
 
-// --- Tela de Lançamento (Entry) ---
+// --- Telas de Lançamento e Dashboard ---
 
 function EntryScreen({ storeData, onSave }) {
   const [step, setStep] = useState('menu');
   const [tempData, setTempData] = useState({});
   const [successMsg, setSuccessMsg] = useState('');
-  
-  // Novos estados para Marketing e Valor
-  const [marketingSource, setMarketingSource] = useState(null); // 'anuncio' | 'mensagem' | null
+  const [marketingSource, setMarketingSource] = useState(null);
   const [saleValue, setSaleValue] = useState('');
 
   const resetFlow = () => {
@@ -832,20 +724,16 @@ function EntryScreen({ storeData, onSave }) {
     if (success) showSuccess('Serviço registrado!');
   };
 
-  // --- NOVO: Lógica para Botão de WhatsApp ---
   const handleWhatsappClick = async (actionId) => {
     const hours = new Date().getHours();
     const period = hours < 12 ? 'manha' : 'tarde';
-    // Registra como categoria 'whatsapp'
     const success = await onSave({ 
         category: 'whatsapp', 
         type: actionId, 
         period: period,
-        // Também marca como origem de marketing automaticamente
         marketingSource: 'mensagem' 
     });
     if (success) showSuccess('Mensagem registrada!');
-    // Volta para o menu principal se estiver no sub-menu
     if (step === 'whatsapp_menu') setStep('menu');
   };
 
@@ -882,7 +770,6 @@ function EntryScreen({ storeData, onSave }) {
 
   return (
     <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-300">
-      {/* Cabeçalho só aparece se NÃO estiver no menu principal */}
       {step !== 'menu' && (
         <div className="flex items-center justify-between border-b border-stone-200 pb-4">
             <div>
@@ -1116,8 +1003,6 @@ function EntryScreen({ storeData, onSave }) {
   );
 }
 
-// --- Dashboard ---
-
 function DashboardScreen({ data, storeData }) {
   const availableMonths = useMemo(() => {
     const monthSet = new Set();
@@ -1148,7 +1033,6 @@ function DashboardScreen({ data, storeData }) {
     });
   }, [data, selectedMonth]);
 
-  // --- DADOS DE HOJE (Calculados) ---
   const todayStats = useMemo(() => {
     const today = new Date();
     const todayData = data.filter(entry => {
@@ -1968,6 +1852,646 @@ function DashboardScreen({ data, storeData }) {
 
         </div>
       )}
+    </div>
+  );
+}
+
+// --- Nova Tela: Comparativo (ComparisonScreen) ---
+
+function ComparisonScreen({ data }) {
+    // --- Lógica de Filtro de Mês ---
+    const availableMonths = useMemo(() => {
+        const monthSet = new Set();
+        data.forEach(item => {
+            const d = item.date;
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            monthSet.add(key);
+        });
+        return Array.from(monthSet).sort().reverse();
+    }, [data]);
+
+    const [selectedMonth, setSelectedMonth] = useState(availableMonths[0] || '');
+
+    useEffect(() => {
+        if (availableMonths.length > 0 && !selectedMonth) {
+            setSelectedMonth(availableMonths[0]);
+        }
+    }, [availableMonths, selectedMonth]);
+
+    const formatMonthLabel = (key) => {
+        if (!key) return '';
+        const [year, month] = key.split('-');
+        const date = new Date(year, month - 1);
+        const monthName = date.toLocaleString('pt-BR', { month: 'long' });
+        return `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`;
+    };
+
+    // --- Processamento dos Dados Comparativos ---
+    const compStats = useMemo(() => {
+        if (!selectedMonth) return null;
+        const [year, month] = selectedMonth.split('-').map(Number);
+        
+        // Filtra pelo mês selecionado
+        const monthData = data.filter(item => {
+            const d = item.date;
+            return d.getFullYear() === year && (d.getMonth() + 1) === month;
+        });
+
+        // Estrutura Base
+        const metrics = {
+            TC: { vendas: 0, orcamentos: 0, retornos: 0, servicos: 0, atendimentos: 0, messages: 0, msgSales: 0, cliSales:0, newSales:0, staff: {} },
+            SGS: { vendas: 0, orcamentos: 0, retornos: 0, servicos: 0, atendimentos: 0, messages: 0, msgSales: 0, cliSales:0, newSales:0, staff: {} }
+        };
+
+        // Popula Métricas
+        monthData.forEach(entry => {
+            const store = entry.store;
+            if (!metrics[store]) return;
+
+            if (entry.category === 'servico') metrics[store].servicos++;
+            if (entry.category === 'whatsapp') metrics[store].messages++;
+            
+            if (entry.category === 'comercial') {
+                metrics[store].atendimentos++;
+                if (entry.marketingSource === 'mensagem') metrics[store].msgSales++; 
+
+                if (entry.action === 'venda') {
+                    metrics[store].vendas++;
+                    if (entry.clientType === 'cliente') metrics[store].cliSales++;
+                    else metrics[store].newSales++;
+                }
+                if (entry.action === 'orcamento') metrics[store].orcamentos++;
+                if (entry.action === 'retorno') metrics[store].retornos++;
+
+                // Dados Detalhados por Atendente
+                if (entry.attendant) {
+                    if (!metrics[store].staff[entry.attendant]) {
+                        metrics[store].staff[entry.attendant] = { 
+                            vendaCli: 0, vendaNew: 0, 
+                            orcCli: 0, orcNew: 0,
+                            valCli: 0, valNew: 0 
+                        };
+                    }
+                    const staff = metrics[store].staff[entry.attendant];
+                    
+                    if (entry.action === 'venda') {
+                        if (entry.clientType === 'cliente') {
+                            staff.vendaCli++;
+                            staff.valCli += (parseFloat(entry.saleValue) || 0);
+                        } else {
+                            staff.vendaNew++;
+                            staff.valNew += (parseFloat(entry.saleValue) || 0);
+                        }
+                    }
+                    if (entry.action === 'orcamento') {
+                        if (entry.clientType === 'cliente') staff.orcCli++;
+                        else staff.orcNew++;
+                    }
+                }
+            }
+        });
+
+        return metrics;
+    }, [data, selectedMonth]);
+
+    if (!compStats) return <div className="p-8 text-center text-stone-400">Sem dados suficientes para comparação.</div>;
+
+    // --- Dados para Gráficos ---
+
+    // 1. Vendas Totais & Tipo
+    const salesCompData = [
+        { name: 'Venda Cliente', TC: compStats.TC.cliSales, SGS: compStats.SGS.cliSales },
+        { name: 'Venda Ñ Cliente', TC: compStats.TC.newSales, SGS: compStats.SGS.newSales },
+        { name: 'Total', TC: compStats.TC.vendas, SGS: compStats.SGS.vendas }
+    ];
+
+    // 2. Orçamentos x Retornos
+    const quoteCompData = [
+        { name: 'Orçamentos', TC: compStats.TC.orcamentos, SGS: compStats.SGS.orcamentos },
+        { name: 'Retornos', TC: compStats.TC.retornos, SGS: compStats.SGS.retornos }
+    ];
+
+    // 3. Volume Serviços
+    const serviceCompData = [
+        { name: 'Serviços Rápidos', TC: compStats.TC.servicos, SGS: compStats.SGS.servicos },
+        { name: 'Comercial', TC: compStats.TC.atendimentos, SGS: compStats.SGS.atendimentos }
+    ];
+
+    // 4. Mensagens
+    const msgData = [
+        { name: 'Msgs Enviadas', TC: compStats.TC.messages, SGS: compStats.SGS.messages },
+        { name: 'Vendas via Msg', TC: compStats.TC.msgSales, SGS: compStats.SGS.msgSales }
+    ];
+
+    // 5. Ranking Atendentes (Unificado)
+    const allStaff = [];
+    ['TC', 'SGS'].forEach(store => {
+        Object.entries(compStats[store].staff).forEach(([name, s]) => {
+            const totalSales = s.vendaCli + s.vendaNew;
+            const totalOrc = s.orcCli + s.orcNew;
+            
+            // Taxas de Conversão Específicas
+            const rateCli = (s.vendaCli + s.orcCli) > 0 ? Math.round((s.vendaCli / (s.vendaCli + s.orcCli)) * 100) : 0;
+            const rateNew = (s.vendaNew + s.orcNew) > 0 ? Math.round((s.vendaNew / (s.vendaNew + s.orcNew)) * 100) : 0;
+
+            allStaff.push({ 
+                name, 
+                store, 
+                vendas: totalSales, 
+                orcamentos: totalOrc,
+                conversion: totalOrc > 0 ? Math.round((totalSales/totalOrc)*100) : 0,
+                // Dados detalhados
+                rateCli,
+                rateNew,
+                valCli: s.valCli,
+                valNew: s.valNew
+            });
+        });
+    });
+    
+    // Ordenar para o Ranking Geral
+    const topStaff = [...allStaff].sort((a,b) => b.vendas - a.vendas).slice(0, 10);
+    
+    // Ordenar para o Gráfico de Eficiência (por nome para agrupar)
+    const staffEfficiency = [...allStaff].sort((a,b) => b.vendas - a.vendas); 
+
+    // Custom Tooltip for Efficiency Chart
+    const CustomEfficiencyTooltip = ({ active, payload, label }) => {
+        if (active && payload && payload.length) {
+            const data = payload[0].payload;
+            return (
+                <div className="bg-white p-3 border border-stone-200 shadow-xl rounded-lg z-50">
+                    <p className="font-bold text-stone-800 text-xs mb-1">{label} ({data.store})</p>
+                    <div className="space-y-1">
+                        <p className="text-[10px] text-orange-700 font-bold">
+                            Cliente: {data.rateCli}% <span className="font-normal text-stone-500">({data.vendaCli} vds / {data.valCli.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})})</span>
+                        </p>
+                        <p className="text-[10px] text-stone-600 font-bold">
+                            Novo: {data.rateNew}% <span className="font-normal text-stone-500">({data.vendaNew} vds / {data.valNew.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})})</span>
+                        </p>
+                    </div>
+                </div>
+            );
+        }
+        return null;
+    };
+
+    return (
+        <div className="space-y-6 animate-in slide-in-from-right-4 duration-500 pb-10">
+            {/* Header Comparativo */}
+            <div className="flex flex-col gap-4 border-b border-stone-200 pb-6">
+                <div className="flex items-center gap-3">
+                    <div className="bg-gradient-to-br from-orange-600 to-red-600 p-3 rounded-xl shadow-lg text-white">
+                        <Scale className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-extrabold text-stone-800 leading-tight">Comparativo Lojas</h2>
+                        <p className="text-xs font-medium text-stone-500">Benchmarking TC vs SGS</p>
+                    </div>
+                </div>
+                
+                {/* Seletor Mês */}
+                <div className="relative">
+                    <Filter className="absolute left-3 top-3.5 h-5 w-5 text-stone-400" />
+                    <select
+                        value={selectedMonth}
+                        onChange={(e) => setSelectedMonth(e.target.value)}
+                        className="block w-full pl-10 pr-10 py-3 text-sm font-bold border-2 border-orange-100 rounded-xl bg-white text-stone-800 shadow-sm focus:ring-orange-500 focus:border-orange-500"
+                    >
+                        {availableMonths.map(m => <option key={m} value={m}>{formatMonthLabel(m)}</option>)}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-3.5 h-5 w-5 text-stone-400" />
+                </div>
+            </div>
+
+            {/* 1. Vendas Comparadas */}
+            <Card className="p-4">
+                <div className="flex justify-between items-center mb-4">
+                    <h4 className="font-bold text-stone-700 text-sm uppercase">Vendas: Clientes vs Novos</h4>
+                    <div className="flex gap-3 text-[10px] font-bold">
+                        <span className="text-orange-600 flex items-center gap-1"><div className="w-2 h-2 bg-orange-600 rounded-full"></div> TC</span>
+                        <span className="text-red-600 flex items-center gap-1"><div className="w-2 h-2 bg-red-600 rounded-full"></div> SGS</span>
+                    </div>
+                </div>
+                <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={salesCompData} margin={{top: 20, right: 5, left: -20, bottom: 0}}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis dataKey="name" tick={{fontSize: 10, fontWeight: 'bold'}} />
+                            <YAxis tick={{fontSize: 10}} />
+                            <Tooltip cursor={{fill: '#f5f5f4'}} contentStyle={{fontSize: '12px', borderRadius: '8px'}}/>
+                            <Bar dataKey="TC" fill="#ea580c" radius={[4,4,0,0]} barSize={30}>
+                                <LabelList dataKey="TC" position="top" style={{ fill: '#c2410c', fontSize: '10px', fontWeight: 'bold' }} />
+                            </Bar>
+                            <Bar dataKey="SGS" fill="#dc2626" radius={[4,4,0,0]} barSize={30}>
+                                <LabelList dataKey="SGS" position="top" style={{ fill: '#991b1b', fontSize: '10px', fontWeight: 'bold' }} />
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </Card>
+
+            {/* 2. Orçamentos e Retornos */}
+            <Card className="p-4">
+                <h4 className="font-bold text-stone-700 text-sm mb-4 uppercase">Orçamentos & Retornos</h4>
+                <div className="h-56">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={quoteCompData} margin={{top: 20, right: 5, left: -20, bottom: 0}}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis dataKey="name" tick={{fontSize: 10, fontWeight: 'bold'}} />
+                            <YAxis tick={{fontSize: 10}} />
+                            <Tooltip cursor={{fill: '#f5f5f4'}} />
+                            <Bar dataKey="TC" fill="#ea580c" radius={[4,4,0,0]} barSize={30}>
+                                <LabelList dataKey="TC" position="top" style={{ fill: '#c2410c', fontSize: '10px', fontWeight: 'bold' }} />
+                            </Bar>
+                            <Bar dataKey="SGS" fill="#dc2626" radius={[4,4,0,0]} barSize={30}>
+                                <LabelList dataKey="SGS" position="top" style={{ fill: '#991b1b', fontSize: '10px', fontWeight: 'bold' }} />
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+                <div className="mt-4 flex justify-around text-xs border-t border-stone-100 pt-2">
+                    <div className="text-center">
+                        <span className="block font-bold text-stone-500">Taxa Retorno TC</span>
+                        <span className="text-lg font-black text-orange-600">
+                            {compStats.TC.orcamentos > 0 ? Math.round((compStats.TC.retornos/compStats.TC.orcamentos)*100) : 0}%
+                        </span>
+                    </div>
+                    <div className="text-center">
+                        <span className="block font-bold text-stone-500">Taxa Retorno SGS</span>
+                        <span className="text-lg font-black text-red-600">
+                            {compStats.SGS.orcamentos > 0 ? Math.round((compStats.SGS.retornos/compStats.SGS.orcamentos)*100) : 0}%
+                        </span>
+                    </div>
+                </div>
+            </Card>
+
+            {/* 3. Volume de Serviços */}
+            <Card className="p-4">
+                <h4 className="font-bold text-stone-700 text-sm mb-4 uppercase">Volume de Atendimento</h4>
+                <div className="h-56">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={serviceCompData} layout="vertical" margin={{top: 0, right: 30, left: 10, bottom: 0}}>
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                            <XAxis type="number" hide />
+                            <YAxis dataKey="name" type="category" width={100} tick={{fontSize: 10, fontWeight: 'bold'}} />
+                            <Tooltip cursor={{fill: '#f5f5f4'}} />
+                            <Legend iconSize={8} />
+                            <Bar dataKey="TC" fill="#fb923c" radius={[0,4,4,0]} barSize={20}>
+                                <LabelList dataKey="TC" position="right" style={{ fill: '#c2410c', fontSize: '10px' }} />
+                            </Bar>
+                            <Bar dataKey="SGS" fill="#f87171" radius={[0,4,4,0]} barSize={20}>
+                                <LabelList dataKey="SGS" position="right" style={{ fill: '#991b1b', fontSize: '10px' }} />
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </Card>
+
+            {/* 4. Mensagens e Conversão (Verde) */}
+            <Card className="p-4 bg-green-50/50 border-green-100">
+                <h4 className="font-bold text-green-800 text-sm mb-4 uppercase flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4" /> Marketing (WhatsApp)
+                </h4>
+                <div className="h-48">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={msgData} margin={{top: 20, right: 5, left: -20, bottom: 0}}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis dataKey="name" tick={{fontSize: 10, fontWeight: 'bold'}} />
+                            <YAxis tick={{fontSize: 10}} />
+                            <Tooltip />
+                            <Bar dataKey="TC" fill="#16a34a" radius={[4,4,0,0]} barSize={30}>
+                                <LabelList dataKey="TC" position="top" style={{ fill: '#14532d', fontSize: '10px', fontWeight: 'bold' }} />
+                            </Bar>
+                            <Bar dataKey="SGS" fill="#4ade80" radius={[4,4,0,0]} barSize={30}>
+                                <LabelList dataKey="SGS" position="top" style={{ fill: '#14532d', fontSize: '10px', fontWeight: 'bold' }} />
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </Card>
+
+            {/* 5. Eficiência por Perfil de Cliente (Atendentes) */}
+            <Card className="p-4 bg-stone-50 border-stone-200">
+                <h4 className="font-bold text-stone-700 text-sm mb-4 uppercase flex items-center gap-2">
+                    <Target className="w-4 h-4 text-orange-600" /> Eficiência por Perfil (Conversão %)
+                </h4>
+                <p className="text-[10px] text-stone-500 mb-2">Compara a conversão de Clientes Antigos vs. Novos Clientes por atendente.</p>
+                
+                <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={staffEfficiency} layout="vertical" margin={{top: 0, right: 15, left: 0, bottom: 0}}>
+                            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                            <XAxis type="number" hide />
+                            <YAxis dataKey="name" type="category" width={80} tick={{fontSize: 10, fontWeight: 'bold'}} />
+                            <Tooltip content={<CustomEfficiencyTooltip />} cursor={{fill: '#f5f5f4'}} />
+                            <Legend iconSize={8} wrapperStyle={{fontSize:'10px'}} />
+                            <Bar name="Cliente (%)" dataKey="rateCli" fill="#ea580c" radius={[0,4,4,0]} barSize={12}>
+                                <LabelList dataKey="rateCli" position="right" formatter={(v) => `${v}%`} style={{ fill: '#9a3412', fontSize: '9px', fontWeight:'bold' }} />
+                            </Bar>
+                            <Bar name="Novo (%)" dataKey="rateNew" fill="#78716c" radius={[0,4,4,0]} barSize={12}>
+                                <LabelList dataKey="rateNew" position="right" formatter={(v) => `${v}%`} style={{ fill: '#44403c', fontSize: '9px' }} />
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </Card>
+
+            {/* 6. Ranking Top Atendentes */}
+            <Card className="p-4">
+                <h4 className="font-bold text-stone-700 text-sm mb-4 uppercase flex items-center gap-2">
+                    <Award className="w-4 h-4 text-yellow-500" /> Top Atendentes
+                </h4>
+                <div className="space-y-2">
+                    <div className="grid grid-cols-6 text-[9px] font-bold text-stone-400 border-b border-stone-100 pb-2">
+                        <div className="col-span-2">Nome</div>
+                        <div className="text-center">Vendas</div>
+                        <div className="text-center">Conv.</div>
+                        <div className="col-span-2 text-right">R$ Total</div>
+                    </div>
+                    {topStaff.map((s, i) => (
+                        <div key={`${s.store}-${s.name}`} className="grid grid-cols-6 items-center py-2 border-b border-stone-50 text-xs">
+                            <div className="col-span-2">
+                                <span className="font-bold text-stone-700 block">{i+1}. {s.name}</span>
+                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${s.store === 'TC' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`}>
+                                    {s.store}
+                                </span>
+                            </div>
+                            <div className="text-center font-bold text-stone-800">{s.vendas}</div>
+                            <div className="text-center font-bold text-stone-500">{s.conversion}%</div>
+                            <div className="col-span-2 text-right font-black text-green-600">
+                                R$ {(s.valCli + s.valNew).toLocaleString('pt-BR', {compactDisplay: 'short', notation: 'compact'})}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </Card>
+        </div>
+    );
+}
+
+// --- App Main Component ---
+
+export default function App() {
+  const [storeConfig, setStoreConfig] = useState(DEFAULT_CONFIG);
+  const [user, setUser] = useState(null);
+  
+  // Authentication State
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isManager, setIsManager] = useState(false);
+  const [currentStore, setCurrentStore] = useState(null); // 'TC' or 'SGS'
+
+  const [view, setView] = useState('entry'); 
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [notification, setNotification] = useState(null); 
+  const [showSettings, setShowSettings] = useState(false);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null); 
+  const [pendingStore, setPendingStore] = useState(null);
+
+  // Load Config from LocalStorage
+  useEffect(() => {
+    const savedConfig = localStorage.getItem('optical_store_config_v2');
+    if (savedConfig) {
+        setStoreConfig(JSON.parse(savedConfig));
+    }
+  }, []);
+
+  // Save Config to LocalStorage
+  const handleUpdateConfig = (newConfig) => {
+      setStoreConfig(newConfig);
+      localStorage.setItem('optical_store_config_v2', JSON.stringify(newConfig));
+  };
+
+  // Firebase Auth
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        await signInAnonymously(auth);
+      } catch (error) {
+        console.error("Auth error:", error);
+      }
+    };
+    initAuth();
+    return onAuthStateChanged(auth, setUser);
+  }, []);
+
+  // Load Entries
+  useEffect(() => {
+    if (!user) return;
+    const q = query(
+      collection(db, 'artifacts', appId, 'public', 'data', 'optical_records_final_v11')
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        date: doc.data().createdAt ? doc.data().createdAt.toDate() : new Date()
+      }));
+      data.sort((a, b) => b.date - a.date);
+      setEntries(data);
+      setLoading(false);
+    }, (error) => {
+      console.error("Firestore Error:", error);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, [user]);
+
+  const handleLogin = (storeId, isManagerLogin) => {
+      setCurrentStore(storeId);
+      setIsAuthenticated(true);
+      setIsManager(isManagerLogin);
+      setView('entry');
+  };
+
+  const handleLogout = () => {
+      setIsAuthenticated(false);
+      setIsManager(false);
+      setCurrentStore(null);
+  };
+
+  const handleAddEntry = async (entryData) => {
+    if (!user) return;
+    try {
+      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'optical_records_final_v11'), {
+        ...entryData,
+        store: currentStore,
+        createdAt: serverTimestamp(),
+        userId: user.uid,
+        dateString: new Date().toLocaleDateString('pt-BR')
+      });
+      return true;
+    } catch (error) {
+      console.error("Error adding document: ", error);
+      return false;
+    }
+  };
+
+  const handleClearToday = async () => {
+    const today = new Date();
+    const entriesToDelete = entries.filter(entry => {
+        const entryDate = entry.date; 
+        return entry.store === currentStore && 
+               entryDate.getDate() === today.getDate() &&
+               entryDate.getMonth() === today.getMonth() &&
+               entryDate.getFullYear() === today.getFullYear();
+    });
+
+    if (entriesToDelete.length === 0) {
+        setShowSettings(false); 
+        return;
+    }
+
+    try {
+        const batch = writeBatch(db);
+        entriesToDelete.forEach(entry => {
+            const ref = doc(db, 'artifacts', appId, 'public', 'data', 'optical_records_final_v11', entry.id);
+            batch.delete(ref);
+        });
+        await batch.commit();
+        setShowSettings(false);
+    } catch (error) {
+        console.error("Erro ao limpar dados:", error);
+    }
+  };
+
+  const filteredEntries = useMemo(() => {
+    return entries.filter(e => e.store === currentStore);
+  }, [entries, currentStore]);
+
+  const requestAccess = (action, payload = null) => {
+    if (isManager) {
+        if (action === 'dashboard') setView('dashboard');
+        if (action === 'comparison') setView('comparison');
+        if (action === 'settings') setShowSettings(true);
+        if (action === 'storeChange') setCurrentStore(payload);
+    } else {
+        setPendingAction(action);
+        setPendingStore(payload);
+        setShowPinModal(true);
+    }
+  };
+
+  const handlePinSuccess = () => {
+    setIsManager(true);
+    if (pendingAction === 'dashboard') setView('dashboard');
+    if (pendingAction === 'comparison') setView('comparison');
+    if (pendingAction === 'settings') setShowSettings(true);
+    if (pendingAction === 'storeChange') setCurrentStore(pendingStore);
+    
+    setPendingAction(null);
+    setPendingStore(null);
+  };
+
+  if (!isAuthenticated) {
+      return <LoginScreen config={storeConfig} onLogin={handleLogin} />;
+  }
+
+  return (
+    <div className={`min-h-screen ${THEME.bgMain} font-sans ${THEME.textDark} pb-24`}>
+      <NotificationToast notification={notification} onClose={() => setNotification(null)} />
+
+      <header className={`${THEME.primary} shadow-lg sticky top-0 z-30`}>
+        <div className="max-w-md mx-auto px-3 py-3 flex justify-between items-center">
+          <div>
+            <h1 className="font-extrabold text-lg leading-tight text-white tracking-wide">ÓTICA PRECISÃO</h1>
+            <p className="text-[10px] text-orange-100 font-medium tracking-wider opacity-90 flex items-center gap-1">
+              {storeConfig.stores[currentStore].name}
+              {isManager ? <Unlock className="w-3 h-3 text-green-300"/> : <Lock className="w-3 h-3 text-orange-200"/>}
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-2">
+             {/* Logout Button */}
+             <button 
+                onClick={handleLogout}
+                className="bg-orange-800/50 p-1.5 rounded-xl text-white border border-orange-400/30 hover:bg-orange-700 transition-colors"
+                title="Sair / Trocar Loja"
+            >
+                <LogOut className="w-4 h-4" />
+            </button>
+
+            {/* Manager Settings */}
+            <button 
+                onClick={() => requestAccess('settings')}
+                className="bg-orange-800/50 p-1.5 rounded-xl text-white border border-orange-400/30 hover:bg-orange-700 transition-colors"
+            >
+                {isManager ? <Settings className="w-4 h-4" /> : <Lock className="w-4 h-4 opacity-70" />}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {showPinModal && (
+          <PinModal 
+            onClose={() => setShowPinModal(false)} 
+            onSuccess={handlePinSuccess}
+            managerPin={storeConfig.managerPassword}
+          />
+      )}
+
+      {showSettings && (
+        <SettingsModal 
+            config={storeConfig} 
+            currentStore={currentStore}
+            onClose={() => setShowSettings(false)}
+            onUpdateConfig={handleUpdateConfig}
+            onClearToday={handleClearToday}
+        />
+      )}
+
+      <main className="max-w-md mx-auto px-4 py-6">
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-orange-600"></div>
+          </div>
+        ) : view === 'entry' ? (
+          <EntryScreen 
+            storeData={storeConfig.stores[currentStore]} 
+            onSave={handleAddEntry} 
+          />
+        ) : view === 'dashboard' ? (
+          <DashboardScreen 
+            data={filteredEntries} 
+            storeData={storeConfig.stores[currentStore]}
+          />
+        ) : (
+          <ComparisonScreen data={entries} />
+        )}
+      </main>
+
+      <div className={`fixed bottom-0 left-0 right-0 ${THEME.bgCard} border-t ${THEME.border} px-4 py-3 flex justify-around z-30 shadow-[0_-4px_10px_-2px_rgba(0,0,0,0.05)]`}>
+        <button 
+          onClick={() => setView('entry')}
+          className={`flex flex-col items-center gap-1.5 p-2 rounded-xl w-full transition-all active:scale-95 ${view === 'entry' ? THEME.accentText : THEME.textLight}`}
+        >
+          <PlusCircle className="w-6 h-6" />
+          <span className="text-[10px] font-bold uppercase tracking-wider">Novo</span>
+        </button>
+        
+        <button 
+          onClick={() => requestAccess('dashboard')}
+          className={`flex flex-col items-center gap-1.5 p-2 rounded-xl w-full transition-all active:scale-95 ${view === 'dashboard' ? THEME.accentText : THEME.textLight}`}
+        >
+          {isManager ? <BarChart2 className="w-6 h-6" /> : <Lock className="w-6 h-6 opacity-60" />}
+          <span className="text-[10px] font-bold uppercase tracking-wider">
+            {isManager ? "Relatórios" : "Restrito"}
+          </span>
+        </button>
+
+        {/* Botão Comparativo */}
+        <button 
+          onClick={() => requestAccess('comparison')}
+          className={`flex flex-col items-center gap-1.5 p-2 rounded-xl w-full transition-all active:scale-95 ${view === 'comparison' ? 'text-orange-600' : THEME.textLight}`}
+        >
+          {isManager ? <Scale className="w-6 h-6" /> : <Lock className="w-6 h-6 opacity-60" />}
+          <span className="text-[10px] font-bold uppercase tracking-wider">
+            Comparar
+          </span>
+        </button>
+      </div>
     </div>
   );
 }
