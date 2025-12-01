@@ -88,9 +88,11 @@ import {
 } from 'firebase/firestore';
 
 // ============================================================================
-// CONFIGURAÇÃO FIREBASE (CORRIGIDA E PREENCHIDA)
+// ÁREA DE CONFIGURAÇÃO FIREBASE (IMPORTANTE PARA FUNCIONAR ONLINE)
 // ============================================================================
 
+// Aqui inserimos as chaves fixas para garantir que funcione na Vercel.
+// Se criou um banco novo, substitua estes valores pelos novos.
 const firebaseConfig = {
   apiKey: "AIzaSyAu25o6sVXnAGIBRaEheBwHdTCM8lkCuxo",
   authDomain: "otica-precisao-app.firebaseapp.com",
@@ -99,6 +101,10 @@ const firebaseConfig = {
   messagingSenderId: "216643068456",
   appId: "1:216643068456:web:3e98fa915c996e603d4b1d"
 };
+
+// ============================================================================
+// FIM DA ÁREA DE CONFIGURAÇÃO
+// ============================================================================
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -114,13 +120,13 @@ const DEFAULT_CONFIG = {
             id: 'TC',
             name: 'Três Corações',
             staff: ['Ana Laura', 'Elaine', 'Ketlin', 'Eleonora'],
-            password: '0000'
+            password: '4572'
         },
         SGS: {
             id: 'SGS',
             name: 'São Gonçalo do Sapucaí',
             staff: ['Vitoria', 'Roberta', 'Fernanda'],
-            password: '0000'
+            password: '3748'
         }
     }
 };
@@ -1026,6 +1032,7 @@ function DashboardScreen({ data, storeData }) {
     });
   }, [data, selectedMonth]);
 
+  // --- DADOS DE HOJE (Calculados) ---
   const todayStats = useMemo(() => {
     const today = new Date();
     const todayData = data.filter(entry => {
@@ -1062,7 +1069,7 @@ function DashboardScreen({ data, storeData }) {
         // NOVO: Contagem WhatsApp
         if (entry.category === 'whatsapp') {
             stats.whatsappCount++;
-            stats.marketingHits++; // Conta como marketing
+            stats.marketingHits++; // Conta como hit
             stats.whatsappBreakdown[entry.type] = (stats.whatsappBreakdown[entry.type] || 0) + 1;
         }
 
