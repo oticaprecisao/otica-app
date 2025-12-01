@@ -88,10 +88,9 @@ import {
 } from 'firebase/firestore';
 
 // ============================================================================
-// CONFIGURAÇÃO FIREBASE (CORRIGIDA PARA VERCEL)
+// CONFIGURAÇÃO FIREBASE (CORRIGIDA E PREENCHIDA)
 // ============================================================================
 
-// Mantivemos suas chaves reais aqui para funcionar na produção
 const firebaseConfig = {
   apiKey: "AIzaSyAu25o6sVXnAGIBRaEheBwHdTCM8lkCuxo",
   authDomain: "otica-precisao-app.firebaseapp.com",
@@ -642,8 +641,8 @@ function LoginScreen({ config, onLogin }) {
                     <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-orange-600 shadow-inner">
                         <Eye className="w-8 h-8" />
                     </div>
-                    <h1 className="text-2xl font-extrabold text-stone-800 tracking-tight">Ótica Precisão</h1>
-                    <p className="text-stone-500 text-sm font-medium">App de Gestão da Ótica</p>
+                    <h1 className="text-2xl font-extrabold text-stone-800 tracking-tight">Bem-vindo</h1>
+                    <p className="text-stone-500 text-sm font-medium">App de Gestão Ótica</p>
                 </div>
 
                 <div className="space-y-5">
@@ -1027,7 +1026,6 @@ function DashboardScreen({ data, storeData }) {
     });
   }, [data, selectedMonth]);
 
-  // --- DADOS DE HOJE (Calculados) ---
   const todayStats = useMemo(() => {
     const today = new Date();
     const todayData = data.filter(entry => {
@@ -1944,6 +1942,646 @@ function DashboardScreen({ data, storeData }) {
 
         </div>
       )}
+    </div>
+  );
+}
+
+// --- Nova Tela: Comparativo (ComparisonScreen) ---
+
+function ComparisonScreen({ data }) {
+    // --- Lógica de Filtro de Mês ---
+    const availableMonths = useMemo(() => {
+        const monthSet = new Set();
+        data.forEach(item => {
+            const d = item.date;
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            monthSet.add(key);
+        });
+        return Array.from(monthSet).sort().reverse();
+    }, [data]);
+
+    const [selectedMonth, setSelectedMonth] = useState(availableMonths[0] || '');
+
+    useEffect(() => {
+        if (availableMonths.length > 0 && !selectedMonth) {
+            setSelectedMonth(availableMonths[0]);
+        }
+    }, [availableMonths, selectedMonth]);
+
+    const formatMonthLabel = (key) => {
+        if (!key) return '';
+        const [year, month] = key.split('-');
+        const date = new Date(year, month - 1);
+        const monthName = date.toLocaleString('pt-BR', { month: 'long' });
+        return `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`;
+    };
+
+    // --- Processamento dos Dados Comparativos ---
+    const compStats = useMemo(() => {
+        if (!selectedMonth) return null;
+        const [year, month] = selectedMonth.split('-').map(Number);
+        
+        // Filtra pelo mês selecionado
+        const monthData = data.filter(item => {
+            const d = item.date;
+            return d.getFullYear() === year && (d.getMonth() + 1) === month;
+        });
+
+        // Estrutura Base
+        const metrics = {
+            TC: { vendas: 0, orcamentos: 0, retornos: 0, servicos: 0, atendimentos: 0, messages: 0, msgSales: 0, cliSales:0, newSales:0, staff: {} },
+            SGS: { vendas: 0, orcamentos: 0, retornos: 0, servicos: 0, atendimentos: 0, messages: 0, msgSales: 0, cliSales:0, newSales:0, staff: {} }
+        };
+
+        // Popula Métricas
+        monthData.forEach(entry => {
+            const store = entry.store;
+            if (!metrics[store]) return;
+
+            if (entry.category === 'servico') metrics[store].servicos++;
+            if (entry.category === 'whatsapp') metrics[store].messages++;
+            
+            if (entry.category === 'comercial') {
+                metrics[store].atendimentos++;
+                if (entry.marketingSource === 'mensagem') metrics[store].msgSales++; 
+
+                if (entry.action === 'venda') {
+                    metrics[store].vendas++;
+                    if (entry.clientType === 'cliente') metrics[store].cliSales++;
+                    else metrics[store].newSales++;
+                }
+                if (entry.action === 'orcamento') metrics[store].orcamentos++;
+                if (entry.action === 'retorno') metrics[store].retornos++;
+
+                // Dados Detalhados por Atendente
+                if (entry.attendant) {
+                    if (!metrics[store].staff[entry.attendant]) {
+                        metrics[store].staff[entry.attendant] = { 
+                            vendaCli: 0, vendaNew: 0, 
+                            orcCli: 0, orcNew: 0,
+                            valCli: 0, valNew: 0 
+                        };
+                    }
+                    const staff = metrics[store].staff[entry.attendant];
+                    
+                    if (entry.action === 'venda') {
+                        if (entry.clientType === 'cliente') {
+                            staff.vendaCli++;
+                            staff.valCli += (parseFloat(entry.saleValue) || 0);
+                        } else {
+                            staff.vendaNew++;
+                            staff.valNew += (parseFloat(entry.saleValue) || 0);
+                        }
+                    }
+                    if (entry.action === 'orcamento') {
+                        if (entry.clientType === 'cliente') staff.orcCli++;
+                        else staff.orcNew++;
+                    }
+                }
+            }
+        });
+
+        return metrics;
+    }, [data, selectedMonth]);
+
+    if (!compStats) return <div className="p-8 text-center text-stone-400">Sem dados suficientes para comparação.</div>;
+
+    // --- Dados para Gráficos ---
+
+    // 1. Vendas Totais & Tipo
+    const salesCompData = [
+        { name: 'Venda Cliente', TC: compStats.TC.cliSales, SGS: compStats.SGS.cliSales },
+        { name: 'Venda Ñ Cliente', TC: compStats.TC.newSales, SGS: compStats.SGS.newSales },
+        { name: 'Total', TC: compStats.TC.vendas, SGS: compStats.SGS.vendas }
+    ];
+
+    // 2. Orçamentos x Retornos
+    const quoteCompData = [
+        { name: 'Orçamentos', TC: compStats.TC.orcamentos, SGS: compStats.SGS.orcamentos },
+        { name: 'Retornos', TC: compStats.TC.retornos, SGS: compStats.SGS.retornos }
+    ];
+
+    // 3. Volume Serviços
+    const serviceCompData = [
+        { name: 'Serviços Rápidos', TC: compStats.TC.servicos, SGS: compStats.SGS.servicos },
+        { name: 'Comercial', TC: compStats.TC.atendimentos, SGS: compStats.SGS.atendimentos }
+    ];
+
+    // 4. Mensagens
+    const msgData = [
+        { name: 'Msgs Enviadas', TC: compStats.TC.messages, SGS: compStats.SGS.messages },
+        { name: 'Vendas via Msg', TC: compStats.TC.msgSales, SGS: compStats.SGS.msgSales }
+    ];
+
+    // 5. Ranking Atendentes (Unificado)
+    const allStaff = [];
+    ['TC', 'SGS'].forEach(store => {
+        Object.entries(compStats[store].staff).forEach(([name, s]) => {
+            const totalSales = s.vendaCli + s.vendaNew;
+            const totalOrc = s.orcCli + s.orcNew;
+            
+            // Taxas de Conversão Específicas
+            const rateCli = (s.vendaCli + s.orcCli) > 0 ? Math.round((s.vendaCli / (s.vendaCli + s.orcCli)) * 100) : 0;
+            const rateNew = (s.vendaNew + s.orcNew) > 0 ? Math.round((s.vendaNew / (s.vendaNew + s.orcNew)) * 100) : 0;
+
+            allStaff.push({ 
+                name, 
+                store, 
+                vendas: totalSales, 
+                orcamentos: totalOrc,
+                conversion: totalOrc > 0 ? Math.round((totalSales/totalOrc)*100) : 0,
+                // Dados detalhados
+                rateCli,
+                rateNew,
+                valCli: s.valCli,
+                valNew: s.valNew
+            });
+        });
+    });
+    
+    // Ordenar para o Ranking Geral
+    const topStaff = [...allStaff].sort((a,b) => b.vendas - a.vendas).slice(0, 10);
+    
+    // Ordenar para o Gráfico de Eficiência (por nome para agrupar)
+    const staffEfficiency = [...allStaff].sort((a,b) => b.vendas - a.vendas); 
+
+    // Custom Tooltip for Efficiency Chart
+    const CustomEfficiencyTooltip = ({ active, payload, label }) => {
+        if (active && payload && payload.length) {
+            const data = payload[0].payload;
+            return (
+                <div className="bg-white p-3 border border-stone-200 shadow-xl rounded-lg z-50">
+                    <p className="font-bold text-stone-800 text-xs mb-1">{label} ({data.store})</p>
+                    <div className="space-y-1">
+                        <p className="text-[10px] text-orange-700 font-bold">
+                            Cliente: {data.rateCli}% <span className="font-normal text-stone-500">({data.vendaCli} vds / {data.valCli.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})})</span>
+                        </p>
+                        <p className="text-[10px] text-stone-600 font-bold">
+                            Novo: {data.rateNew}% <span className="font-normal text-stone-500">({data.vendaNew} vds / {data.valNew.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})})</span>
+                        </p>
+                    </div>
+                </div>
+            );
+        }
+        return null;
+    };
+
+    return (
+        <div className="space-y-6 animate-in slide-in-from-right-4 duration-500 pb-10">
+            {/* Header Comparativo */}
+            <div className="flex flex-col gap-4 border-b border-stone-200 pb-6">
+                <div className="flex items-center gap-3">
+                    <div className="bg-gradient-to-br from-orange-600 to-red-600 p-3 rounded-xl shadow-lg text-white">
+                        <Scale className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-extrabold text-stone-800 leading-tight">Comparativo Lojas</h2>
+                        <p className="text-xs font-medium text-stone-500">Benchmarking TC vs SGS</p>
+                    </div>
+                </div>
+                
+                {/* Seletor Mês */}
+                <div className="relative">
+                    <Filter className="absolute left-3 top-3.5 h-5 w-5 text-stone-400" />
+                    <select
+                        value={selectedMonth}
+                        onChange={(e) => setSelectedMonth(e.target.value)}
+                        className="block w-full pl-10 pr-10 py-3 text-sm font-bold border-2 border-orange-100 rounded-xl bg-white text-stone-800 shadow-sm focus:ring-orange-500 focus:border-orange-500"
+                    >
+                        {availableMonths.map(m => <option key={m} value={m}>{formatMonthLabel(m)}</option>)}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-3.5 h-5 w-5 text-stone-400" />
+                </div>
+            </div>
+
+            {/* 1. Vendas Comparadas */}
+            <Card className="p-4">
+                <div className="flex justify-between items-center mb-4">
+                    <h4 className="font-bold text-stone-700 text-sm uppercase">Vendas: Clientes vs Novos</h4>
+                    <div className="flex gap-3 text-[10px] font-bold">
+                        <span className="text-orange-600 flex items-center gap-1"><div className="w-2 h-2 bg-orange-600 rounded-full"></div> TC</span>
+                        <span className="text-red-600 flex items-center gap-1"><div className="w-2 h-2 bg-red-600 rounded-full"></div> SGS</span>
+                    </div>
+                </div>
+                <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={salesCompData} margin={{top: 20, right: 5, left: -20, bottom: 0}}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis dataKey="name" tick={{fontSize: 10, fontWeight: 'bold'}} />
+                            <YAxis tick={{fontSize: 10}} />
+                            <Tooltip cursor={{fill: '#f5f5f4'}} contentStyle={{fontSize: '12px', borderRadius: '8px'}}/>
+                            <Bar dataKey="TC" fill="#ea580c" radius={[4,4,0,0]} barSize={30}>
+                                <LabelList dataKey="TC" position="top" style={{ fill: '#c2410c', fontSize: '10px', fontWeight: 'bold' }} />
+                            </Bar>
+                            <Bar dataKey="SGS" fill="#dc2626" radius={[4,4,0,0]} barSize={30}>
+                                <LabelList dataKey="SGS" position="top" style={{ fill: '#991b1b', fontSize: '10px', fontWeight: 'bold' }} />
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </Card>
+
+            {/* 2. Orçamentos e Retornos */}
+            <Card className="p-4">
+                <h4 className="font-bold text-stone-700 text-sm mb-4 uppercase">Orçamentos & Retornos</h4>
+                <div className="h-56">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={quoteCompData} margin={{top: 20, right: 5, left: -20, bottom: 0}}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis dataKey="name" tick={{fontSize: 10, fontWeight: 'bold'}} />
+                            <YAxis tick={{fontSize: 10}} />
+                            <Tooltip cursor={{fill: '#f5f5f4'}} />
+                            <Bar dataKey="TC" fill="#ea580c" radius={[4,4,0,0]} barSize={30}>
+                                <LabelList dataKey="TC" position="top" style={{ fill: '#c2410c', fontSize: '10px', fontWeight: 'bold' }} />
+                            </Bar>
+                            <Bar dataKey="SGS" fill="#dc2626" radius={[4,4,0,0]} barSize={30}>
+                                <LabelList dataKey="SGS" position="top" style={{ fill: '#991b1b', fontSize: '10px', fontWeight: 'bold' }} />
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+                <div className="mt-4 flex justify-around text-xs border-t border-stone-100 pt-2">
+                    <div className="text-center">
+                        <span className="block font-bold text-stone-500">Taxa Retorno TC</span>
+                        <span className="text-lg font-black text-orange-600">
+                            {compStats.TC.orcamentos > 0 ? Math.round((compStats.TC.retornos/compStats.TC.orcamentos)*100) : 0}%
+                        </span>
+                    </div>
+                    <div className="text-center">
+                        <span className="block font-bold text-stone-500">Taxa Retorno SGS</span>
+                        <span className="text-lg font-black text-red-600">
+                            {compStats.SGS.orcamentos > 0 ? Math.round((compStats.SGS.retornos/compStats.SGS.orcamentos)*100) : 0}%
+                        </span>
+                    </div>
+                </div>
+            </Card>
+
+            {/* 3. Volume de Serviços */}
+            <Card className="p-4">
+                <h4 className="font-bold text-stone-700 text-sm mb-4 uppercase">Volume de Atendimento</h4>
+                <div className="h-56">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={serviceCompData} layout="vertical" margin={{top: 0, right: 30, left: 10, bottom: 0}}>
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                            <XAxis type="number" hide />
+                            <YAxis dataKey="name" type="category" width={100} tick={{fontSize: 10, fontWeight: 'bold'}} />
+                            <Tooltip cursor={{fill: '#f5f5f4'}} />
+                            <Legend iconSize={8} />
+                            <Bar dataKey="TC" fill="#fb923c" radius={[0,4,4,0]} barSize={20}>
+                                <LabelList dataKey="TC" position="right" style={{ fill: '#c2410c', fontSize: '10px' }} />
+                            </Bar>
+                            <Bar dataKey="SGS" fill="#f87171" radius={[0,4,4,0]} barSize={20}>
+                                <LabelList dataKey="SGS" position="right" style={{ fill: '#991b1b', fontSize: '10px' }} />
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </Card>
+
+            {/* 4. Mensagens e Conversão (Verde) */}
+            <Card className="p-4 bg-green-50/50 border-green-100">
+                <h4 className="font-bold text-green-800 text-sm mb-4 uppercase flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4" /> Marketing (WhatsApp)
+                </h4>
+                <div className="h-48">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={msgData} margin={{top: 20, right: 5, left: -20, bottom: 0}}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis dataKey="name" tick={{fontSize: 10, fontWeight: 'bold'}} />
+                            <YAxis tick={{fontSize: 10}} />
+                            <Tooltip />
+                            <Bar dataKey="TC" fill="#16a34a" radius={[4,4,0,0]} barSize={30}>
+                                <LabelList dataKey="TC" position="top" style={{ fill: '#14532d', fontSize: '10px', fontWeight: 'bold' }} />
+                            </Bar>
+                            <Bar dataKey="SGS" fill="#4ade80" radius={[4,4,0,0]} barSize={30}>
+                                <LabelList dataKey="SGS" position="top" style={{ fill: '#14532d', fontSize: '10px', fontWeight: 'bold' }} />
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </Card>
+
+            {/* 5. Eficiência por Perfil de Cliente (Atendentes) */}
+            <Card className="p-4 bg-stone-50 border-stone-200">
+                <h4 className="font-bold text-stone-700 text-sm mb-4 uppercase flex items-center gap-2">
+                    <Target className="w-4 h-4 text-orange-600" /> Eficiência por Perfil (Conversão %)
+                </h4>
+                <p className="text-[10px] text-stone-500 mb-2">Compara a conversão de Clientes Antigos vs. Novos Clientes por atendente.</p>
+                
+                <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={staffEfficiency} layout="vertical" margin={{top: 0, right: 15, left: 0, bottom: 0}}>
+                            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                            <XAxis type="number" hide />
+                            <YAxis dataKey="name" type="category" width={80} tick={{fontSize: 10, fontWeight: 'bold'}} />
+                            <Tooltip content={<CustomEfficiencyTooltip />} cursor={{fill: '#f5f5f4'}} />
+                            <Legend iconSize={8} wrapperStyle={{fontSize:'10px'}} />
+                            <Bar name="Cliente (%)" dataKey="rateCli" fill="#ea580c" radius={[0,4,4,0]} barSize={12}>
+                                <LabelList dataKey="rateCli" position="right" formatter={(v) => `${v}%`} style={{ fill: '#9a3412', fontSize: '9px', fontWeight:'bold' }} />
+                            </Bar>
+                            <Bar name="Novo (%)" dataKey="rateNew" fill="#78716c" radius={[0,4,4,0]} barSize={12}>
+                                <LabelList dataKey="rateNew" position="right" formatter={(v) => `${v}%`} style={{ fill: '#44403c', fontSize: '9px' }} />
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </Card>
+
+            {/* 6. Ranking Top Atendentes */}
+            <Card className="p-4">
+                <h4 className="font-bold text-stone-700 text-sm mb-4 uppercase flex items-center gap-2">
+                    <Award className="w-4 h-4 text-yellow-500" /> Top Atendentes
+                </h4>
+                <div className="space-y-2">
+                    <div className="grid grid-cols-6 text-[9px] font-bold text-stone-400 border-b border-stone-100 pb-2">
+                        <div className="col-span-2">Nome</div>
+                        <div className="text-center">Vendas</div>
+                        <div className="text-center">Conv.</div>
+                        <div className="col-span-2 text-right">R$ Total</div>
+                    </div>
+                    {topStaff.map((s, i) => (
+                        <div key={`${s.store}-${s.name}`} className="grid grid-cols-6 items-center py-2 border-b border-stone-50 text-xs">
+                            <div className="col-span-2">
+                                <span className="font-bold text-stone-700 block">{i+1}. {s.name}</span>
+                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${s.store === 'TC' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`}>
+                                    {s.store}
+                                </span>
+                            </div>
+                            <div className="text-center font-bold text-stone-800">{s.vendas}</div>
+                            <div className="text-center font-bold text-stone-500">{s.conversion}%</div>
+                            <div className="col-span-2 text-right font-black text-green-600">
+                                R$ {(s.valCli + s.valNew).toLocaleString('pt-BR', {compactDisplay: 'short', notation: 'compact'})}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </Card>
+        </div>
+    );
+}
+
+// --- App Main Component ---
+
+export default function App() {
+  const [storeConfig, setStoreConfig] = useState(DEFAULT_CONFIG);
+  const [user, setUser] = useState(null);
+  
+  // Authentication State
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isManager, setIsManager] = useState(false);
+  const [currentStore, setCurrentStore] = useState(null); // 'TC' or 'SGS'
+
+  const [view, setView] = useState('entry'); 
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [notification, setNotification] = useState(null); 
+  const [showSettings, setShowSettings] = useState(false);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null); 
+  const [pendingStore, setPendingStore] = useState(null);
+
+  // Load Config from LocalStorage
+  useEffect(() => {
+    const savedConfig = localStorage.getItem('optical_store_config_v2');
+    if (savedConfig) {
+        setStoreConfig(JSON.parse(savedConfig));
+    }
+  }, []);
+
+  // Save Config to LocalStorage
+  const handleUpdateConfig = (newConfig) => {
+      setStoreConfig(newConfig);
+      localStorage.setItem('optical_store_config_v2', JSON.stringify(newConfig));
+  };
+
+  // Firebase Auth
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        await signInAnonymously(auth);
+      } catch (error) {
+        console.error("Auth error:", error);
+      }
+    };
+    initAuth();
+    return onAuthStateChanged(auth, setUser);
+  }, []);
+
+  // Load Entries
+  useEffect(() => {
+    if (!user) return;
+    const q = query(
+      collection(db, 'artifacts', appId, 'public', 'data', 'optical_records_final_v11')
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        date: doc.data().createdAt ? doc.data().createdAt.toDate() : new Date()
+      }));
+      data.sort((a, b) => b.date - a.date);
+      setEntries(data);
+      setLoading(false);
+    }, (error) => {
+      console.error("Firestore Error:", error);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, [user]);
+
+  const handleLogin = (storeId, isManagerLogin) => {
+      setCurrentStore(storeId);
+      setIsAuthenticated(true);
+      setIsManager(isManagerLogin);
+      setView('entry');
+  };
+
+  const handleLogout = () => {
+      setIsAuthenticated(false);
+      setIsManager(false);
+      setCurrentStore(null);
+  };
+
+  const handleAddEntry = async (entryData) => {
+    if (!user) return;
+    try {
+      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'optical_records_final_v11'), {
+        ...entryData,
+        store: currentStore,
+        createdAt: serverTimestamp(),
+        userId: user.uid,
+        dateString: new Date().toLocaleDateString('pt-BR')
+      });
+      return true;
+    } catch (error) {
+      console.error("Error adding document: ", error);
+      return false;
+    }
+  };
+
+  const handleClearToday = async () => {
+    const today = new Date();
+    const entriesToDelete = entries.filter(entry => {
+        const entryDate = entry.date; 
+        return entry.store === currentStore && 
+               entryDate.getDate() === today.getDate() &&
+               entryDate.getMonth() === today.getMonth() &&
+               entryDate.getFullYear() === today.getFullYear();
+    });
+
+    if (entriesToDelete.length === 0) {
+        setShowSettings(false); 
+        return;
+    }
+
+    try {
+        const batch = writeBatch(db);
+        entriesToDelete.forEach(entry => {
+            const ref = doc(db, 'artifacts', appId, 'public', 'data', 'optical_records_final_v11', entry.id);
+            batch.delete(ref);
+        });
+        await batch.commit();
+        setShowSettings(false);
+    } catch (error) {
+        console.error("Erro ao limpar dados:", error);
+    }
+  };
+
+  const filteredEntries = useMemo(() => {
+    return entries.filter(e => e.store === currentStore);
+  }, [entries, currentStore]);
+
+  const requestAccess = (action, payload = null) => {
+    if (isManager) {
+        if (action === 'dashboard') setView('dashboard');
+        if (action === 'comparison') setView('comparison');
+        if (action === 'settings') setShowSettings(true);
+        if (action === 'storeChange') setCurrentStore(payload);
+    } else {
+        setPendingAction(action);
+        setPendingStore(payload);
+        setShowPinModal(true);
+    }
+  };
+
+  const handlePinSuccess = () => {
+    setIsManager(true);
+    if (pendingAction === 'dashboard') setView('dashboard');
+    if (pendingAction === 'comparison') setView('comparison');
+    if (pendingAction === 'settings') setShowSettings(true);
+    if (pendingAction === 'storeChange') setCurrentStore(pendingStore);
+    
+    setPendingAction(null);
+    setPendingStore(null);
+  };
+
+  if (!isAuthenticated) {
+      return <LoginScreen config={storeConfig} onLogin={handleLogin} />;
+  }
+
+  return (
+    <div className={`min-h-screen ${THEME.bgMain} font-sans ${THEME.textDark} pb-24`}>
+      <NotificationToast notification={notification} onClose={() => setNotification(null)} />
+
+      <header className={`${THEME.primary} shadow-lg sticky top-0 z-30`}>
+        <div className="max-w-md mx-auto px-3 py-3 flex justify-between items-center">
+          <div>
+            <h1 className="font-extrabold text-lg leading-tight text-white tracking-wide">ÓTICA PRECISÃO</h1>
+            <p className="text-[10px] text-orange-100 font-medium tracking-wider opacity-90 flex items-center gap-1">
+              {storeConfig.stores[currentStore].name}
+              {isManager ? <Unlock className="w-3 h-3 text-green-300"/> : <Lock className="w-3 h-3 text-orange-200"/>}
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-2">
+             {/* Logout Button */}
+             <button 
+                onClick={handleLogout}
+                className="bg-orange-800/50 p-1.5 rounded-xl text-white border border-orange-400/30 hover:bg-orange-700 transition-colors"
+                title="Sair / Trocar Loja"
+            >
+                <LogOut className="w-4 h-4" />
+            </button>
+
+            {/* Manager Settings */}
+            <button 
+                onClick={() => requestAccess('settings')}
+                className="bg-orange-800/50 p-1.5 rounded-xl text-white border border-orange-400/30 hover:bg-orange-700 transition-colors"
+            >
+                {isManager ? <Settings className="w-4 h-4" /> : <Lock className="w-4 h-4 opacity-70" />}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {showPinModal && (
+          <PinModal 
+            onClose={() => setShowPinModal(false)} 
+            onSuccess={handlePinSuccess}
+            managerPin={storeConfig.managerPassword}
+          />
+      )}
+
+      {showSettings && (
+        <SettingsModal 
+            config={storeConfig} 
+            currentStore={currentStore}
+            onClose={() => setShowSettings(false)}
+            onUpdateConfig={handleUpdateConfig}
+            onClearToday={handleClearToday}
+        />
+      )}
+
+      <main className="max-w-md mx-auto px-4 py-6">
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-orange-600"></div>
+          </div>
+        ) : view === 'entry' ? (
+          <EntryScreen 
+            storeData={storeConfig.stores[currentStore]} 
+            onSave={handleAddEntry} 
+          />
+        ) : view === 'dashboard' ? (
+          <DashboardScreen 
+            data={filteredEntries} 
+            storeData={storeConfig.stores[currentStore]}
+          />
+        ) : (
+          <ComparisonScreen data={entries} />
+        )}
+      </main>
+
+      <div className={`fixed bottom-0 left-0 right-0 ${THEME.bgCard} border-t ${THEME.border} px-4 py-3 flex justify-around z-30 shadow-[0_-4px_10px_-2px_rgba(0,0,0,0.05)]`}>
+        <button 
+          onClick={() => setView('entry')}
+          className={`flex flex-col items-center gap-1.5 p-2 rounded-xl w-full transition-all active:scale-95 ${view === 'entry' ? THEME.accentText : THEME.textLight}`}
+        >
+          <PlusCircle className="w-6 h-6" />
+          <span className="text-[10px] font-bold uppercase tracking-wider">Novo</span>
+        </button>
+        
+        <button 
+          onClick={() => requestAccess('dashboard')}
+          className={`flex flex-col items-center gap-1.5 p-2 rounded-xl w-full transition-all active:scale-95 ${view === 'dashboard' ? THEME.accentText : THEME.textLight}`}
+        >
+          {isManager ? <BarChart2 className="w-6 h-6" /> : <Lock className="w-6 h-6 opacity-60" />}
+          <span className="text-[10px] font-bold uppercase tracking-wider">
+            {isManager ? "Relatórios" : "Restrito"}
+          </span>
+        </button>
+
+        {/* Botão Comparativo */}
+        <button 
+          onClick={() => requestAccess('comparison')}
+          className={`flex flex-col items-center gap-1.5 p-2 rounded-xl w-full transition-all active:scale-95 ${view === 'comparison' ? 'text-orange-600' : THEME.textLight}`}
+        >
+          {isManager ? <Scale className="w-6 h-6" /> : <Lock className="w-6 h-6 opacity-60" />}
+          <span className="text-[10px] font-bold uppercase tracking-wider">
+            Comparar
+          </span>
+        </button>
+      </div>
     </div>
   );
 }
