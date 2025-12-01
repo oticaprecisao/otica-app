@@ -642,8 +642,8 @@ function LoginScreen({ config, onLogin }) {
                     <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-orange-600 shadow-inner">
                         <Eye className="w-8 h-8" />
                     </div>
-                    <h1 className="text-2xl font-extrabold text-stone-800 tracking-tight">Bem-vindo</h1>
-                    <p className="text-stone-500 text-sm font-medium">App de Gestão Ótica</p>
+                    <h1 className="text-2xl font-extrabold text-stone-800 tracking-tight">Ótica Precisão</h1>
+                    <p className="text-stone-500 text-sm font-medium">App de Gestão da Ótica</p>
                 </div>
 
                 <div className="space-y-5">
