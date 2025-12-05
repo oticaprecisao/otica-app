@@ -4,10 +4,10 @@ import {
   ShoppingBag, 
   Wrench, 
   CreditCard, 
-  CircleHelp,
-  ChartBar,
-  CirclePlus,
-  CircleCheck,
+  CircleHelp,    // Nome novo (era HelpCircle)
+  ChartBar,      // Nome novo (era BarChart2)
+  CirclePlus,    // Nome novo (era PlusCircle)
+  CircleCheck,   // Nome novo (era CheckCircle2)
   ArrowLeft, 
   Calendar, 
   Eye, 
@@ -20,7 +20,7 @@ import {
   Target, 
   ChevronDown, 
   Filter, 
-  CircleAlert,
+  CircleAlert,   // Nome novo (era AlertCircle)
   Award, 
   CalendarDays, 
   Zap, 
@@ -29,21 +29,21 @@ import {
   Megaphone, 
   Lightbulb, 
   Settings, 
-  Trash,
+  Trash,         // Nome novo (era Trash2)
   MonitorPlay, 
   MessageCircle, 
   Lock, 
-  LockOpen,
+  LockOpen,      // Nome novo (era Unlock)
   X, 
   Smartphone, 
   Globe, 
-  TriangleAlert,
+  TriangleAlert, // Nome novo (era AlertTriangle)
   Camera, 
   CalendarCheck, 
-  Ellipsis,
+  Ellipsis,      // Nome novo (era MoreHorizontal)
   MessageSquare,
   Scale, 
-  ArrowLeftRight,
+  ArrowLeftRight,// Nome novo (era ArrowRightLeft)
   Plus,
   LogOut,
   Shield,
@@ -196,7 +196,9 @@ const generateMockData = async (storeConfig) => {
         for (let i = 0; i < 40; i++) {
             const date = randomDate();
             const action = random(actions);
-            const isSale = action === 'venda';
+            
+            // LÓGICA ATUALIZADA: Retorno conta como venda para gerar valor
+            const isSale = action === 'venda' || action === 'retorno';
             
             const entry = {
                 category: 'comercial',
@@ -270,7 +272,7 @@ const Button = ({ onClick, children, variant = 'primary', className = '', disabl
     secondary: `${THEME.bgCard} ${THEME.textDark} border ${THEME.border} hover:bg-stone-50`,
     outline: `border-2 border-orange-600 ${THEME.accentText} hover:bg-orange-50`,
     danger: `bg-red-50 text-red-600 border border-red-200 hover:bg-red-100`,
-    marketing: `border-2 border-stone-100 bg-stone-50 text-stone-700 hover:border-stone-300 hover:bg-stone-100`,
+    marketing: `border-2 border-stone-100 bg-stone-700 hover:border-stone-300 hover:bg-stone-100`,
     whatsapp: `bg-green-600 text-white hover:bg-green-700 shadow-md shadow-green-200`
   };
   
@@ -671,7 +673,8 @@ function YearlyAnalysis({ data }) {
             
             if (item.category === 'comercial') {
                 months[key].total++;
-                if (item.action === 'venda') months[key].vendas++;
+                // AJUSTE GLOBAL: Retorno conta como venda para gráficos anuais
+                if (item.action === 'venda' || item.action === 'retorno') months[key].vendas++;
                 if (item.action === 'orcamento') months[key].orcamentos++;
             }
         });
@@ -731,7 +734,7 @@ function YearlyAnalysis({ data }) {
     );
 }
 
-// --- Telas de Login e Entrada ---
+// --- Telas de Lançamento e Dashboard ---
 
 function LoginScreen({ config, onLogin }) {
     const [selectedStore, setSelectedStore] = useState('TC');
@@ -922,6 +925,7 @@ function EntryScreen({ storeData, onSave }) {
                 <Users className="w-4 h-4" /> Comercial
             </h3>
             <div className="space-y-4">
+                {/* Botão Vendas & Orçamentos */}
                 <button
                 onClick={() => setStep('commercial_attendant')}
                 className={`w-full ${THEME.bgCard} border-2 border-orange-600/30 p-6 rounded-2xl shadow-sm flex items-center justify-between group hover:bg-orange-50 hover:border-orange-600 transition-all active:scale-95 relative overflow-hidden`}
@@ -941,6 +945,7 @@ function EntryScreen({ storeData, onSave }) {
                 </div>
                 </button>
 
+                {/* NOVO BOTÃO: Controle WhatsApp */}
                 <button
                 onClick={() => setStep('whatsapp_menu')}
                 className={`w-full bg-green-50 border-2 border-green-200 p-5 rounded-2xl shadow-sm flex items-center justify-between group hover:bg-green-100 hover:border-green-500 transition-all active:scale-95`}
@@ -963,6 +968,7 @@ function EntryScreen({ storeData, onSave }) {
         </>
       )}
 
+      {/* TELA DE OPÇÕES DO WHATSAPP */}
       {step === 'whatsapp_menu' && (
         <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
             <div className="bg-green-50 p-4 rounded-2xl border border-green-200 mb-4">
@@ -1143,6 +1149,7 @@ function DashboardScreen({ data, storeData }) {
     });
   }, [data, selectedMonth]);
 
+  // --- DADOS DE HOJE (Calculados) ---
   const todayStats = useMemo(() => {
     const today = new Date();
     const todayData = data.filter(entry => {
@@ -1161,10 +1168,13 @@ function DashboardScreen({ data, storeData }) {
         attendantBreakdown: {},
         morningCount: 0, afternoonCount: 0,
         marketingAdCount: 0, marketingMsgCount: 0, marketingRevenue: 0,
+        
+        // WhatsApp Stats
         whatsappCount: 0,
         whatsappBreakdown: {}
     };
 
+    // Inicializa atendentes para hoje
     storeData.staff.forEach(name => {
         stats.attendantBreakdown[name] = { atendimentos: 0, vendas: 0, orcamentos: 0, retornos: 0 };
     });
@@ -1173,9 +1183,10 @@ function DashboardScreen({ data, storeData }) {
         if (entry.period === 'manha') stats.morningCount++;
         if (entry.period === 'tarde') stats.afternoonCount++;
 
+        // NOVO: Contagem WhatsApp
         if (entry.category === 'whatsapp') {
             stats.whatsappCount++;
-            stats.marketingHits++;
+            stats.marketingHits++; // Conta como hit
             stats.whatsappBreakdown[entry.type] = (stats.whatsappBreakdown[entry.type] || 0) + 1;
         }
 
@@ -1185,14 +1196,18 @@ function DashboardScreen({ data, storeData }) {
         }
         if (entry.category === 'comercial') {
             stats.atendimentos++;
+            
+            // *** CORREÇÃO: Toda interação de marketing conta como hit ***
             if (entry.marketingSource || entry.marketingImpact) stats.marketingHits++;
+
             if (entry.marketingSource === 'anuncio') stats.marketingAdCount++;
             if (entry.marketingSource === 'mensagem') stats.marketingMsgCount++;
             if (entry.saleValue) stats.marketingRevenue += parseFloat(entry.saleValue);
 
             stats.commercialBreakdown[entry.action] = (stats.commercialBreakdown[entry.action] || 0) + 1;
             
-            if (entry.action === 'venda') {
+            // AJUSTE GLOBAL: Retorno conta como venda hoje
+            if (entry.action === 'venda' || entry.action === 'retorno') {
                 stats.vendas++;
                 if (entry.clientType === 'cliente') stats.vendaCliente++;
                 else stats.vendaNaoCliente++;
@@ -1210,7 +1225,8 @@ function DashboardScreen({ data, storeData }) {
 
             if (entry.attendant && stats.attendantBreakdown[entry.attendant]) {
                 stats.attendantBreakdown[entry.attendant].atendimentos++;
-                if (entry.action === 'venda') stats.attendantBreakdown[entry.attendant].vendas++;
+                // AJUSTE GLOBAL: Retorno conta como venda no breakdown
+                if (entry.action === 'venda' || entry.action === 'retorno') stats.attendantBreakdown[entry.attendant].vendas++;
                 if (entry.action === 'orcamento') stats.attendantBreakdown[entry.attendant].orcamentos++;
                 if (entry.action === 'retorno') stats.attendantBreakdown[entry.attendant].retornos++;
             }
@@ -1227,12 +1243,15 @@ function DashboardScreen({ data, storeData }) {
     return `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`;
   };
 
+  // --- Processamento de Estatísticas MÊS (STATS) ---
   const stats = useMemo(() => {
     const uniqueDays = new Set(filteredData.map(d => d.dateString)).size || 1;
+    
+    // Funcao auxiliar para pegar o DOMINGO da semana dessa data
     const getStartOfWeek = (d) => {
         const date = new Date(d);
-        const day = date.getDay(); 
-        const diff = date.getDate() - day; 
+        const day = date.getDay(); // 0 (Dom) - 6 (Sab)
+        const diff = date.getDate() - day; // Ajusta para o Domingo
         return new Date(date.setDate(diff));
     };
 
@@ -1242,16 +1261,28 @@ function DashboardScreen({ data, storeData }) {
       totalComercial: 0,
       serviceBreakdown: {},
       commercialBreakdown: {},
+      
       orcamentoCliente: 0, orcamentoNaoCliente: 0, totalOrcamentos: 0,
       vendaCliente: 0, vendaNaoCliente: 0, totalVendas: 0,
       retornoCliente: 0, retornoNaoCliente: 0, totalRetornos: 0,
-      marketingAdCount: 0, marketingMsgCount: 0, marketingRevenue: 0, marketingHits: 0,
-      totalWhatsapp: 0, whatsappBreakdown: {}, mediaDiariaWhatsapp: 0,
+      
+      marketingAdCount: 0,
+      marketingMsgCount: 0,
+      marketingRevenue: 0,
+      marketingHits: 0,
+      
+      // WhatsApp Mensal
+      totalWhatsapp: 0,
+      whatsappBreakdown: {},
+      mediaDiariaWhatsapp: 0,
+
       morningCount: 0, afternoonCount: 0,
+      
       attendantStats: {},
       uniqueDays,
       weekdayCounts: {0:0,1:0,2:0,3:0,4:0,5:0,6:0},
-      dateCounts: {}, weekCounts: {} 
+      dateCounts: {}, 
+      weekCounts: {} 
     };
 
     storeData.staff.forEach(name => {
@@ -1267,7 +1298,10 @@ function DashboardScreen({ data, storeData }) {
       const date = entry.date;
       const dayOfWeek = date.getDay();
       const dayOfMonth = date.getDate();
+      
+      // --- LOGICA DE SEMANA AJUSTADA (DATA) ---
       const weekStart = getStartOfWeek(date);
+      // Chave para ordenacao: YYYY-MM-DD
       const weekKey = weekStart.toISOString().split('T')[0]; 
       
       metrics.weekdayCounts[dayOfWeek]++;
@@ -1277,9 +1311,10 @@ function DashboardScreen({ data, storeData }) {
       if (entry.period === 'manha') metrics.morningCount++;
       if (entry.period === 'tarde') metrics.afternoonCount++;
 
+      // NOVO: Contagem WhatsApp Mensal
       if (entry.category === 'whatsapp') {
           metrics.totalWhatsapp++;
-          metrics.marketingHits++; 
+          metrics.marketingHits++; // Conta como hit
           metrics.whatsappBreakdown[entry.type] = (metrics.whatsappBreakdown[entry.type] || 0) + 1;
       }
 
@@ -1292,6 +1327,7 @@ function DashboardScreen({ data, storeData }) {
         metrics.totalComercial++;
         metrics.commercialBreakdown[entry.action] = (metrics.commercialBreakdown[entry.action] || 0) + 1;
         
+        // Marketing Stats
         if (entry.marketingSource === 'anuncio') metrics.marketingAdCount++;
         if (entry.marketingSource === 'mensagem') metrics.marketingMsgCount++;
         if (entry.saleValue) metrics.marketingRevenue += parseFloat(entry.saleValue);
@@ -1301,15 +1337,21 @@ function DashboardScreen({ data, storeData }) {
           const staff = metrics.attendantStats[entry.attendant];
           staff.totalGeralAtendente++;
 
-          if (entry.action === 'venda') {
+          // AJUSTE GLOBAL: Retorno conta como venda para totais mensais
+          if (entry.action === 'venda' || entry.action === 'retorno') {
               metrics.totalVendas++;
               if (entry.clientType === 'cliente') { metrics.vendaCliente++; staff.vendaCli++; } 
               else { metrics.vendaNaoCliente++; staff.vendaNew++; }
-          } else if (entry.action === 'orcamento') {
+          } 
+          
+          // IMPORTANTE: Manter contagem independente de orçamentos e retornos
+          if (entry.action === 'orcamento') {
               metrics.totalOrcamentos++;
               if (entry.clientType === 'cliente') { metrics.orcamentoCliente++; staff.orcCli++; } 
               else { metrics.orcamentoNaoCliente++; staff.orcNew++; }
-          } else if (entry.action === 'retorno') {
+          } 
+          
+          if (entry.action === 'retorno') {
               metrics.totalRetornos++;
                if (entry.clientType === 'cliente') { metrics.retornoCliente++; staff.retornoCli++; }
                else { metrics.retornoNaoCliente++; staff.retornoNew++; }
@@ -1342,12 +1384,14 @@ function DashboardScreen({ data, storeData }) {
   const COLORS_PIE = ['#f97316', '#fbbf24', '#ef4444', '#78716c'];
   const COLORS_COM = ['#ea580c', '#fbbf24', '#22c55e']; 
 
+  // Formatador auxiliar para data da semana
   const formatWeekKey = (key) => {
       if(!key) return '-';
       const [y, m, d] = key.split('-');
       return `Semana de ${d}/${m}`;
   }
 
+  // 1. Serviços Balcão
   const serviceData = Object.entries(stats.serviceBreakdown).map(([key, value]) => ({
     name: SERVICE_TYPES.find(t => t.id === key)?.label || key,
     value,
@@ -1355,6 +1399,7 @@ function DashboardScreen({ data, storeData }) {
     todayCount: todayStats.serviceBreakdown[key] || 0
   })).sort((a,b) => b.value - a.value);
 
+  // 2. Serviços Comerciais
   const commercialData = Object.entries(stats.commercialBreakdown).map(([key, value]) => ({
     name: COMMERCIAL_ACTIONS.find(t => t.id === key)?.label || key,
     value,
@@ -1362,6 +1407,7 @@ function DashboardScreen({ data, storeData }) {
     todayCount: todayStats.commercialBreakdown[key] || 0
   })).sort((a,b) => b.value - a.value);
 
+  // Dados do WhatsApp para o Gráfico
   const whatsappData = Object.entries(stats.whatsappBreakdown).map(([key, value]) => ({
       name: WHATSAPP_ACTIONS.find(w => w.id === key)?.label || key,
       value: value,
@@ -1369,6 +1415,7 @@ function DashboardScreen({ data, storeData }) {
       todayCount: todayStats.whatsappBreakdown[key] || 0
   })).sort((a,b) => b.value - a.value);
 
+  // 3. Share Vendas
   const salesShareList = Object.entries(stats.attendantStats).map(([name, s]) => {
       const totalSales = s.vendaCli + s.vendaNew;
       const todayAtt = todayStats.attendantBreakdown[name];
@@ -1383,11 +1430,16 @@ function DashboardScreen({ data, storeData }) {
       }
   }).sort((a,b) => b.monthTotal - a.monthTotal);
 
+  // 4. Conversão Vendas DETALHADA
   const conversionList = Object.entries(stats.attendantStats).map(([name, s]) => {
       const totalSales = s.vendaCli + s.vendaNew;
+      // LÓGICA ATUALIZADA: Share de Vendas (Vendas do Atendente / Vendas Totais da Loja)
       const generalConversion = stats.totalVendas > 0 ? Math.round((totalSales / stats.totalVendas) * 100) : 0;
+      
+      // 2. & 3. Share das vendas (Cliente vs Não Cliente)
       const shareCli = totalSales > 0 ? Math.round((s.vendaCli / totalSales) * 100) : 0;
       const shareNew = totalSales > 0 ? Math.round((s.vendaNew / totalSales) * 100) : 0;
+      
       return {
           name: name.split(' ')[0],
           generalConversion,
@@ -1396,6 +1448,7 @@ function DashboardScreen({ data, storeData }) {
       }
   }).sort((a,b) => b.generalConversion - a.generalConversion);
 
+  // NOVO: Tabela Detalhes Orçamento
   const budgetDetailsList = Object.entries(stats.attendantStats).map(([name, s]) => {
       const totalOrc = s.orcCli + s.orcNew;
       return {
@@ -1406,6 +1459,7 @@ function DashboardScreen({ data, storeData }) {
       }
   }).sort((a,b) => b.totalOrc - a.totalOrc);
 
+  // 6. Retornos vs Orçamentos
   const returnAnalysisData = [
     {
         name: 'Total Mês',
@@ -1476,6 +1530,7 @@ function DashboardScreen({ data, storeData }) {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-6">
+      {/* Header e Filtro */}
       <div className="flex flex-col gap-4 border-b border-stone-200 pb-6">
           <div className="flex items-center justify-between">
              <h2 className="text-xl font-extrabold text-stone-800 tracking-tight flex items-center gap-2">
@@ -1504,6 +1559,7 @@ function DashboardScreen({ data, storeData }) {
       ) : (
         <div className="grid grid-cols-1 gap-6">
             
+            {/* 1. VENDAS TOTAIS (KEY METRIC) */}
             <Card className="p-6 bg-gradient-to-br from-orange-500 to-red-600 text-white border-none relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10 rotate-12"><DollarSign className="w-32 h-32" /></div>
                 <h4 className="text-orange-100 text-sm font-bold uppercase mb-2">Vendas Totais</h4>
@@ -1525,6 +1581,7 @@ function DashboardScreen({ data, storeData }) {
                 </div>
             </Card>
 
+            {/* 2. SERVIÇOS (BALCÃO E COMERCIAL) */}
             <div className="space-y-4 pt-4 border-t-2 border-stone-200">
                 <h3 className="text-lg font-black text-stone-800 uppercase pl-2 border-l-4 border-stone-400">Operacional</h3>
 
@@ -1617,7 +1674,10 @@ function DashboardScreen({ data, storeData }) {
                 </Card>
             </div>
 
+            {/* 3. RAIO-X DE VENDAS */}
             <div className="space-y-4 pt-4 border-t-2 border-orange-100">
+                <h3 className="text-lg font-black text-stone-800 uppercase pl-2 border-l-4 border-orange-600">Raio-X de Vendas</h3>
+
                 <Card className="p-4">
                     <div className="flex gap-4 items-center">
                         <div className="h-40 w-1/3">
@@ -1908,6 +1968,7 @@ function DashboardScreen({ data, storeData }) {
                             <span className="text-sm font-bold text-stone-800">{formatWeekKey(stats.quietestWeek[0])}</span>
                             <span className="block text-[10px] text-stone-500">{stats.quietestWeek[1]} atendimentos</span>
                         </div>
+                        {/* NOVOS CAMPOS: Dia do Mês */}
                         <div>
                             <p className="text-[10px] font-bold text-green-600 uppercase">Data + Cheia</p>
                             <span className="text-sm font-bold text-stone-800">Dia {stats.busiestDate[0]}</span>
@@ -1947,6 +2008,7 @@ function DashboardScreen({ data, storeData }) {
                         </div>
                     </div>
 
+                    {/* GRÁFICO DE BARRAS: DIAS DA SEMANA */}
                     <div className="mb-4">
                         <p className="text-[10px] font-bold text-stone-400 uppercase mb-2">Por Dia da Semana</p>
                         <div className="h-32">
@@ -1961,6 +2023,7 @@ function DashboardScreen({ data, storeData }) {
                         </div>
                     </div>
 
+                    {/* GRÁFICO DE BARRAS: SEMANAS */}
                     <div>
                         <p className="text-[10px] font-bold text-stone-400 uppercase mb-2">Por Semana do Mês</p>
                         <div className="h-32">
@@ -1976,6 +2039,7 @@ function DashboardScreen({ data, storeData }) {
                     </div>
                 </Card>
 
+                {/* NOVO QUADRO: FLUXO TOTAL DE PESSOAS (Substitui "Total de atendimentos mês") */}
                 <Card className="p-5 border border-stone-200">
                     <h4 className="font-extrabold text-stone-800 text-lg uppercase leading-none">Fluxo Total de Pessoas</h4>
                     <p className="text-xs text-stone-400 font-medium mb-4">Pessoas que passaram na ótica este mês</p>
@@ -1992,6 +2056,7 @@ function DashboardScreen({ data, storeData }) {
                     </div>
 
                     <div className="space-y-3">
+                        {/* Bloco Serviços Rápidos */}
                         <div className="border border-stone-200 rounded-xl p-3 bg-stone-50/50">
                             <div className="flex items-center gap-2 mb-2 pb-2 border-b border-stone-100">
                                 <Wrench className="w-4 h-4 text-stone-600" />
@@ -2013,6 +2078,7 @@ function DashboardScreen({ data, storeData }) {
                             </div>
                         </div>
 
+                        {/* Bloco Serviços Comerciais */}
                         <div className="border border-orange-200 rounded-xl p-3 bg-orange-50/30">
                             <div className="flex items-center gap-2 mb-2 pb-2 border-b border-orange-100">
                                 <Users className="w-4 h-4 text-orange-600" />
@@ -2046,7 +2112,7 @@ function DashboardScreen({ data, storeData }) {
   );
 }
 
-// --- ComparisonScreen ---
+// --- ComparisonScreen (COM NOVO GRÁFICO ADICIONADO) ---
 
 function ComparisonScreen({ data }) {
     const availableMonths = useMemo(() => {
@@ -2110,17 +2176,20 @@ function ComparisonScreen({ data }) {
                 metrics[store].atendimentos++;
                 if (entry.marketingSource === 'mensagem') metrics[store].msgSales++; 
 
-                if (entry.action === 'venda') {
+                // AJUSTE: Venda inclui Retorno
+                if (entry.action === 'venda' || entry.action === 'retorno') {
                     metrics[store].vendas++;
                     if (entry.clientType === 'cliente') metrics[store].cliSales++;
                     else metrics[store].newSales++;
                 }
                 
+                // IMPORTANTE: Manter contagem separada de Orçamentos e Retornos para os gráficos de conversão
                 if (entry.action === 'orcamento') {
                     metrics[store].orcamentos++;
                     if (entry.clientType === 'cliente') metrics[store].orcCli++;
                     else metrics[store].orcNew++;
                 }
+                
                 if (entry.action === 'retorno') {
                     metrics[store].retornos++;
                     if (entry.clientType === 'cliente') metrics[store].retCli++;
@@ -2140,7 +2209,8 @@ function ComparisonScreen({ data }) {
                     
                     staff.totalAtendimentos++;
 
-                    if (entry.action === 'venda') {
+                    // AJUSTE: Venda inclui Retorno para atendente também
+                    if (entry.action === 'venda' || entry.action === 'retorno') {
                         if (entry.clientType === 'cliente') {
                             staff.vendaCli++;
                             staff.valCli += (parseFloat(entry.saleValue) || 0);
@@ -2175,16 +2245,17 @@ function ComparisonScreen({ data }) {
         }
     ];
 
+    // AJUSTE: Gráfico de Perfil de Retornos (Share)
     const budgetProfileData = [
         {
             name: 'Conv. Cliente',
-            TC: compStats.TC.orcCli > 0 ? Math.round((compStats.TC.retCli / compStats.TC.orcCli) * 100) : 0,
-            SGS: compStats.SGS.orcCli > 0 ? Math.round((compStats.SGS.retCli / compStats.SGS.orcCli) * 100) : 0
+            TC: (compStats.TC.retCli + compStats.TC.retNew) > 0 ? Math.round((compStats.TC.retCli / (compStats.TC.retCli + compStats.TC.retNew)) * 100) : 0,
+            SGS: (compStats.SGS.retCli + compStats.SGS.retNew) > 0 ? Math.round((compStats.SGS.retCli / (compStats.SGS.retCli + compStats.SGS.retNew)) * 100) : 0
         },
         {
             name: 'Conv. Novo',
-            TC: compStats.TC.orcNew > 0 ? Math.round((compStats.TC.retNew / compStats.TC.orcNew) * 100) : 0,
-            SGS: compStats.SGS.orcNew > 0 ? Math.round((compStats.SGS.retNew / compStats.SGS.orcNew) * 100) : 0
+            TC: (compStats.TC.retCli + compStats.TC.retNew) > 0 ? Math.round((compStats.TC.retNew / (compStats.TC.retCli + compStats.TC.retNew)) * 100) : 0,
+            SGS: (compStats.SGS.retCli + compStats.SGS.retNew) > 0 ? Math.round((compStats.SGS.retNew / (compStats.SGS.retCli + compStats.SGS.retNew)) * 100) : 0
         }
     ];
 
@@ -2254,6 +2325,7 @@ function ComparisonScreen({ data }) {
 
     return (
         <div className="space-y-6 animate-in slide-in-from-right-4 duration-500 pb-10">
+            {/* Header Comparativo */}
             <div className="flex flex-col gap-4 border-b border-stone-200 pb-6">
                 <div className="flex items-center gap-3">
                     <div className="bg-gradient-to-br from-orange-600 to-red-600 p-3 rounded-xl shadow-lg text-white">
@@ -2278,6 +2350,7 @@ function ComparisonScreen({ data }) {
                 </div>
             </div>
 
+            {/* 1. Vendas Comparadas */}
             <Card className="p-4">
                 <div className="flex justify-between items-center mb-4">
                     <h4 className="font-bold text-stone-700 text-sm uppercase">Perfil de Vendas (%)</h4>
@@ -2304,9 +2377,10 @@ function ComparisonScreen({ data }) {
                 </div>
             </Card>
 
+            {/* NOVO GRÁFICO: CONVERSÃO DE ORÇAMENTOS POR PERFIL (Share of Returns) */}
             <Card className="p-4">
                 <div className="flex justify-between items-center mb-4">
-                    <h4 className="font-bold text-stone-700 text-sm uppercase">Conversão de Orçamento por Perfil (%)</h4>
+                    <h4 className="font-bold text-stone-700 text-sm uppercase">Perfil de Retornos (%)</h4>
                     <div className="flex gap-3 text-[10px] font-bold">
                         <span className="text-orange-600 flex items-center gap-1"><div className="w-2 h-2 bg-orange-600 rounded-full"></div> TC</span>
                         <span className="text-red-600 flex items-center gap-1"><div className="w-2 h-2 bg-red-600 rounded-full"></div> SGS</span>
@@ -2329,7 +2403,8 @@ function ComparisonScreen({ data }) {
                     </ResponsiveContainer>
                 </div>
             </Card>
-
+            
+             {/* 2. Orçamentos e Retornos */}
             <Card className="p-4">
                 <h4 className="font-bold text-stone-700 text-sm mb-4 uppercase">Orçamentos & Retornos</h4>
                 <div className="h-56">
@@ -2348,7 +2423,7 @@ function ComparisonScreen({ data }) {
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
-                <div className="mt-4 flex justify-around text-xs border-t border-stone-100 pt-2">
+                 <div className="mt-4 flex justify-around text-xs border-t border-stone-100 pt-2">
                     <div className="text-center">
                         <span className="block font-bold text-stone-500">Taxa Retorno TC</span>
                         <span className="text-lg font-black text-orange-600">
@@ -2364,7 +2439,8 @@ function ComparisonScreen({ data }) {
                 </div>
             </Card>
 
-            <Card className="p-4">
+            {/* ... Rest of the component ... */}
+             <Card className="p-4">
                 <h4 className="font-bold text-stone-700 text-sm mb-4 uppercase">Volume de Atendimento</h4>
                 <div className="h-56">
                     <ResponsiveContainer width="100%" height="100%">
@@ -2437,16 +2513,16 @@ function ComparisonScreen({ data }) {
                     <Award className="w-4 h-4 text-yellow-500" /> Top Atendentes
                 </h4>
                 <div className="space-y-2">
-                    <div className="grid grid-cols-5 text-[9px] font-bold text-stone-400 border-b border-stone-100 pb-2 text-center">
-                        <div className="text-left">Nome</div>
+                    <div className="grid grid-cols-6 text-[9px] font-bold text-stone-400 border-b border-stone-100 pb-2 text-center">
+                        <div className="text-left col-span-2">Nome</div>
                         <div>Vendas</div>
                         <div>C.Total</div>
                         <div>% Cli</div>
                         <div>% Novo</div>
                     </div>
                     {topStaff.map((s, i) => (
-                        <div key={`${s.store}-${s.name}`} className="grid grid-cols-5 items-center py-3 border-b border-stone-50 text-xs text-center">
-                            <div className="text-left">
+                        <div key={`${s.store}-${s.name}`} className="grid grid-cols-6 items-center py-3 border-b border-stone-50 text-xs text-center">
+                            <div className="text-left col-span-2">
                                 <span className="font-bold text-stone-700 block">{i+1}. {s.name}</span>
                                 <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${s.store === 'TC' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`}>
                                     {s.store}
@@ -2477,9 +2553,7 @@ function ComparisonScreen({ data }) {
         </div>
     );
 }
-
-// --- App Main Component ---
-
+// ... (App Main Component)
 export default function App() {
   const [storeConfig, setStoreConfig] = useState(DEFAULT_CONFIG);
   const [user, setUser] = useState(null);
@@ -2532,7 +2606,7 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
     const q = query(
-      collection(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION_NAME)
+      collection(db, 'artifacts', appId, 'public', 'data', 'optical_records_final_v11')
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({
@@ -2566,7 +2640,7 @@ export default function App() {
   const handleAddEntry = async (entryData) => {
     if (!user) return;
     try {
-      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION_NAME), {
+      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'optical_records_final_v11'), {
         ...entryData,
         store: currentStore,
         createdAt: serverTimestamp(),
@@ -2598,7 +2672,7 @@ export default function App() {
     try {
         const batch = writeBatch(db);
         entriesToDelete.forEach(entry => {
-            const ref = doc(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION_NAME, entry.id);
+            const ref = doc(db, 'artifacts', appId, 'public', 'data', 'optical_records_final_v11', entry.id);
             batch.delete(ref);
         });
         await batch.commit();
