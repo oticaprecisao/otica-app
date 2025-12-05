@@ -4,10 +4,10 @@ import {
   ShoppingBag, 
   Wrench, 
   CreditCard, 
-  HelpCircle, 
-  BarChart2, 
-  PlusCircle, 
-  CheckCircle2, 
+  CircleHelp,
+  ChartBar,
+  CirclePlus,
+  CircleCheck,
   ArrowLeft, 
   Calendar, 
   Eye, 
@@ -20,7 +20,7 @@ import {
   Target, 
   ChevronDown, 
   Filter, 
-  AlertCircle, 
+  CircleAlert,
   Award, 
   CalendarDays, 
   Zap, 
@@ -29,21 +29,21 @@ import {
   Megaphone, 
   Lightbulb, 
   Settings, 
-  Trash2, 
+  Trash,
   MonitorPlay, 
   MessageCircle, 
   Lock, 
-  Unlock, 
+  LockOpen,
   X, 
   Smartphone, 
   Globe, 
-  AlertTriangle, 
+  TriangleAlert,
   Camera, 
   CalendarCheck, 
-  MoreHorizontal, 
+  Ellipsis,
   MessageSquare,
   Scale, 
-  ArrowRightLeft,
+  ArrowLeftRight,
   Plus,
   LogOut,
   Shield,
@@ -88,11 +88,10 @@ import {
 } from 'firebase/firestore';
 
 // ============================================================================
-// ÁREA DE CONFIGURAÇÃO FIREBASE (IMPORTANTE PARA FUNCIONAR ONLINE)
+// CONFIGURAÇÃO FIREBASE (SUAS CHAVES REAIS)
 // ============================================================================
 
-// Aqui inserimos as chaves fixas para garantir que funcione na Vercel.
-// Se criou um banco novo, substitua estes valores pelos novos.
+// Estas chaves conectam ao seu projeto oficial "otica-precisao-app".
 const firebaseConfig = {
   apiKey: "AIzaSyAu25o6sVXnAGIBRaEheBwHdTCM8lkCuxo",
   authDomain: "otica-precisao-app.firebaseapp.com",
@@ -102,15 +101,21 @@ const firebaseConfig = {
   appId: "1:216643068456:web:3e98fa915c996e603d4b1d"
 };
 
-// ============================================================================
-// FIM DA ÁREA DE CONFIGURAÇÃO
-// ============================================================================
-
+// Inicializa o Firebase com a configuração real
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// ⚠️ ID CRÍTICO: Deve ser igual ao que você já usa para puxar os dados antigos.
 const appId = 'otica-precisao-main-app';
+
+// Nome da coleção onde os dados são salvos.
+// Se por acaso os dados não aparecerem, verifique se no código antigo este nome era diferente.
+const DATA_COLLECTION_NAME = 'optical_records_final_v11';
+
+// ============================================================================
+// FIM DA ÁREA DE CONFIGURAÇÃO
+// ============================================================================
 
 // --- Constantes Iniciais ---
 const DEFAULT_CONFIG = {
@@ -150,7 +155,7 @@ const SERVICE_TYPES = [
   { id: 'pagamento', label: 'Pagamento', icon: CreditCard },
   { id: 'retirada', label: 'Retirada', icon: ShoppingBag },
   { id: 'ajuste', label: 'Ajuste', icon: Wrench },
-  { id: 'duvidas', label: 'Dúvidas', icon: HelpCircle }
+  { id: 'duvidas', label: 'Dúvidas', icon: CircleHelp }
 ];
 
 const COMMERCIAL_ACTIONS = [
@@ -161,16 +166,101 @@ const COMMERCIAL_ACTIONS = [
 
 const WHATSAPP_ACTIONS = [
   { id: 'fotos', label: 'Fotos Armações', icon: Camera },
-  { id: 'duvidas_zap', label: 'Tirou Dúvidas', icon: HelpCircle },
+  { id: 'duvidas_zap', label: 'Tirou Dúvidas', icon: CircleHelp },
   { id: 'receita', label: 'Enviou Receita', icon: FileText },
   { id: 'agendou', label: 'Agendou', icon: CalendarCheck },
-  { id: 'outros_zap', label: 'Outros', icon: MoreHorizontal }
+  { id: 'outros_zap', label: 'Outros', icon: Ellipsis }
 ];
 
 const CLIENT_TYPES = [
   { id: 'cliente', label: 'Já é Cliente' },
   { id: 'nao_cliente', label: 'Não Cliente' }
 ];
+
+// --- Mock Data Generator Helper (Ferramenta de Teste) ---
+const generateMockData = async (storeConfig) => {
+    const batch = writeBatch(db);
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    
+    const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    
+    const randomDate = () => {
+        const day = Math.floor(Math.random() * today.getDate()) + 1;
+        return new Date(currentYear, currentMonth, day, Math.floor(Math.random() * 10) + 9, 0, 0); 
+    };
+
+    const actions = ['venda', 'orcamento', 'orcamento', 'venda', 'retorno'];
+    const marketingSources = [null, null, 'anuncio', 'mensagem', null];
+    const clientTypes = ['cliente', 'cliente', 'nao_cliente'];
+
+    let count = 0;
+
+    for (const storeKey of ['TC', 'SGS']) {
+        const staffList = storeConfig.stores[storeKey].staff;
+        
+        for (let i = 0; i < 40; i++) {
+            const date = randomDate();
+            const action = random(actions);
+            const isSale = action === 'venda';
+            
+            const entry = {
+                category: 'comercial',
+                action: action,
+                attendant: random(staffList),
+                clientType: random(clientTypes),
+                marketingSource: random(marketingSources),
+                period: date.getHours() < 12 ? 'manha' : 'tarde',
+                store: storeKey,
+                createdAt: date,
+                dateString: date.toLocaleDateString('pt-BR'),
+                userId: 'mock-user',
+                saleValue: isSale ? Math.floor(Math.random() * 800) + 150 : 0
+            };
+
+            const ref = doc(collection(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION_NAME));
+            batch.set(ref, entry);
+            count++;
+        }
+        
+        for (let i = 0; i < 15; i++) {
+             const date = randomDate();
+             const entry = {
+                category: 'servico',
+                type: random(SERVICE_TYPES.map(s => s.id)),
+                period: date.getHours() < 12 ? 'manha' : 'tarde',
+                store: storeKey,
+                createdAt: date,
+                dateString: date.toLocaleDateString('pt-BR'),
+                userId: 'mock-user'
+            };
+            const ref = doc(collection(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION_NAME));
+            batch.set(ref, entry);
+            count++;
+        }
+
+        for (let i = 0; i < 20; i++) {
+             const date = randomDate();
+             const entry = {
+                category: 'whatsapp',
+                type: random(WHATSAPP_ACTIONS.map(a => a.id)),
+                period: date.getHours() < 12 ? 'manha' : 'tarde',
+                marketingSource: 'mensagem',
+                store: storeKey,
+                createdAt: date,
+                dateString: date.toLocaleDateString('pt-BR'),
+                userId: 'mock-user'
+            };
+            const ref = doc(collection(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION_NAME));
+            batch.set(ref, entry);
+            count++;
+        }
+    }
+
+    await batch.commit();
+    return count;
+};
 
 // --- Componentes UI Auxiliares ---
 
@@ -206,7 +296,7 @@ function NotificationToast({ notification, onClose }) {
     if (!notification) return null;
 
     const bg = notification.type === 'error' ? 'bg-red-500' : 'bg-green-600';
-    const icon = notification.type === 'error' ? <AlertCircle className="w-5 h-5 text-white" /> : <CheckCircle2 className="w-5 h-5 text-white" />;
+    const icon = notification.type === 'error' ? <CircleAlert className="w-5 h-5 text-white" /> : <CircleCheck className="w-5 h-5 text-white" />;
 
     return (
         <div className={`fixed top-4 left-4 right-4 z-50 flex items-center justify-center pointer-events-none animate-in slide-in-from-top-2 fade-in duration-300`}>
@@ -272,12 +362,12 @@ function PinModal({ onClose, onSuccess, managerPin }) {
 }
 
 function SettingsModal({ config, onClose, onUpdateConfig, onClearToday, currentStore }) {
-    const [activeTab, setActiveTab] = useState('staff'); // 'staff' or 'security'
+    const [activeTab, setActiveTab] = useState('staff'); 
     const [newStaffName, setNewStaffName] = useState("");
     const [confirmDeleteStaff, setConfirmDeleteStaff] = useState(null); 
     const [confirmClearToday, setConfirmClearToday] = useState(false); 
+    const [isGenerating, setIsGenerating] = useState(false); 
 
-    // Security States
     const [managerPass, setManagerPass] = useState(config.managerPassword);
     const [tcPass, setTcPass] = useState(config.stores.TC.password);
     const [sgsPass, setSgsPass] = useState(config.stores.SGS.password);
@@ -314,6 +404,24 @@ function SettingsModal({ config, onClose, onUpdateConfig, onClearToday, currentS
         alert("Senhas atualizadas com sucesso!");
     };
 
+    const handleGenerateData = async () => {
+        // Aviso para não sobrescrever dados reais se estiver em produção
+        const confirmed = window.confirm("ATENÇÃO: Isso vai gerar dados fictícios no banco de dados ATUAL. Use apenas se estiver testando em um ambiente seguro. Deseja continuar?");
+        if (!confirmed) return;
+
+        setIsGenerating(true);
+        try {
+            const count = await generateMockData(config);
+            alert(`${count} registros fictícios gerados para este mês!`);
+            onClose();
+        } catch (error) {
+            console.error("Error generating data:", error);
+            alert("Erro ao gerar dados.");
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
             <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -324,7 +432,6 @@ function SettingsModal({ config, onClose, onUpdateConfig, onClearToday, currentS
                     <button onClick={onClose} className="text-white/80 hover:text-white">✕</button>
                 </div>
                 
-                {/* Tabs */}
                 <div className="flex border-b border-stone-200">
                     <button 
                         onClick={() => setActiveTab('staff')}
@@ -373,23 +480,41 @@ function SettingsModal({ config, onClose, onUpdateConfig, onClearToday, currentS
                                                 onClick={() => setConfirmDeleteStaff(name)}
                                                 className="text-red-400 hover:text-red-600 p-1"
                                             >
-                                                <Trash2 className="w-4 h-4" />
+                                                <Trash className="w-4 h-4" />
                                             </button>
                                         )}
                                     </div>
                                 ))}
                             </div>
                             
-                            <div className="pt-4 border-t border-stone-200 mt-4">
-                                <h4 className="text-xs font-bold text-red-600 uppercase mb-2 flex items-center gap-1">
-                                    <AlertTriangle className="w-3 h-3" /> Zona de Testes
+                            <div className="pt-4 border-t border-stone-200 mt-4 space-y-3">
+                                <h4 className="text-xs font-bold text-stone-500 uppercase mb-2 flex items-center gap-1">
+                                    <Wrench className="w-3 h-3" /> Ferramentas de Teste
                                 </h4>
+                                
+                                <button 
+                                    onClick={handleGenerateData}
+                                    disabled={isGenerating}
+                                    className="w-full py-3 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors disabled:opacity-50"
+                                >
+                                    {isGenerating ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700"></div>
+                                            Gerando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <TrendingUp className="w-4 h-4" /> Gerar Dados Fictícios (Mês Atual)
+                                        </>
+                                    )}
+                                </button>
+
                                 {!confirmClearToday ? (
                                     <button 
                                         onClick={() => setConfirmClearToday(true)}
                                         className="w-full py-3 rounded-lg bg-red-50 text-red-600 border border-red-200 font-bold text-sm flex items-center justify-center gap-2 hover:bg-red-100 transition-colors"
                                     >
-                                        <Trash2 className="w-4 h-4" /> Zerar Dados de Hoje
+                                        <Trash className="w-4 h-4" /> Zerar Dados de Hoje
                                     </button>
                                 ) : (
                                     <div className="animate-in fade-in slide-in-from-bottom-2 bg-red-50 p-3 rounded-xl border border-red-200 text-center">
@@ -467,7 +592,7 @@ function SettingsModal({ config, onClose, onUpdateConfig, onClearToday, currentS
     );
 }
 
-// --- Sub-Componente: Tooltip Customizado (Definido antes do uso) ---
+// --- Sub-Componente: Tooltip Customizado ---
 const CustomEfficiencyTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
         const data = payload[0].payload;
@@ -476,10 +601,10 @@ const CustomEfficiencyTooltip = ({ active, payload, label }) => {
                 <p className="font-bold text-stone-800 text-xs mb-1">{label} ({data.store})</p>
                 <div className="space-y-1">
                     <p className="text-[10px] text-orange-700 font-bold">
-                        Cliente: {data.rateCli}% <span className="font-normal text-stone-500">({data.vendaCli} vds / {data.valCli.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})})</span>
+                        Cliente: {data.rateCli}% <span className="font-normal text-stone-500">({data.vendaCli} vds / {data.valCli ? data.valCli.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}) : 'R$ 0'})</span>
                     </p>
                     <p className="text-[10px] text-stone-600 font-bold">
-                        Novo: {data.rateNew}% <span className="font-normal text-stone-500">({data.vendaNew} vds / {data.valNew.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})})</span>
+                        Novo: {data.rateNew}% <span className="font-normal text-stone-500">({data.vendaNew} vds / {data.valNew ? data.valNew.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}) : 'R$ 0'})</span>
                     </p>
                 </div>
             </div>
@@ -488,7 +613,7 @@ const CustomEfficiencyTooltip = ({ active, payload, label }) => {
     return null;
 };
 
-// --- Componentes de Dados (Definidos antes do uso) ---
+// --- Componentes de Dados ---
 
 function InsightsPanel({ stats }) {
     const insights = useMemo(() => {
@@ -614,7 +739,7 @@ function YearlyAnalysis({ data }) {
     );
 }
 
-// --- Tela de Login (LoginScreen) ---
+// --- Telas de Lançamento e Dashboard ---
 
 function LoginScreen({ config, onLogin }) {
     const [selectedStore, setSelectedStore] = useState('TC');
@@ -626,9 +751,9 @@ function LoginScreen({ config, onLogin }) {
         const managerPass = config.managerPassword;
 
         if (password === storePass) {
-            onLogin(selectedStore, false); // Logged as staff
+            onLogin(selectedStore, false); 
         } else if (password === managerPass) {
-            onLogin(selectedStore, true); // Logged as manager (Master Key)
+            onLogin(selectedStore, true); 
         } else {
             setError('Senha incorreta');
             setPassword('');
@@ -638,7 +763,6 @@ function LoginScreen({ config, onLogin }) {
 
     return (
         <div className="min-h-screen bg-orange-600 flex flex-col items-center justify-center p-6 relative overflow-hidden">
-            {/* Background Decoration */}
             <div className="absolute top-[-10%] left-[-10%] w-64 h-64 bg-orange-500 rounded-full opacity-50 blur-3xl"></div>
             <div className="absolute bottom-[-10%] right-[-10%] w-64 h-64 bg-orange-700 rounded-full opacity-50 blur-3xl"></div>
 
@@ -700,8 +824,6 @@ function LoginScreen({ config, onLogin }) {
     );
 }
 
-// --- Telas de Lançamento e Dashboard ---
-
 function EntryScreen({ storeData, onSave }) {
   const [step, setStep] = useState('menu');
   const [tempData, setTempData] = useState({});
@@ -759,7 +881,7 @@ function EntryScreen({ storeData, onSave }) {
       <div className="fixed inset-0 flex items-center justify-center bg-stone-900/40 z-50 backdrop-blur-sm px-4">
         <div className={`${THEME.bgCard} p-8 rounded-3xl shadow-2xl flex flex-col items-center gap-4 animate-in fade-in zoom-in duration-300`}>
           <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center shadow-inner">
-            <CheckCircle2 className="w-12 h-12 text-orange-600" />
+            <CircleCheck className="w-12 h-12 text-orange-600" />
           </div>
           <h3 className="font-bold text-xl text-stone-800 text-center">{successMsg}</h3>
         </div>
@@ -808,7 +930,6 @@ function EntryScreen({ storeData, onSave }) {
                 <Users className="w-4 h-4" /> Comercial
             </h3>
             <div className="space-y-4">
-                {/* Botão Vendas & Orçamentos */}
                 <button
                 onClick={() => setStep('commercial_attendant')}
                 className={`w-full ${THEME.bgCard} border-2 border-orange-600/30 p-6 rounded-2xl shadow-sm flex items-center justify-between group hover:bg-orange-50 hover:border-orange-600 transition-all active:scale-95 relative overflow-hidden`}
@@ -828,7 +949,6 @@ function EntryScreen({ storeData, onSave }) {
                 </div>
                 </button>
 
-                {/* NOVO BOTÃO: Controle WhatsApp */}
                 <button
                 onClick={() => setStep('whatsapp_menu')}
                 className={`w-full bg-green-50 border-2 border-green-200 p-5 rounded-2xl shadow-sm flex items-center justify-between group hover:bg-green-100 hover:border-green-500 transition-all active:scale-95`}
@@ -843,7 +963,7 @@ function EntryScreen({ storeData, onSave }) {
                     </div>
                 </div>
                 <div className="bg-white/50 p-2 rounded-full">
-                    <PlusCircle className="w-6 h-6 text-green-700" />
+                    <CirclePlus className="w-6 h-6 text-green-700" />
                 </div>
                 </button>
             </div>
@@ -851,7 +971,6 @@ function EntryScreen({ storeData, onSave }) {
         </>
       )}
 
-      {/* TELA DE OPÇÕES DO WHATSAPP */}
       {step === 'whatsapp_menu' && (
         <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
             <div className="bg-green-50 p-4 rounded-2xl border border-green-200 mb-4">
@@ -871,7 +990,7 @@ function EntryScreen({ storeData, onSave }) {
                             <action.icon className="w-6 h-6" />
                             {action.label}
                         </div>
-                        <CheckCircle2 className="w-5 h-5 opacity-50" />
+                        <CircleCheck className="w-5 h-5 opacity-50" />
                     </Button>
                 ))}
             </div>
@@ -988,7 +1107,7 @@ function EntryScreen({ storeData, onSave }) {
                   className={`p-6 rounded-2xl border-2 flex flex-col items-center justify-center gap-3 transition-all active:scale-95 shadow-sm
                     ${type.id === 'cliente' 
                         ? 'border-orange-200 bg-orange-50 text-orange-800 hover:bg-orange-100 hover:border-orange-400' 
-                        : 'border-stone-200 bg-stone-50 text-stone-700 hover:bg-stone-100 hover:border-stone-400'}`}
+                        : 'border-stone-200 bg-stone-700 hover:bg-stone-100 hover:border-stone-400'}`}
                 >
                    {type.id === 'cliente' ? <UserCheck className="w-10 h-10 text-orange-600" /> : <UserPlus className="w-10 h-10 text-stone-500" />}
                   <span className="text-lg font-bold">{type.label}</span>
@@ -1032,7 +1151,6 @@ function DashboardScreen({ data, storeData }) {
     });
   }, [data, selectedMonth]);
 
-  // --- DADOS DE HOJE (Calculados) ---
   const todayStats = useMemo(() => {
     const today = new Date();
     const todayData = data.filter(entry => {
@@ -1051,13 +1169,10 @@ function DashboardScreen({ data, storeData }) {
         attendantBreakdown: {},
         morningCount: 0, afternoonCount: 0,
         marketingAdCount: 0, marketingMsgCount: 0, marketingRevenue: 0,
-        
-        // WhatsApp Stats
         whatsappCount: 0,
         whatsappBreakdown: {}
     };
 
-    // Inicializa atendentes para hoje
     storeData.staff.forEach(name => {
         stats.attendantBreakdown[name] = { atendimentos: 0, vendas: 0, orcamentos: 0, retornos: 0 };
     });
@@ -1066,10 +1181,9 @@ function DashboardScreen({ data, storeData }) {
         if (entry.period === 'manha') stats.morningCount++;
         if (entry.period === 'tarde') stats.afternoonCount++;
 
-        // NOVO: Contagem WhatsApp
         if (entry.category === 'whatsapp') {
             stats.whatsappCount++;
-            stats.marketingHits++; // Conta como hit
+            stats.marketingHits++;
             stats.whatsappBreakdown[entry.type] = (stats.whatsappBreakdown[entry.type] || 0) + 1;
         }
 
@@ -1079,10 +1193,7 @@ function DashboardScreen({ data, storeData }) {
         }
         if (entry.category === 'comercial') {
             stats.atendimentos++;
-            
-            // *** CORREÇÃO: Toda interação de marketing conta como hit ***
             if (entry.marketingSource || entry.marketingImpact) stats.marketingHits++;
-
             if (entry.marketingSource === 'anuncio') stats.marketingAdCount++;
             if (entry.marketingSource === 'mensagem') stats.marketingMsgCount++;
             if (entry.saleValue) stats.marketingRevenue += parseFloat(entry.saleValue);
@@ -1124,15 +1235,12 @@ function DashboardScreen({ data, storeData }) {
     return `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`;
   };
 
-  // --- Processamento de Estatísticas MÊS (STATS) ---
   const stats = useMemo(() => {
     const uniqueDays = new Set(filteredData.map(d => d.dateString)).size || 1;
-    
-    // Funcao auxiliar para pegar o DOMINGO da semana dessa data
     const getStartOfWeek = (d) => {
         const date = new Date(d);
-        const day = date.getDay(); // 0 (Dom) - 6 (Sab)
-        const diff = date.getDate() - day; // Ajusta para o Domingo
+        const day = date.getDay(); 
+        const diff = date.getDate() - day; 
         return new Date(date.setDate(diff));
     };
 
@@ -1142,28 +1250,16 @@ function DashboardScreen({ data, storeData }) {
       totalComercial: 0,
       serviceBreakdown: {},
       commercialBreakdown: {},
-      
       orcamentoCliente: 0, orcamentoNaoCliente: 0, totalOrcamentos: 0,
       vendaCliente: 0, vendaNaoCliente: 0, totalVendas: 0,
       retornoCliente: 0, retornoNaoCliente: 0, totalRetornos: 0,
-      
-      marketingAdCount: 0,
-      marketingMsgCount: 0,
-      marketingRevenue: 0,
-      marketingHits: 0,
-      
-      // WhatsApp Mensal
-      totalWhatsapp: 0,
-      whatsappBreakdown: {},
-      mediaDiariaWhatsapp: 0,
-
+      marketingAdCount: 0, marketingMsgCount: 0, marketingRevenue: 0, marketingHits: 0,
+      totalWhatsapp: 0, whatsappBreakdown: {}, mediaDiariaWhatsapp: 0,
       morningCount: 0, afternoonCount: 0,
-      
       attendantStats: {},
       uniqueDays,
       weekdayCounts: {0:0,1:0,2:0,3:0,4:0,5:0,6:0},
-      dateCounts: {}, 
-      weekCounts: {} 
+      dateCounts: {}, weekCounts: {} 
     };
 
     storeData.staff.forEach(name => {
@@ -1179,10 +1275,7 @@ function DashboardScreen({ data, storeData }) {
       const date = entry.date;
       const dayOfWeek = date.getDay();
       const dayOfMonth = date.getDate();
-      
-      // --- LOGICA DE SEMANA AJUSTADA (DATA) ---
       const weekStart = getStartOfWeek(date);
-      // Chave para ordenacao: YYYY-MM-DD
       const weekKey = weekStart.toISOString().split('T')[0]; 
       
       metrics.weekdayCounts[dayOfWeek]++;
@@ -1192,10 +1285,9 @@ function DashboardScreen({ data, storeData }) {
       if (entry.period === 'manha') metrics.morningCount++;
       if (entry.period === 'tarde') metrics.afternoonCount++;
 
-      // NOVO: Contagem WhatsApp Mensal
       if (entry.category === 'whatsapp') {
           metrics.totalWhatsapp++;
-          metrics.marketingHits++; // Conta como hit
+          metrics.marketingHits++; 
           metrics.whatsappBreakdown[entry.type] = (metrics.whatsappBreakdown[entry.type] || 0) + 1;
       }
 
@@ -1208,7 +1300,6 @@ function DashboardScreen({ data, storeData }) {
         metrics.totalComercial++;
         metrics.commercialBreakdown[entry.action] = (metrics.commercialBreakdown[entry.action] || 0) + 1;
         
-        // Marketing Stats
         if (entry.marketingSource === 'anuncio') metrics.marketingAdCount++;
         if (entry.marketingSource === 'mensagem') metrics.marketingMsgCount++;
         if (entry.saleValue) metrics.marketingRevenue += parseFloat(entry.saleValue);
@@ -1259,14 +1350,12 @@ function DashboardScreen({ data, storeData }) {
   const COLORS_PIE = ['#f97316', '#fbbf24', '#ef4444', '#78716c'];
   const COLORS_COM = ['#ea580c', '#fbbf24', '#22c55e']; 
 
-  // Formatador auxiliar para data da semana
   const formatWeekKey = (key) => {
       if(!key) return '-';
       const [y, m, d] = key.split('-');
       return `Semana de ${d}/${m}`;
   }
 
-  // 1. Serviços Balcão
   const serviceData = Object.entries(stats.serviceBreakdown).map(([key, value]) => ({
     name: SERVICE_TYPES.find(t => t.id === key)?.label || key,
     value,
@@ -1274,7 +1363,6 @@ function DashboardScreen({ data, storeData }) {
     todayCount: todayStats.serviceBreakdown[key] || 0
   })).sort((a,b) => b.value - a.value);
 
-  // 2. Serviços Comerciais
   const commercialData = Object.entries(stats.commercialBreakdown).map(([key, value]) => ({
     name: COMMERCIAL_ACTIONS.find(t => t.id === key)?.label || key,
     value,
@@ -1282,7 +1370,6 @@ function DashboardScreen({ data, storeData }) {
     todayCount: todayStats.commercialBreakdown[key] || 0
   })).sort((a,b) => b.value - a.value);
 
-  // Dados do WhatsApp para o Gráfico
   const whatsappData = Object.entries(stats.whatsappBreakdown).map(([key, value]) => ({
       name: WHATSAPP_ACTIONS.find(w => w.id === key)?.label || key,
       value: value,
@@ -1290,7 +1377,6 @@ function DashboardScreen({ data, storeData }) {
       todayCount: todayStats.whatsappBreakdown[key] || 0
   })).sort((a,b) => b.value - a.value);
 
-  // 3. Share Vendas
   const salesShareList = Object.entries(stats.attendantStats).map(([name, s]) => {
       const totalSales = s.vendaCli + s.vendaNew;
       const todayAtt = todayStats.attendantBreakdown[name];
@@ -1305,76 +1391,18 @@ function DashboardScreen({ data, storeData }) {
       }
   }).sort((a,b) => b.monthTotal - a.monthTotal);
 
-  // 4. Conversão Vendas DETALHADA
   const conversionList = Object.entries(stats.attendantStats).map(([name, s]) => {
-      const totalOppCli = s.vendaCli + s.orcCli;
-      const totalOppNew = s.vendaNew + s.orcNew;
-      
+      const totalSales = s.vendaCli + s.vendaNew;
+      const generalConversion = stats.totalVendas > 0 ? Math.round((totalSales / stats.totalVendas) * 100) : 0;
+      const shareCli = totalSales > 0 ? Math.round((s.vendaCli / totalSales) * 100) : 0;
+      const shareNew = totalSales > 0 ? Math.round((s.vendaNew / totalSales) * 100) : 0;
       return {
           name: name.split(' ')[0],
-          cliRate: totalOppCli > 0 ? Math.round((s.vendaCli / totalOppCli) * 100) : 0,
-          newRate: totalOppNew > 0 ? Math.round((s.vendaNew / totalOppNew) * 100) : 0,
-          totalRate: (totalOppCli + totalOppNew) > 0 ? Math.round(((s.vendaCli + s.vendaNew) / (totalOppCli + totalOppNew)) * 100) : 0
+          generalConversion,
+          shareCli,
+          shareNew
       }
-  }).sort((a,b) => b.totalRate - a.totalRate);
-
-  // 5. Taxa de Retorno DETALHADA
-  const returnRateList = Object.entries(stats.attendantStats).map(([name, s]) => {
-      const totalOrcCli = s.orcCli;
-      const totalOrcNew = s.orcNew;
-      
-      return {
-          name: name.split(' ')[0],
-          cliRate: totalOrcCli > 0 ? Math.round((s.retornoCli / totalOrcCli) * 100) : 0,
-          cliCount: s.retornoCli,
-          newRate: totalOrcNew > 0 ? Math.round((s.retornoNew / totalOrcNew) * 100) : 0,
-          newCount: s.retornoNew,
-          totalRate: (totalOrcCli + totalOrcNew) > 0 ? Math.round(((s.retornoCli + s.retornoNew) / (totalOrcCli + totalOrcNew)) * 100) : 0
-      }
-  }).sort((a,b) => b.totalRate - a.totalRate);
-
-  // 6. Retornos vs Orçamentos
-  const returnVsQuoteData = [
-    { name: 'Mês', Orcamentos: stats.totalOrcamentos, Retornos: stats.totalRetornos },
-    { name: 'Hoje', Orcamentos: todayStats.orcamentos, Retornos: todayStats.retornos }
-  ];
-
-  const monthReturnRate = stats.totalOrcamentos > 0 ? Math.round((stats.totalRetornos / stats.totalOrcamentos) * 100) : 0;
-  const todayReturnRate = todayStats.orcamentos > 0 ? Math.round((todayStats.retornos / todayStats.orcamentos) * 100) : 0;
-
-  const salesCompositionData = [
-    { name: 'Venda Cliente', value: stats.vendaCliente, fill: '#c2410c' },
-    { name: 'Venda Não Cliente', value: stats.vendaNaoCliente, fill: '#fb923c' },
-  ];
-
-  const weekDayData = Object.entries(stats.weekdayCounts).map(([day, count]) => ({
-      name: daysMap[day].substring(0,3), 
-      value: count
-  }));
-
-  const weekData = Object.entries(stats.weekCounts)
-    .sort((a, b) => a[0].localeCompare(b[0])) // Ordena pela chave de data
-    .map(([key, count]) => {
-        const [y, m, d] = key.split('-');
-        return {
-            name: `${d}/${m}`, // Exibe apenas DD/MM
-            value: count
-        };
-    });
-
-  const attendantFunnelList = Object.keys(storeData.staff).map(idx => storeData.staff[idx]).map(name => {
-      const monthStats = stats.attendantStats[name] || { totalGeralAtendente: 0, orcCli:0, orcNew:0, vendaCli:0, vendaNew:0 };
-      const todayStatsAtt = todayStats.attendantBreakdown[name] || { atendimentos: 0, orcamentos: 0, vendas: 0 };
-      return {
-          name: name.split(' ')[0],
-          month: {
-              atend: monthStats.totalGeralAtendente,
-              orc: monthStats.orcCli + monthStats.orcNew,
-              venda: monthStats.vendaCli + monthStats.vendaNew
-          },
-          today: todayStatsAtt
-      };
-  });
+  }).sort((a,b) => b.generalConversion - a.generalConversion);
 
   const returnAnalysisData = [
     {
@@ -1408,9 +1436,44 @@ function DashboardScreen({ data, storeData }) {
     };
   }).sort((a,b) => b.Orçamentos - a.Orçamentos);
 
+  const salesCompositionData = [
+    { name: 'Venda Cliente', value: stats.vendaCliente, fill: '#c2410c' },
+    { name: 'Venda Não Cliente', value: stats.vendaNaoCliente, fill: '#fb923c' },
+  ];
+
+  const weekDayData = Object.entries(stats.weekdayCounts).map(([day, count]) => ({
+      name: daysMap[day].substring(0,3), 
+      value: count
+  }));
+
+  const weekData = Object.entries(stats.weekCounts)
+    .sort((a, b) => a[0].localeCompare(b[0])) 
+    .map(([key, count]) => {
+        const [y, m, d] = key.split('-');
+        return {
+            name: `${d}/${m}`, 
+            value: count
+        };
+    });
+
+  const attendantFunnelList = Object.keys(storeData.staff).map(idx => storeData.staff[idx]).map(name => {
+      const monthStats = stats.attendantStats[name] || { totalGeralAtendente: 0, orcCli:0, orcNew:0, vendaCli:0, vendaNew:0 };
+      const todayStatsAtt = todayStats.attendantBreakdown[name] || { atendimentos: 0, orcamentos: 0, vendas: 0 };
+      return {
+          name: name.split(' ')[0],
+          month: {
+              atend: monthStats.totalGeralAtendente,
+              orc: monthStats.orcCli + monthStats.orcNew,
+              venda: monthStats.vendaCli + monthStats.vendaNew
+          },
+          today: todayStatsAtt
+      };
+  });
+
+  const totalHoje = todayStats.servicos + todayStats.atendimentos;
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-6">
-      {/* Header e Filtro */}
       <div className="flex flex-col gap-4 border-b border-stone-200 pb-6">
           <div className="flex items-center justify-between">
              <h2 className="text-xl font-extrabold text-stone-800 tracking-tight flex items-center gap-2">
@@ -1426,7 +1489,7 @@ function DashboardScreen({ data, storeData }) {
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 disabled={availableMonths.length === 0}
-                className="block w-full pl-10 pr-10 py-3 text-sm font-bold border-2 border-orange-200 rounded-xl bg-white text-stone-800 shadow-sm focus:ring-orange-500"
+                className="block w-full pl-10 pr-10 py-3 text-sm font-bold border-2 border-orange-100 rounded-xl bg-white text-stone-800 shadow-sm focus:ring-orange-500"
              >
                 {availableMonths.length === 0 ? <option>Sem dados</option> : availableMonths.map(m => <option key={m} value={m}>{formatMonthLabel(m)}</option>)}
              </select>
@@ -1439,7 +1502,6 @@ function DashboardScreen({ data, storeData }) {
       ) : (
         <div className="grid grid-cols-1 gap-6">
             
-            {/* 1. VENDAS TOTAIS (KEY METRIC) */}
             <Card className="p-6 bg-gradient-to-br from-orange-500 to-red-600 text-white border-none relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10 rotate-12"><DollarSign className="w-32 h-32" /></div>
                 <h4 className="text-orange-100 text-sm font-bold uppercase mb-2">Vendas Totais</h4>
@@ -1461,7 +1523,6 @@ function DashboardScreen({ data, storeData }) {
                 </div>
             </Card>
 
-            {/* 2. SERVIÇOS (BALCÃO E COMERCIAL) */}
             <div className="space-y-4 pt-4 border-t-2 border-stone-200">
                 <h3 className="text-lg font-black text-stone-800 uppercase pl-2 border-l-4 border-stone-400">Operacional</h3>
 
@@ -1554,10 +1615,7 @@ function DashboardScreen({ data, storeData }) {
                 </Card>
             </div>
 
-            {/* 3. RAIO-X DE VENDAS */}
             <div className="space-y-4 pt-4 border-t-2 border-orange-100">
-                <h3 className="text-lg font-black text-stone-800 uppercase pl-2 border-l-4 border-orange-600">Raio-X de Vendas</h3>
-
                 <Card className="p-4">
                     <div className="flex gap-4 items-center">
                         <div className="h-40 w-1/3">
@@ -1619,17 +1677,19 @@ function DashboardScreen({ data, storeData }) {
 
                 <Card className="p-4">
                     <h4 className="font-bold text-stone-700 text-sm mb-4 uppercase">Conversão de Vendas (Eficiência)</h4>
-                    <div className="grid grid-cols-3 text-[9px] font-bold text-stone-400 border-b border-stone-100 pb-2 mb-2 text-center">
+                    <div className="grid grid-cols-4 text-[9px] font-bold text-stone-400 border-b border-stone-100 pb-2 mb-2 text-center">
                         <div className="text-left">Atendente</div>
-                        <div>% Cliente</div>
-                        <div>% Não Cliente</div>
+                        <div>Venda Total</div>
+                        <div>% Cli</div>
+                        <div>% Novo</div>
                     </div>
                     <div className="space-y-2">
                         {conversionList.map((staff) => (
-                            <div key={staff.name} className="grid grid-cols-3 text-xs items-center text-center border-b border-stone-50 pb-1">
+                            <div key={staff.name} className="grid grid-cols-4 text-xs items-center text-center border-b border-stone-50 pb-1">
                                 <div className="text-left font-bold text-stone-700">{staff.name}</div>
-                                <div className="font-bold text-orange-700 bg-orange-50 rounded py-1">{staff.cliRate}%</div>
-                                <div className="font-bold text-stone-600 bg-stone-100 rounded py-1">{staff.newRate}%</div>
+                                <div className="font-black text-stone-800 bg-stone-100 rounded py-1">{staff.generalConversion}%</div>
+                                <div className="font-bold text-orange-700 bg-orange-50 rounded py-1">{staff.shareCli}%</div>
+                                <div className="font-bold text-blue-600 bg-blue-50 rounded py-1">{staff.shareNew}%</div>
                             </div>
                         ))}
                     </div>
@@ -1754,13 +1814,11 @@ function DashboardScreen({ data, storeData }) {
                                 <span className="text-sm font-black text-stone-800">R$ {stats.marketingRevenue.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
                             </div>
 
-                            {/* NOVO: DETALHAMENTO DE WHATSAPP */}
                             <div className="mt-4 pt-3 border-t border-blue-200 bg-blue-100/50 rounded-lg p-3">
                                 <h5 className="text-xs font-bold text-blue-900 uppercase mb-3 flex items-center gap-2">
                                     <MessageCircle className="w-4 h-4" /> Mensagens WhatsApp
                                 </h5>
                                 
-                                {/* New Summary Grid */}
                                 <div className="grid grid-cols-3 gap-2 mb-3">
                                     <div className="bg-white p-2 rounded border border-blue-100 text-center">
                                         <span className="text-[9px] text-blue-400 uppercase font-bold block">Hoje</span>
@@ -1797,7 +1855,6 @@ function DashboardScreen({ data, storeData }) {
                 </Card>
             </div>
 
-            {/* 5. MOVIMENTO (Fluxo) */}
             <div className="space-y-4 pt-4 border-t-2 border-stone-200">
                 <h3 className="text-lg font-black text-stone-800 uppercase pl-2 border-l-4 border-stone-400">Movimento</h3>
                 
@@ -1900,44 +1957,64 @@ function DashboardScreen({ data, storeData }) {
                     </div>
                 </Card>
 
-                <Card className="p-4">
-                    <h4 className="font-bold text-stone-700 text-sm mb-4 uppercase">Total de atendimentos mês</h4>
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div className="bg-white p-3 rounded-lg border border-stone-200">
-                            <p className="text-[9px] font-bold uppercase text-stone-500">Total Mês</p>
-                            <h3 className="text-2xl font-black text-stone-800">{stats.totalAtendimentosGeral}</h3>
-                            <p className="text-[10px] text-stone-400">Média: {stats.mediaDiariaAtendimentos}/dia</p>
+                {/* NOVO QUADRO: FLUXO TOTAL DE PESSOAS (Substitui "Total de atendimentos mês") */}
+                <Card className="p-5 border border-stone-200">
+                    <h4 className="font-extrabold text-stone-800 text-lg uppercase leading-none">Fluxo Total de Pessoas</h4>
+                    <p className="text-xs text-stone-400 font-medium mb-4">Pessoas que passaram na ótica este mês</p>
+                    
+                    <div className="flex justify-between items-end mb-6">
+                        <div>
+                            <span className="text-5xl font-black text-stone-800 tracking-tighter block">{stats.totalServicos + stats.totalComercial}</span>
+                            <span className="text-xs font-bold text-stone-500 uppercase">Mês Atual</span>
                         </div>
-                        <div className="bg-orange-50 p-3 rounded-lg border border-orange-100">
-                            <div className="flex justify-between items-center">
-                                <p className="text-[9px] font-bold uppercase text-orange-600">Hoje</p>
-                                <Zap className="w-3 h-3 text-orange-500" />
-                            </div>
-                            <h3 className="text-2xl font-black text-orange-600">{todayStats.atendimentos}</h3>
-                            <p className="text-[10px] text-orange-400">Total Geral</p>
+                        <div className="text-right">
+                             <span className="text-4xl font-black text-orange-600 tracking-tighter block">{totalHoje}</span>
+                             <span className="text-xs font-bold text-orange-400 uppercase flex items-center justify-end gap-1"><Zap className="w-3 h-3" /> Hoje</span>
                         </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="bg-stone-50 p-2 rounded space-y-1">
-                            <span className="font-bold text-stone-600 block border-b border-stone-200 pb-1 mb-1">Balcão</span>
-                            <div className="flex justify-between">
-                                <span className="text-stone-500">Total:</span>
-                                <span className="font-bold text-stone-800">{stats.totalServicos}</span>
+
+                    <div className="space-y-3">
+                        {/* Bloco Serviços Rápidos */}
+                        <div className="border border-stone-200 rounded-xl p-3 bg-stone-50/50">
+                            <div className="flex items-center gap-2 mb-2 pb-2 border-b border-stone-100">
+                                <Wrench className="w-4 h-4 text-stone-600" />
+                                <h5 className="font-bold text-stone-700 text-sm uppercase">Serviços Rápidos</h5>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="text-stone-500">Média:</span>
-                                <span className="font-bold text-stone-800">{stats.mediaDiariaServicos}</span>
+                            <div className="grid grid-cols-3 text-center divide-x divide-stone-200">
+                                <div>
+                                    <p className="text-[10px] font-bold text-stone-400 uppercase mb-1">Total Mês</p>
+                                    <p className="text-lg font-black text-stone-800">{stats.totalServicos}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-stone-400 uppercase mb-1">Hoje</p>
+                                    <p className="text-lg font-black text-stone-800">{todayStats.servicos}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-stone-400 uppercase mb-1">Média/Dia</p>
+                                    <p className="text-lg font-black text-stone-800">{stats.mediaDiariaServicos}</p>
+                                </div>
                             </div>
                         </div>
-                        <div className="bg-orange-50 p-2 rounded space-y-1">
-                            <span className="font-bold text-orange-700 block border-b border-orange-200 pb-1 mb-1">Comercial</span>
-                            <div className="flex justify-between">
-                                <span className="text-orange-600">Total:</span>
-                                <span className="font-bold text-orange-800">{stats.totalComercial}</span>
+
+                        {/* Bloco Serviços Comerciais */}
+                        <div className="border border-orange-200 rounded-xl p-3 bg-orange-50/30">
+                            <div className="flex items-center gap-2 mb-2 pb-2 border-b border-orange-100">
+                                <Users className="w-4 h-4 text-orange-600" />
+                                <h5 className="font-bold text-orange-800 text-sm uppercase">Serviços Comerciais</h5>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="text-orange-600">Média:</span>
-                                <span className="font-bold text-orange-800">{stats.mediaDiariaTotal}</span>
+                            <div className="grid grid-cols-3 text-center divide-x divide-orange-100">
+                                <div>
+                                    <p className="text-[10px] font-bold text-orange-400 uppercase mb-1">Total Mês</p>
+                                    <p className="text-lg font-black text-orange-700">{stats.totalComercial}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-orange-400 uppercase mb-1">Hoje</p>
+                                    <p className="text-lg font-black text-orange-700">{todayStats.atendimentos}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-orange-400 uppercase mb-1">Média/Dia</p>
+                                    <p className="text-lg font-black text-orange-700">{stats.mediaDiariaTotal}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1953,10 +2030,9 @@ function DashboardScreen({ data, storeData }) {
   );
 }
 
-// --- Nova Tela: Comparativo (ComparisonScreen) ---
+// --- ComparisonScreen ---
 
 function ComparisonScreen({ data }) {
-    // --- Lógica de Filtro de Mês ---
     const availableMonths = useMemo(() => {
         const monthSet = new Set();
         data.forEach(item => {
@@ -1983,24 +2059,20 @@ function ComparisonScreen({ data }) {
         return `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`;
     };
 
-    // --- Processamento dos Dados Comparativos ---
     const compStats = useMemo(() => {
         if (!selectedMonth) return null;
         const [year, month] = selectedMonth.split('-').map(Number);
         
-        // Filtra pelo mês selecionado
         const monthData = data.filter(item => {
             const d = item.date;
             return d.getFullYear() === year && (d.getMonth() + 1) === month;
         });
 
-        // Estrutura Base
         const metrics = {
-            TC: { vendas: 0, orcamentos: 0, retornos: 0, servicos: 0, atendimentos: 0, messages: 0, msgSales: 0, cliSales:0, newSales:0, staff: {} },
-            SGS: { vendas: 0, orcamentos: 0, retornos: 0, servicos: 0, atendimentos: 0, messages: 0, msgSales: 0, cliSales:0, newSales:0, staff: {} }
+            TC: { vendas: 0, orcamentos: 0, retornos: 0, servicos: 0, atendimentos: 0, messages: 0, msgSales: 0, cliSales:0, newSales:0, orcCli: 0, orcNew: 0, retCli: 0, retNew: 0, staff: {} },
+            SGS: { vendas: 0, orcamentos: 0, retornos: 0, servicos: 0, atendimentos: 0, messages: 0, msgSales: 0, cliSales:0, newSales:0, orcCli: 0, orcNew: 0, retCli: 0, retNew: 0, staff: {} }
         };
 
-        // Popula Métricas
         monthData.forEach(entry => {
             const store = entry.store;
             if (!metrics[store]) return;
@@ -2017,20 +2089,32 @@ function ComparisonScreen({ data }) {
                     if (entry.clientType === 'cliente') metrics[store].cliSales++;
                     else metrics[store].newSales++;
                 }
-                if (entry.action === 'orcamento') metrics[store].orcamentos++;
-                if (entry.action === 'retorno') metrics[store].retornos++;
+                
+                // Contagem detalhada de Orçamentos e Retornos por perfil
+                if (entry.action === 'orcamento') {
+                    metrics[store].orcamentos++;
+                    if (entry.clientType === 'cliente') metrics[store].orcCli++;
+                    else metrics[store].orcNew++;
+                }
+                if (entry.action === 'retorno') {
+                    metrics[store].retornos++;
+                    if (entry.clientType === 'cliente') metrics[store].retCli++;
+                    else metrics[store].retNew++;
+                }
 
-                // Dados Detalhados por Atendente
                 if (entry.attendant) {
                     if (!metrics[store].staff[entry.attendant]) {
                         metrics[store].staff[entry.attendant] = { 
                             vendaCli: 0, vendaNew: 0, 
                             orcCli: 0, orcNew: 0,
-                            valCli: 0, valNew: 0 
+                            valCli: 0, valNew: 0,
+                            totalAtendimentos: 0 
                         };
                     }
                     const staff = metrics[store].staff[entry.attendant];
                     
+                    staff.totalAtendimentos++;
+
                     if (entry.action === 'venda') {
                         if (entry.clientType === 'cliente') {
                             staff.vendaCli++;
@@ -2053,66 +2137,76 @@ function ComparisonScreen({ data }) {
 
     if (!compStats) return <div className="p-8 text-center text-stone-400">Sem dados suficientes para comparação.</div>;
 
-    // --- Dados para Gráficos ---
-
-    // 1. Vendas Totais & Tipo
     const salesCompData = [
-        { name: 'Venda Cliente', TC: compStats.TC.cliSales, SGS: compStats.SGS.cliSales },
-        { name: 'Venda Ñ Cliente', TC: compStats.TC.newSales, SGS: compStats.SGS.newSales },
-        { name: 'Total', TC: compStats.TC.vendas, SGS: compStats.SGS.vendas }
+        { 
+            name: 'Venda Cliente', 
+            TC: compStats.TC.vendas > 0 ? Math.round((compStats.TC.cliSales / compStats.TC.vendas) * 100) : 0, 
+            SGS: compStats.SGS.vendas > 0 ? Math.round((compStats.SGS.cliSales / compStats.SGS.vendas) * 100) : 0 
+        },
+        { 
+            name: 'Venda Ñ Cliente', 
+            TC: compStats.TC.vendas > 0 ? Math.round((compStats.TC.newSales / compStats.TC.vendas) * 100) : 0, 
+            SGS: compStats.SGS.vendas > 0 ? Math.round((compStats.SGS.newSales / compStats.SGS.vendas) * 100) : 0 
+        }
     ];
 
-    // 2. Orçamentos x Retornos
+    const budgetProfileData = [
+        {
+            name: 'Conv. Cliente',
+            TC: compStats.TC.orcCli > 0 ? Math.round((compStats.TC.retCli / compStats.TC.orcCli) * 100) : 0,
+            SGS: compStats.SGS.orcCli > 0 ? Math.round((compStats.SGS.retCli / compStats.SGS.orcCli) * 100) : 0
+        },
+        {
+            name: 'Conv. Novo',
+            TC: compStats.TC.orcNew > 0 ? Math.round((compStats.TC.retNew / compStats.TC.orcNew) * 100) : 0,
+            SGS: compStats.SGS.orcNew > 0 ? Math.round((compStats.SGS.retNew / compStats.SGS.orcNew) * 100) : 0
+        }
+    ];
+
     const quoteCompData = [
         { name: 'Orçamentos', TC: compStats.TC.orcamentos, SGS: compStats.SGS.orcamentos },
         { name: 'Retornos', TC: compStats.TC.retornos, SGS: compStats.SGS.retornos }
     ];
 
-    // 3. Volume Serviços
     const serviceCompData = [
         { name: 'Serviços Rápidos', TC: compStats.TC.servicos, SGS: compStats.SGS.servicos },
         { name: 'Comercial', TC: compStats.TC.atendimentos, SGS: compStats.SGS.atendimentos }
     ];
 
-    // 4. Mensagens
     const msgData = [
         { name: 'Msgs Enviadas', TC: compStats.TC.messages, SGS: compStats.SGS.messages },
         { name: 'Vendas via Msg', TC: compStats.TC.msgSales, SGS: compStats.SGS.msgSales }
     ];
 
-    // 5. Ranking Atendentes (Unificado)
     const allStaff = [];
     ['TC', 'SGS'].forEach(store => {
         Object.entries(compStats[store].staff).forEach(([name, s]) => {
             const totalSales = s.vendaCli + s.vendaNew;
-            const totalOrc = s.orcCli + s.orcNew;
+            const totalInteractions = s.totalAtendimentos;
             
-            // Taxas de Conversão Específicas
-            const rateCli = (s.vendaCli + s.orcCli) > 0 ? Math.round((s.vendaCli / (s.vendaCli + s.orcCli)) * 100) : 0;
-            const rateNew = (s.vendaNew + s.orcNew) > 0 ? Math.round((s.vendaNew / (s.vendaNew + s.orcNew)) * 100) : 0;
+            const conversionEfficiency = totalInteractions > 0 ? Math.round((totalSales / totalInteractions) * 100) : 0;
+
+            const rateCli = totalSales > 0 ? Math.round((s.vendaCli / totalSales) * 100) : 0;
+            const rateNew = totalSales > 0 ? (100 - rateCli) : 0;
 
             allStaff.push({ 
                 name, 
                 store, 
                 vendas: totalSales, 
-                orcamentos: totalOrc,
-                conversion: totalOrc > 0 ? Math.round((totalSales/totalOrc)*100) : 0,
-                // Dados detalhados
-                rateCli,
-                rateNew,
+                atendimentos: totalInteractions,
+                conversion: conversionEfficiency, 
+                rateCli,                  
+                rateNew,                  
                 valCli: s.valCli,
                 valNew: s.valNew
             });
         });
     });
     
-    // Ordenar para o Ranking Geral
     const topStaff = [...allStaff].sort((a,b) => b.vendas - a.vendas).slice(0, 10);
     
-    // Ordenar para o Gráfico de Eficiência (por nome para agrupar)
     const staffEfficiency = [...allStaff].sort((a,b) => b.vendas - a.vendas); 
 
-    // Custom Tooltip for Efficiency Chart
     const CustomEfficiencyTooltip = ({ active, payload, label }) => {
         if (active && payload && payload.length) {
             const data = payload[0].payload;
@@ -2135,7 +2229,6 @@ function ComparisonScreen({ data }) {
 
     return (
         <div className="space-y-6 animate-in slide-in-from-right-4 duration-500 pb-10">
-            {/* Header Comparativo */}
             <div className="flex flex-col gap-4 border-b border-stone-200 pb-6">
                 <div className="flex items-center gap-3">
                     <div className="bg-gradient-to-br from-orange-600 to-red-600 p-3 rounded-xl shadow-lg text-white">
@@ -2147,7 +2240,6 @@ function ComparisonScreen({ data }) {
                     </div>
                 </div>
                 
-                {/* Seletor Mês */}
                 <div className="relative">
                     <Filter className="absolute left-3 top-3.5 h-5 w-5 text-stone-400" />
                     <select
@@ -2161,10 +2253,9 @@ function ComparisonScreen({ data }) {
                 </div>
             </div>
 
-            {/* 1. Vendas Comparadas */}
             <Card className="p-4">
                 <div className="flex justify-between items-center mb-4">
-                    <h4 className="font-bold text-stone-700 text-sm uppercase">Vendas: Clientes vs Novos</h4>
+                    <h4 className="font-bold text-stone-700 text-sm uppercase">Perfil de Vendas (%)</h4>
                     <div className="flex gap-3 text-[10px] font-bold">
                         <span className="text-orange-600 flex items-center gap-1"><div className="w-2 h-2 bg-orange-600 rounded-full"></div> TC</span>
                         <span className="text-red-600 flex items-center gap-1"><div className="w-2 h-2 bg-red-600 rounded-full"></div> SGS</span>
@@ -2175,13 +2266,40 @@ function ComparisonScreen({ data }) {
                         <BarChart data={salesCompData} margin={{top: 20, right: 5, left: -20, bottom: 0}}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             <XAxis dataKey="name" tick={{fontSize: 10, fontWeight: 'bold'}} />
-                            <YAxis tick={{fontSize: 10}} />
-                            <Tooltip cursor={{fill: '#f5f5f4'}} contentStyle={{fontSize: '12px', borderRadius: '8px'}}/>
-                            <Bar dataKey="TC" fill="#ea580c" radius={[4,4,0,0]} barSize={30}>
-                                <LabelList dataKey="TC" position="top" style={{ fill: '#c2410c', fontSize: '10px', fontWeight: 'bold' }} />
+                            <YAxis tick={{fontSize: 10}} domain={[0, 100]} />
+                            <Tooltip cursor={{fill: '#f5f5f4'}} contentStyle={{fontSize: '12px', borderRadius: '8px'}} formatter={(value) => [`${value}%`, '']}/>
+                            <Bar dataKey="TC" fill="#ea580c" radius={[4,4,0,0]} barSize={40}>
+                                <LabelList dataKey="TC" position="top" formatter={(v) => `${v}%`} style={{ fill: '#c2410c', fontSize: '11px', fontWeight: 'bold' }} />
                             </Bar>
-                            <Bar dataKey="SGS" fill="#dc2626" radius={[4,4,0,0]} barSize={30}>
-                                <LabelList dataKey="SGS" position="top" style={{ fill: '#991b1b', fontSize: '10px', fontWeight: 'bold' }} />
+                            <Bar dataKey="SGS" fill="#dc2626" radius={[4,4,0,0]} barSize={40}>
+                                <LabelList dataKey="SGS" position="top" formatter={(v) => `${v}%`} style={{ fill: '#991b1b', fontSize: '11px', fontWeight: 'bold' }} />
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </Card>
+
+            {/* NOVO GRÁFICO: CONVERSÃO DE ORÇAMENTOS POR PERFIL */}
+            <Card className="p-4">
+                <div className="flex justify-between items-center mb-4">
+                    <h4 className="font-bold text-stone-700 text-sm uppercase">Conversão de Orçamento por Perfil (%)</h4>
+                    <div className="flex gap-3 text-[10px] font-bold">
+                        <span className="text-orange-600 flex items-center gap-1"><div className="w-2 h-2 bg-orange-600 rounded-full"></div> TC</span>
+                        <span className="text-red-600 flex items-center gap-1"><div className="w-2 h-2 bg-red-600 rounded-full"></div> SGS</span>
+                    </div>
+                </div>
+                <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={budgetProfileData} margin={{top: 20, right: 5, left: -20, bottom: 0}}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis dataKey="name" tick={{fontSize: 10, fontWeight: 'bold'}} />
+                            <YAxis tick={{fontSize: 10}} domain={[0, 100]} />
+                            <Tooltip cursor={{fill: '#f5f5f4'}} contentStyle={{fontSize: '12px', borderRadius: '8px'}} formatter={(value) => [`${value}%`, '']}/>
+                            <Bar dataKey="TC" fill="#ea580c" radius={[4,4,0,0]} barSize={40}>
+                                <LabelList dataKey="TC" position="top" formatter={(v) => `${v}%`} style={{ fill: '#c2410c', fontSize: '11px', fontWeight: 'bold' }} />
+                            </Bar>
+                            <Bar dataKey="SGS" fill="#dc2626" radius={[4,4,0,0]} barSize={40}>
+                                <LabelList dataKey="SGS" position="top" formatter={(v) => `${v}%`} style={{ fill: '#991b1b', fontSize: '11px', fontWeight: 'bold' }} />
                             </Bar>
                         </BarChart>
                     </ResponsiveContainer>
@@ -2300,24 +2418,38 @@ function ComparisonScreen({ data }) {
                     <Award className="w-4 h-4 text-yellow-500" /> Top Atendentes
                 </h4>
                 <div className="space-y-2">
-                    <div className="grid grid-cols-6 text-[9px] font-bold text-stone-400 border-b border-stone-100 pb-2">
-                        <div className="col-span-2">Nome</div>
-                        <div className="text-center">Vendas</div>
-                        <div className="text-center">Conv.</div>
-                        <div className="col-span-2 text-right">R$ Total</div>
+                    <div className="grid grid-cols-5 text-[9px] font-bold text-stone-400 border-b border-stone-100 pb-2 text-center">
+                        <div className="text-left">Nome</div>
+                        <div>Vendas</div>
+                        <div>C.Total</div>
+                        <div>% Cli</div>
+                        <div>% Novo</div>
                     </div>
                     {topStaff.map((s, i) => (
-                        <div key={`${s.store}-${s.name}`} className="grid grid-cols-6 items-center py-2 border-b border-stone-50 text-xs">
-                            <div className="col-span-2">
+                        <div key={`${s.store}-${s.name}`} className="grid grid-cols-5 items-center py-3 border-b border-stone-50 text-xs text-center">
+                            <div className="text-left">
                                 <span className="font-bold text-stone-700 block">{i+1}. {s.name}</span>
                                 <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${s.store === 'TC' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`}>
                                     {s.store}
                                 </span>
                             </div>
-                            <div className="text-center font-bold text-stone-800">{s.vendas}</div>
-                            <div className="text-center font-bold text-stone-500">{s.conversion}%</div>
-                            <div className="col-span-2 text-right font-black text-green-600">
-                                R$ {(s.valCli + s.valNew).toLocaleString('pt-BR', {compactDisplay: 'short', notation: 'compact'})}
+                            <div className="flex flex-col items-center">
+                                <span className="font-black text-stone-800 text-sm">{s.vendas}</span>
+                                <span className="text-[9px] text-stone-400 font-medium">de {s.atendimentos} atd</span>
+                            </div>
+                            
+                            <div>
+                                <span className={`font-bold px-2 py-1 rounded ${s.conversion >= 30 ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-600'}`}>
+                                    {s.conversion}%
+                                </span>
+                            </div>
+
+                            <div className="font-medium text-orange-700">
+                                {s.rateCli}%
+                            </div>
+
+                            <div className="font-medium text-stone-500">
+                                {s.rateNew}%
                             </div>
                         </div>
                     ))}
@@ -2333,10 +2465,9 @@ export default function App() {
   const [storeConfig, setStoreConfig] = useState(DEFAULT_CONFIG);
   const [user, setUser] = useState(null);
   
-  // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isManager, setIsManager] = useState(false);
-  const [currentStore, setCurrentStore] = useState(null); // 'TC' or 'SGS'
+  const [currentStore, setCurrentStore] = useState(null); 
 
   const [view, setView] = useState('entry'); 
   const [entries, setEntries] = useState([]);
@@ -2347,7 +2478,6 @@ export default function App() {
   const [pendingAction, setPendingAction] = useState(null); 
   const [pendingStore, setPendingStore] = useState(null);
 
-  // Load Config from LocalStorage
   useEffect(() => {
     const savedConfig = localStorage.getItem('optical_store_config_v2');
     if (savedConfig) {
@@ -2355,30 +2485,35 @@ export default function App() {
     }
   }, []);
 
-  // Save Config to LocalStorage
   const handleUpdateConfig = (newConfig) => {
       setStoreConfig(newConfig);
       localStorage.setItem('optical_store_config_v2', JSON.stringify(newConfig));
   };
 
-  // Firebase Auth
   useEffect(() => {
     const initAuth = async () => {
       try {
-        await signInAnonymously(auth);
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+            await signInAnonymously(auth);
+        }
       } catch (error) {
-        console.error("Auth error:", error);
+        try {
+            await signInAnonymously(auth);
+        } catch (anonError) {
+            console.error("Auth error:", anonError);
+        }
       }
     };
     initAuth();
     return onAuthStateChanged(auth, setUser);
   }, []);
 
-  // Load Entries
   useEffect(() => {
     if (!user) return;
     const q = query(
-      collection(db, 'artifacts', appId, 'public', 'data', 'optical_records_final_v11')
+      collection(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION_NAME)
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({
@@ -2412,7 +2547,7 @@ export default function App() {
   const handleAddEntry = async (entryData) => {
     if (!user) return;
     try {
-      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'optical_records_final_v11'), {
+      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION_NAME), {
         ...entryData,
         store: currentStore,
         createdAt: serverTimestamp(),
@@ -2444,7 +2579,7 @@ export default function App() {
     try {
         const batch = writeBatch(db);
         entriesToDelete.forEach(entry => {
-            const ref = doc(db, 'artifacts', appId, 'public', 'data', 'optical_records_final_v11', entry.id);
+            const ref = doc(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION_NAME, entry.id);
             batch.delete(ref);
         });
         await batch.commit();
@@ -2496,12 +2631,11 @@ export default function App() {
             <h1 className="font-extrabold text-lg leading-tight text-white tracking-wide">ÓTICA PRECISÃO</h1>
             <p className="text-[10px] text-orange-100 font-medium tracking-wider opacity-90 flex items-center gap-1">
               {storeConfig.stores[currentStore].name}
-              {isManager ? <Unlock className="w-3 h-3 text-green-300"/> : <Lock className="w-3 h-3 text-orange-200"/>}
+              {isManager ? <LockOpen className="w-3 h-3 text-green-300"/> : <Lock className="w-3 h-3 text-orange-200"/>}
             </p>
           </div>
           
           <div className="flex items-center gap-2">
-             {/* Logout Button */}
              <button 
                 onClick={handleLogout}
                 className="bg-orange-800/50 p-1.5 rounded-xl text-white border border-orange-400/30 hover:bg-orange-700 transition-colors"
@@ -2510,7 +2644,6 @@ export default function App() {
                 <LogOut className="w-4 h-4" />
             </button>
 
-            {/* Manager Settings */}
             <button 
                 onClick={() => requestAccess('settings')}
                 className="bg-orange-800/50 p-1.5 rounded-xl text-white border border-orange-400/30 hover:bg-orange-700 transition-colors"
@@ -2564,7 +2697,7 @@ export default function App() {
           onClick={() => setView('entry')}
           className={`flex flex-col items-center gap-1.5 p-2 rounded-xl w-full transition-all active:scale-95 ${view === 'entry' ? THEME.accentText : THEME.textLight}`}
         >
-          <PlusCircle className="w-6 h-6" />
+          <CirclePlus className="w-6 h-6" />
           <span className="text-[10px] font-bold uppercase tracking-wider">Novo</span>
         </button>
         
@@ -2572,13 +2705,12 @@ export default function App() {
           onClick={() => requestAccess('dashboard')}
           className={`flex flex-col items-center gap-1.5 p-2 rounded-xl w-full transition-all active:scale-95 ${view === 'dashboard' ? THEME.accentText : THEME.textLight}`}
         >
-          {isManager ? <BarChart2 className="w-6 h-6" /> : <Lock className="w-6 h-6 opacity-60" />}
+          {isManager ? <ChartBar className="w-6 h-6" /> : <Lock className="w-6 h-6 opacity-60" />}
           <span className="text-[10px] font-bold uppercase tracking-wider">
             {isManager ? "Relatórios" : "Restrito"}
           </span>
         </button>
 
-        {/* Botão Comparativo */}
         <button 
           onClick={() => requestAccess('comparison')}
           className={`flex flex-col items-center gap-1.5 p-2 rounded-xl w-full transition-all active:scale-95 ${view === 'comparison' ? 'text-orange-600' : THEME.textLight}`}
