@@ -88,10 +88,9 @@ import {
 } from 'firebase/firestore';
 
 // ============================================================================
-// CONFIGURAÇÃO FIREBASE (SUAS CHAVES REAIS)
+// CONFIGURAÇÃO FIREBASE (PRODUÇÃO)
 // ============================================================================
 
-// Estas chaves conectam ao seu projeto oficial "otica-precisao-app".
 const firebaseConfig = {
   apiKey: "AIzaSyAu25o6sVXnAGIBRaEheBwHdTCM8lkCuxo",
   authDomain: "otica-precisao-app.firebaseapp.com",
@@ -101,16 +100,10 @@ const firebaseConfig = {
   appId: "1:216643068456:web:3e98fa915c996e603d4b1d"
 };
 
-// Inicializa o Firebase com a configuração real
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-
-// ⚠️ ID CRÍTICO: Deve ser igual ao que você já usa para puxar os dados antigos.
 const appId = 'otica-precisao-main-app';
-
-// Nome da coleção onde os dados são salvos.
-// Se por acaso os dados não aparecerem, verifique se no código antigo este nome era diferente.
 const DATA_COLLECTION_NAME = 'optical_records_final_v11';
 
 // ============================================================================
@@ -177,7 +170,7 @@ const CLIENT_TYPES = [
   { id: 'nao_cliente', label: 'Não Cliente' }
 ];
 
-// --- Mock Data Generator Helper (Ferramenta de Teste) ---
+// --- Mock Data Generator Helper ---
 const generateMockData = async (storeConfig) => {
     const batch = writeBatch(db);
     const today = new Date();
@@ -405,7 +398,6 @@ function SettingsModal({ config, onClose, onUpdateConfig, onClearToday, currentS
     };
 
     const handleGenerateData = async () => {
-        // Aviso para não sobrescrever dados reais se estiver em produção
         const confirmed = window.confirm("ATENÇÃO: Isso vai gerar dados fictícios no banco de dados ATUAL. Use apenas se estiver testando em um ambiente seguro. Deseja continuar?");
         if (!confirmed) return;
 
@@ -739,7 +731,7 @@ function YearlyAnalysis({ data }) {
     );
 }
 
-// --- Telas de Lançamento e Dashboard ---
+// --- Telas de Login e Entrada ---
 
 function LoginScreen({ config, onLogin }) {
     const [selectedStore, setSelectedStore] = useState('TC');
@@ -1404,6 +1396,16 @@ function DashboardScreen({ data, storeData }) {
       }
   }).sort((a,b) => b.generalConversion - a.generalConversion);
 
+  const budgetDetailsList = Object.entries(stats.attendantStats).map(([name, s]) => {
+      const totalOrc = s.orcCli + s.orcNew;
+      return {
+          name: name.split(' ')[0],
+          totalOrc,
+          orcCli: s.orcCli,
+          orcNew: s.orcNew
+      }
+  }).sort((a,b) => b.totalOrc - a.totalOrc);
+
   const returnAnalysisData = [
     {
         name: 'Total Mês',
@@ -1489,7 +1491,7 @@ function DashboardScreen({ data, storeData }) {
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 disabled={availableMonths.length === 0}
-                className="block w-full pl-10 pr-10 py-3 text-sm font-bold border-2 border-orange-100 rounded-xl bg-white text-stone-800 shadow-sm focus:ring-orange-500"
+                className="block w-full pl-10 pr-10 py-3 text-sm font-bold border-2 border-orange-200 rounded-xl bg-white text-stone-800 shadow-sm focus:ring-orange-500"
              >
                 {availableMonths.length === 0 ? <option>Sem dados</option> : availableMonths.map(m => <option key={m} value={m}>{formatMonthLabel(m)}</option>)}
              </select>
@@ -1759,7 +1761,28 @@ function DashboardScreen({ data, storeData }) {
                         </div>
                     </div>
 
-                    <div>
+                    {/* NOVA TABELA: DETALHES DE ORÇAMENTOS POR ATENDENTE */}
+                    <div className="mt-6">
+                        <p className="text-[10px] font-bold text-stone-500 uppercase mb-2">Detalhes de Orçamentos por Atendente</p>
+                        <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
+                            <div className="grid grid-cols-4 text-[9px] font-bold text-stone-500 bg-stone-50 p-2 text-center border-b border-stone-100">
+                                <div className="text-left">Atendente</div>
+                                <div>Total</div>
+                                <div>Cliente</div>
+                                <div>Não Cli.</div>
+                            </div>
+                            {budgetDetailsList.map((item, idx) => (
+                                <div key={idx} className="grid grid-cols-4 text-xs p-2 items-center text-center border-b border-stone-50 last:border-0 hover:bg-stone-50/50 transition-colors">
+                                    <div className="text-left font-bold text-stone-700">{item.name}</div>
+                                    <div className="font-black text-stone-800">{item.totalOrc}</div>
+                                    <div className="text-orange-700 font-medium bg-orange-50/50 rounded px-1">{item.orcCli}</div>
+                                    <div className="text-stone-600 font-medium bg-stone-100/50 rounded px-1">{item.orcNew}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="mt-6">
                         <p className="text-[10px] font-bold text-stone-500 uppercase mb-2">Eficiência por Equipe (Conversão)</p>
                         <div className="h-64 bg-white rounded-xl border border-stone-200 p-2">
                             <ResponsiveContainer width="100%" height="100%">
@@ -1885,7 +1908,6 @@ function DashboardScreen({ data, storeData }) {
                             <span className="text-sm font-bold text-stone-800">{formatWeekKey(stats.quietestWeek[0])}</span>
                             <span className="block text-[10px] text-stone-500">{stats.quietestWeek[1]} atendimentos</span>
                         </div>
-                        {/* NOVOS CAMPOS: Dia do Mês */}
                         <div>
                             <p className="text-[10px] font-bold text-green-600 uppercase">Data + Cheia</p>
                             <span className="text-sm font-bold text-stone-800">Dia {stats.busiestDate[0]}</span>
@@ -1898,7 +1920,6 @@ function DashboardScreen({ data, storeData }) {
                         </div>
                     </div>
                     
-                    {/* Periodos Manhã Tarde */}
                     <div className="grid grid-cols-2 gap-4 mb-4 border-t border-stone-200 pt-4">
                         <div className="text-center">
                             <div className="flex items-center justify-center gap-2 mb-1">
@@ -1926,7 +1947,6 @@ function DashboardScreen({ data, storeData }) {
                         </div>
                     </div>
 
-                    {/* GRÁFICO DE BARRAS: DIAS DA SEMANA */}
                     <div className="mb-4">
                         <p className="text-[10px] font-bold text-stone-400 uppercase mb-2">Por Dia da Semana</p>
                         <div className="h-32">
@@ -1941,7 +1961,6 @@ function DashboardScreen({ data, storeData }) {
                         </div>
                     </div>
 
-                    {/* GRÁFICO DE BARRAS: SEMANAS */}
                     <div>
                         <p className="text-[10px] font-bold text-stone-400 uppercase mb-2">Por Semana do Mês</p>
                         <div className="h-32">
@@ -1957,7 +1976,6 @@ function DashboardScreen({ data, storeData }) {
                     </div>
                 </Card>
 
-                {/* NOVO QUADRO: FLUXO TOTAL DE PESSOAS (Substitui "Total de atendimentos mês") */}
                 <Card className="p-5 border border-stone-200">
                     <h4 className="font-extrabold text-stone-800 text-lg uppercase leading-none">Fluxo Total de Pessoas</h4>
                     <p className="text-xs text-stone-400 font-medium mb-4">Pessoas que passaram na ótica este mês</p>
@@ -1974,7 +1992,6 @@ function DashboardScreen({ data, storeData }) {
                     </div>
 
                     <div className="space-y-3">
-                        {/* Bloco Serviços Rápidos */}
                         <div className="border border-stone-200 rounded-xl p-3 bg-stone-50/50">
                             <div className="flex items-center gap-2 mb-2 pb-2 border-b border-stone-100">
                                 <Wrench className="w-4 h-4 text-stone-600" />
@@ -1996,7 +2013,6 @@ function DashboardScreen({ data, storeData }) {
                             </div>
                         </div>
 
-                        {/* Bloco Serviços Comerciais */}
                         <div className="border border-orange-200 rounded-xl p-3 bg-orange-50/30">
                             <div className="flex items-center gap-2 mb-2 pb-2 border-b border-orange-100">
                                 <Users className="w-4 h-4 text-orange-600" />
@@ -2069,8 +2085,18 @@ function ComparisonScreen({ data }) {
         });
 
         const metrics = {
-            TC: { vendas: 0, orcamentos: 0, retornos: 0, servicos: 0, atendimentos: 0, messages: 0, msgSales: 0, cliSales:0, newSales:0, orcCli: 0, orcNew: 0, retCli: 0, retNew: 0, staff: {} },
-            SGS: { vendas: 0, orcamentos: 0, retornos: 0, servicos: 0, atendimentos: 0, messages: 0, msgSales: 0, cliSales:0, newSales:0, orcCli: 0, orcNew: 0, retCli: 0, retNew: 0, staff: {} }
+            TC: { 
+                vendas: 0, orcamentos: 0, retornos: 0, servicos: 0, atendimentos: 0, messages: 0, msgSales: 0, 
+                cliSales:0, newSales:0, 
+                orcCli: 0, orcNew: 0, retCli: 0, retNew: 0, 
+                staff: {} 
+            },
+            SGS: { 
+                vendas: 0, orcamentos: 0, retornos: 0, servicos: 0, atendimentos: 0, messages: 0, msgSales: 0, 
+                cliSales:0, newSales:0, 
+                orcCli: 0, orcNew: 0, retCli: 0, retNew: 0, 
+                staff: {} 
+            }
         };
 
         monthData.forEach(entry => {
@@ -2090,7 +2116,6 @@ function ComparisonScreen({ data }) {
                     else metrics[store].newSales++;
                 }
                 
-                // Contagem detalhada de Orçamentos e Retornos por perfil
                 if (entry.action === 'orcamento') {
                     metrics[store].orcamentos++;
                     if (entry.clientType === 'cliente') metrics[store].orcCli++;
@@ -2279,7 +2304,6 @@ function ComparisonScreen({ data }) {
                 </div>
             </Card>
 
-            {/* NOVO GRÁFICO: CONVERSÃO DE ORÇAMENTOS POR PERFIL */}
             <Card className="p-4">
                 <div className="flex justify-between items-center mb-4">
                     <h4 className="font-bold text-stone-700 text-sm uppercase">Conversão de Orçamento por Perfil (%)</h4>
@@ -2306,7 +2330,6 @@ function ComparisonScreen({ data }) {
                 </div>
             </Card>
 
-            {/* 2. Orçamentos e Retornos */}
             <Card className="p-4">
                 <h4 className="font-bold text-stone-700 text-sm mb-4 uppercase">Orçamentos & Retornos</h4>
                 <div className="h-56">
@@ -2341,7 +2364,6 @@ function ComparisonScreen({ data }) {
                 </div>
             </Card>
 
-            {/* 3. Volume de Serviços */}
             <Card className="p-4">
                 <h4 className="font-bold text-stone-700 text-sm mb-4 uppercase">Volume de Atendimento</h4>
                 <div className="h-56">
@@ -2363,7 +2385,6 @@ function ComparisonScreen({ data }) {
                 </div>
             </Card>
 
-            {/* 4. Mensagens e Conversão (Verde) */}
             <Card className="p-4 bg-green-50/50 border-green-100">
                 <h4 className="font-bold text-green-800 text-sm mb-4 uppercase flex items-center gap-2">
                     <MessageSquare className="w-4 h-4" /> Marketing (WhatsApp)
@@ -2386,7 +2407,6 @@ function ComparisonScreen({ data }) {
                 </div>
             </Card>
 
-            {/* 5. Eficiência por Perfil de Cliente (Atendentes) */}
             <Card className="p-4 bg-stone-50 border-stone-200">
                 <h4 className="font-bold text-stone-700 text-sm mb-4 uppercase flex items-center gap-2">
                     <Target className="w-4 h-4 text-orange-600" /> Eficiência por Perfil (Conversão %)
@@ -2412,7 +2432,6 @@ function ComparisonScreen({ data }) {
                 </div>
             </Card>
 
-            {/* 6. Ranking Top Atendentes */}
             <Card className="p-4">
                 <h4 className="font-bold text-stone-700 text-sm mb-4 uppercase flex items-center gap-2">
                     <Award className="w-4 h-4 text-yellow-500" /> Top Atendentes
