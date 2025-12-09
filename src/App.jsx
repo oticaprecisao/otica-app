@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
+// CORREÇÃO: Imports atualizados para Lucide v0.555.0
+// Nomes antigos (HelpCircle, Trash2, etc.) foram removidos nesta versão.
 import { 
   Users, 
   ShoppingBag, 
   Wrench, 
   CreditCard, 
-  CircleHelp,    // Nome novo
-  ChartBar,      // Nome novo
-  CirclePlus,    // Nome novo
-  CircleCheck,   // Nome novo
+  CircleHelp,    // Nome oficial novo (era HelpCircle)
+  ChartBar,      // Nome oficial novo (era BarChart2)
+  CirclePlus,    // Nome oficial novo (era PlusCircle)
+  CircleCheck,   // Nome oficial novo (era CheckCircle)
   ArrowLeft, 
   Calendar, 
   Eye, 
@@ -20,7 +22,7 @@ import {
   Target, 
   ChevronDown, 
   Filter, 
-  CircleAlert,   // Nome novo
+  CircleAlert,   // Nome oficial novo (era AlertCircle)
   Award, 
   CalendarDays, 
   Zap, 
@@ -29,21 +31,21 @@ import {
   Megaphone, 
   Lightbulb, 
   Settings, 
-  Trash,         // Nome novo
-  MonitorPlay, 
+  Trash,         // Nome oficial novo (era Trash2)
+  MonitorPlay,   // Nome oficial novo (era Monitor/MonitorPlay)
   MessageCircle, 
   Lock, 
-  LockOpen,      // Nome novo
+  LockOpen,      // Nome oficial novo (era Unlock)
   X, 
   Smartphone, 
   Globe, 
-  TriangleAlert, // Nome novo
+  TriangleAlert, // Nome oficial novo (era AlertTriangle)
   Camera, 
   CalendarCheck, 
-  Ellipsis,      // Nome novo
+  Ellipsis,      // Nome oficial novo (era MoreHorizontal)
   MessageSquare,
   Scale, 
-  ArrowLeftRight,// Nome novo
+  ArrowLeftRight,
   Plus,
   LogOut,
   Shield,
@@ -170,6 +172,92 @@ const CLIENT_TYPES = [
   { id: 'nao_cliente', label: 'Não Cliente' }
 ];
 
+// --- Mock Data Generator Helper ---
+const generateMockData = async (storeConfig) => {
+    const batch = writeBatch(db);
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    
+    const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    
+    const randomDate = () => {
+        const day = Math.floor(Math.random() * today.getDate()) + 1;
+        return new Date(currentYear, currentMonth, day, Math.floor(Math.random() * 10) + 9, 0, 0); 
+    };
+
+    const actions = ['venda', 'orcamento', 'orcamento', 'venda', 'retorno'];
+    const marketingSources = [null, null, 'anuncio', 'mensagem', null];
+    const clientTypes = ['cliente', 'cliente', 'nao_cliente'];
+
+    let count = 0;
+
+    for (const storeKey of ['TC', 'SGS']) {
+        const staffList = storeConfig.stores[storeKey].staff;
+        
+        for (let i = 0; i < 40; i++) {
+            const date = randomDate();
+            const action = random(actions);
+            // LÓGICA DE VENDA: Venda OU Retorno conta como venda $$$
+            const isSale = action === 'venda' || action === 'retorno';
+            
+            const entry = {
+                category: 'comercial',
+                action: action,
+                attendant: random(staffList),
+                clientType: random(clientTypes),
+                marketingSource: random(marketingSources),
+                period: date.getHours() < 12 ? 'manha' : 'tarde',
+                store: storeKey,
+                createdAt: date,
+                dateString: date.toLocaleDateString('pt-BR'),
+                userId: 'mock-user',
+                saleValue: isSale ? Math.floor(Math.random() * 800) + 150 : 0
+            };
+
+            const ref = doc(collection(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION_NAME));
+            batch.set(ref, entry);
+            count++;
+        }
+        
+        for (let i = 0; i < 15; i++) {
+             const date = randomDate();
+             const entry = {
+                category: 'servico',
+                type: random(SERVICE_TYPES.map(s => s.id)),
+                period: date.getHours() < 12 ? 'manha' : 'tarde',
+                store: storeKey,
+                createdAt: date,
+                dateString: date.toLocaleDateString('pt-BR'),
+                userId: 'mock-user'
+            };
+            const ref = doc(collection(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION_NAME));
+            batch.set(ref, entry);
+            count++;
+        }
+
+        for (let i = 0; i < 20; i++) {
+             const date = randomDate();
+             const entry = {
+                category: 'whatsapp',
+                type: random(WHATSAPP_ACTIONS.map(a => a.id)),
+                period: date.getHours() < 12 ? 'manha' : 'tarde',
+                marketingSource: 'mensagem',
+                store: storeKey,
+                createdAt: date,
+                dateString: date.toLocaleDateString('pt-BR'),
+                userId: 'mock-user'
+            };
+            const ref = doc(collection(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION_NAME));
+            batch.set(ref, entry);
+            count++;
+        }
+    }
+
+    await batch.commit();
+    return count;
+};
+
 // --- Componentes UI Auxiliares ---
 
 const Card = ({ children, className = '' }) => (
@@ -274,6 +362,7 @@ function SettingsModal({ config, onClose, onUpdateConfig, onClearToday, currentS
     const [newStaffName, setNewStaffName] = useState("");
     const [confirmDeleteStaff, setConfirmDeleteStaff] = useState(null); 
     const [confirmClearToday, setConfirmClearToday] = useState(false); 
+    const [isGenerating, setIsGenerating] = useState(false); 
 
     const [managerPass, setManagerPass] = useState(config.managerPassword);
     const [tcPass, setTcPass] = useState(config.stores.TC.password);
@@ -309,6 +398,23 @@ function SettingsModal({ config, onClose, onUpdateConfig, onClearToday, currentS
         };
         onUpdateConfig(newConfig);
         alert("Senhas atualizadas com sucesso!");
+    };
+
+    const handleGenerateData = async () => {
+        const confirmed = window.confirm("ATENÇÃO: Isso vai gerar dados fictícios no banco de dados ATUAL. Use apenas se estiver testando em um ambiente seguro. Deseja continuar?");
+        if (!confirmed) return;
+
+        setIsGenerating(true);
+        try {
+            const count = await generateMockData(config);
+            alert(`${count} registros fictícios gerados para este mês!`);
+            onClose();
+        } catch (error) {
+            console.error("Error generating data:", error);
+            alert("Erro ao gerar dados.");
+        } finally {
+            setIsGenerating(false);
+        }
     };
 
     return (
@@ -377,9 +483,26 @@ function SettingsModal({ config, onClose, onUpdateConfig, onClearToday, currentS
                             </div>
                             
                             <div className="pt-4 border-t border-stone-200 mt-4 space-y-3">
-                                <h4 className="text-xs font-bold text-red-600 uppercase mb-2 flex items-center gap-1">
-                                    <TriangleAlert className="w-3 h-3" /> Zona de Perigo
+                                <h4 className="text-xs font-bold text-stone-500 uppercase mb-2 flex items-center gap-1">
+                                    <Wrench className="w-3 h-3" /> Ferramentas de Teste
                                 </h4>
+                                
+                                <button 
+                                    onClick={handleGenerateData}
+                                    disabled={isGenerating}
+                                    className="w-full py-3 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors disabled:opacity-50"
+                                >
+                                    {isGenerating ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700"></div>
+                                            Gerando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <TrendingUp className="w-4 h-4" /> Gerar Dados Fictícios (Mês Atual)
+                                        </>
+                                    )}
+                                </button>
 
                                 {!confirmClearToday ? (
                                     <button 
@@ -613,6 +736,8 @@ function YearlyAnalysis({ data }) {
 }
 
 // --- Telas de Lançamento e Dashboard ---
+
+// ... (LoginScreen e EntryScreen sem alteração de lógica, apenas reutilização)
 
 function LoginScreen({ config, onLogin }) {
     const [selectedStore, setSelectedStore] = useState('TC');
@@ -1259,6 +1384,42 @@ function DashboardScreen({ data, storeData }) {
   }, [filteredData, storeData]);
 
   const daysMap = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+  
+  // --- DADOS SEMANA ATUAL (Novo Requisito) ---
+  const currentWeekChartData = useMemo(() => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Zera hora para evitar problemas de fuso
+      const currentDay = today.getDay(); // 0 (Dom) - 6 (Sab)
+      
+      // Calcular startOfWeek (Domingo)
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - currentDay);
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      // End of Week (Sábado)
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
+
+      // Inicializa contadores
+      const counts = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0};
+
+      // Usa 'data' que contém todo o histórico
+      data.forEach(entry => {
+          const entryDate = new Date(entry.date); // Garante objeto Date
+          if (entryDate >= startOfWeek && entryDate <= endOfWeek) {
+              counts[entryDate.getDay()]++;
+          }
+      });
+
+      const daysMap = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+      return Object.entries(counts).map(([day, count]) => ({
+          name: daysMap[day], 
+          value: count
+      }));
+  }, [data]); // Depende de 'data' completa, não filtrada
+
   const COLORS_PIE = ['#f97316', '#fbbf24', '#ef4444', '#78716c'];
   const COLORS_COM = ['#ea580c', '#fbbf24', '#22c55e']; 
 
@@ -1312,15 +1473,18 @@ function DashboardScreen({ data, storeData }) {
   const conversionList = Object.entries(stats.attendantStats).map(([name, s]) => {
       const totalSales = s.vendaCli + s.vendaNew;
       
-      // ALTERAÇÃO AQUI: Eficiência Real (Vendas / Atendimentos)
-      const conversionEfficiency = s.totalGeralAtendente > 0 ? Math.round((totalSales / s.totalGeralAtendente) * 100) : 0;
-
+      // ALTERAÇÃO: Cálculo de Eficiência Real (% de Conversão)
+      // Fórmula: (Total de Vendas / Total de Atendimentos Comerciais) * 100
+      const totalInteractions = s.totalGeralAtendente; // Inclui Venda, Orçamento, Retorno
+      const generalConversion = totalInteractions > 0 ? Math.round((totalSales / totalInteractions) * 100) : 0;
+      
+      // 2. & 3. Share das vendas (Cliente vs Não Cliente)
       const shareCli = totalSales > 0 ? Math.round((s.vendaCli / totalSales) * 100) : 0;
       const shareNew = totalSales > 0 ? Math.round((s.vendaNew / totalSales) * 100) : 0;
       
       return {
           name: name.split(' ')[0],
-          generalConversion: conversionEfficiency, // Alterado
+          generalConversion,
           shareCli,
           shareNew
       }
@@ -1424,7 +1588,7 @@ function DashboardScreen({ data, storeData }) {
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 disabled={availableMonths.length === 0}
-                className="block w-full pl-10 pr-10 py-3 text-sm font-bold border-2 border-orange-100 rounded-xl bg-white text-stone-800 shadow-sm focus:ring-orange-500"
+                className="block w-full pl-10 pr-10 py-3 text-sm font-bold border-2 border-orange-200 rounded-xl bg-white text-stone-800 shadow-sm focus:ring-orange-500"
              >
                 {availableMonths.length === 0 ? <option>Sem dados</option> : availableMonths.map(m => <option key={m} value={m}>{formatMonthLabel(m)}</option>)}
              </select>
@@ -1554,8 +1718,6 @@ function DashboardScreen({ data, storeData }) {
 
             {/* 3. RAIO-X DE VENDAS */}
             <div className="space-y-4 pt-4 border-t-2 border-orange-100">
-                <h3 className="text-lg font-black text-stone-800 uppercase pl-2 border-l-4 border-orange-600">Raio-X de Vendas</h3>
-
                 <Card className="p-4">
                     <div className="flex gap-4 items-center">
                         <div className="h-40 w-1/3">
@@ -1888,10 +2050,10 @@ function DashboardScreen({ data, storeData }) {
 
                     {/* GRÁFICO DE BARRAS: DIAS DA SEMANA */}
                     <div className="mb-4">
-                        <p className="text-[10px] font-bold text-stone-400 uppercase mb-2">Por Dia da Semana</p>
+                        <p className="text-[10px] font-bold text-stone-400 uppercase mb-2">Movimento Semana Atual (Tempo Real)</p>
                         <div className="h-32">
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={weekDayData}>
+                                <BarChart data={currentWeekChartData}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                     <XAxis dataKey="name" tick={{fontSize:10}} />
                                     <Tooltip cursor={{fill: '#f5f5f4'}} />
