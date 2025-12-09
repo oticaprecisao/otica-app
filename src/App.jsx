@@ -4,10 +4,10 @@ import {
   ShoppingBag, 
   Wrench, 
   CreditCard, 
-  CircleHelp,    // Nome novo (era HelpCircle)
-  ChartBar,      // Nome novo (era BarChart2)
-  CirclePlus,    // Nome novo (era PlusCircle)
-  CircleCheck,   // Nome novo (era CheckCircle2)
+  CircleHelp,    // Nome novo
+  ChartBar,      // Nome novo
+  CirclePlus,    // Nome novo
+  CircleCheck,   // Nome novo
   ArrowLeft, 
   Calendar, 
   Eye, 
@@ -20,7 +20,7 @@ import {
   Target, 
   ChevronDown, 
   Filter, 
-  CircleAlert,   // Nome novo (era AlertCircle)
+  CircleAlert,   // Nome novo
   Award, 
   CalendarDays, 
   Zap, 
@@ -29,21 +29,21 @@ import {
   Megaphone, 
   Lightbulb, 
   Settings, 
-  Trash,         // Nome novo (era Trash2)
+  Trash,         // Nome novo
   MonitorPlay, 
   MessageCircle, 
   Lock, 
-  LockOpen,      // Nome novo (era Unlock)
+  LockOpen,      // Nome novo
   X, 
   Smartphone, 
   Globe, 
-  TriangleAlert, // Nome novo (era AlertTriangle)
+  TriangleAlert, // Nome novo
   Camera, 
   CalendarCheck, 
-  Ellipsis,      // Nome novo (era MoreHorizontal)
+  Ellipsis,      // Nome novo
   MessageSquare,
   Scale, 
-  ArrowLeftRight,// Nome novo (era ArrowRightLeft)
+  ArrowLeftRight,// Nome novo
   Plus,
   LogOut,
   Shield,
@@ -170,93 +170,6 @@ const CLIENT_TYPES = [
   { id: 'nao_cliente', label: 'Não Cliente' }
 ];
 
-// --- Mock Data Generator Helper ---
-const generateMockData = async (storeConfig) => {
-    const batch = writeBatch(db);
-    const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-    
-    const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
-    
-    const randomDate = () => {
-        const day = Math.floor(Math.random() * today.getDate()) + 1;
-        return new Date(currentYear, currentMonth, day, Math.floor(Math.random() * 10) + 9, 0, 0); 
-    };
-
-    const actions = ['venda', 'orcamento', 'orcamento', 'venda', 'retorno'];
-    const marketingSources = [null, null, 'anuncio', 'mensagem', null];
-    const clientTypes = ['cliente', 'cliente', 'nao_cliente'];
-
-    let count = 0;
-
-    for (const storeKey of ['TC', 'SGS']) {
-        const staffList = storeConfig.stores[storeKey].staff;
-        
-        for (let i = 0; i < 40; i++) {
-            const date = randomDate();
-            const action = random(actions);
-            
-            // LÓGICA ATUALIZADA: Retorno conta como venda para gerar valor
-            const isSale = action === 'venda' || action === 'retorno';
-            
-            const entry = {
-                category: 'comercial',
-                action: action,
-                attendant: random(staffList),
-                clientType: random(clientTypes),
-                marketingSource: random(marketingSources),
-                period: date.getHours() < 12 ? 'manha' : 'tarde',
-                store: storeKey,
-                createdAt: date,
-                dateString: date.toLocaleDateString('pt-BR'),
-                userId: 'mock-user',
-                saleValue: isSale ? Math.floor(Math.random() * 800) + 150 : 0
-            };
-
-            const ref = doc(collection(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION_NAME));
-            batch.set(ref, entry);
-            count++;
-        }
-        
-        for (let i = 0; i < 15; i++) {
-             const date = randomDate();
-             const entry = {
-                category: 'servico',
-                type: random(SERVICE_TYPES.map(s => s.id)),
-                period: date.getHours() < 12 ? 'manha' : 'tarde',
-                store: storeKey,
-                createdAt: date,
-                dateString: date.toLocaleDateString('pt-BR'),
-                userId: 'mock-user'
-            };
-            const ref = doc(collection(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION_NAME));
-            batch.set(ref, entry);
-            count++;
-        }
-
-        for (let i = 0; i < 20; i++) {
-             const date = randomDate();
-             const entry = {
-                category: 'whatsapp',
-                type: random(WHATSAPP_ACTIONS.map(a => a.id)),
-                period: date.getHours() < 12 ? 'manha' : 'tarde',
-                marketingSource: 'mensagem',
-                store: storeKey,
-                createdAt: date,
-                dateString: date.toLocaleDateString('pt-BR'),
-                userId: 'mock-user'
-            };
-            const ref = doc(collection(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION_NAME));
-            batch.set(ref, entry);
-            count++;
-        }
-    }
-
-    await batch.commit();
-    return count;
-};
-
 // --- Componentes UI Auxiliares ---
 
 const Card = ({ children, className = '' }) => (
@@ -361,7 +274,6 @@ function SettingsModal({ config, onClose, onUpdateConfig, onClearToday, currentS
     const [newStaffName, setNewStaffName] = useState("");
     const [confirmDeleteStaff, setConfirmDeleteStaff] = useState(null); 
     const [confirmClearToday, setConfirmClearToday] = useState(false); 
-    const [isGenerating, setIsGenerating] = useState(false); 
 
     const [managerPass, setManagerPass] = useState(config.managerPassword);
     const [tcPass, setTcPass] = useState(config.stores.TC.password);
@@ -397,23 +309,6 @@ function SettingsModal({ config, onClose, onUpdateConfig, onClearToday, currentS
         };
         onUpdateConfig(newConfig);
         alert("Senhas atualizadas com sucesso!");
-    };
-
-    const handleGenerateData = async () => {
-        const confirmed = window.confirm("ATENÇÃO: Isso vai gerar dados fictícios no banco de dados ATUAL. Use apenas se estiver testando em um ambiente seguro. Deseja continuar?");
-        if (!confirmed) return;
-
-        setIsGenerating(true);
-        try {
-            const count = await generateMockData(config);
-            alert(`${count} registros fictícios gerados para este mês!`);
-            onClose();
-        } catch (error) {
-            console.error("Error generating data:", error);
-            alert("Erro ao gerar dados.");
-        } finally {
-            setIsGenerating(false);
-        }
     };
 
     return (
@@ -482,26 +377,9 @@ function SettingsModal({ config, onClose, onUpdateConfig, onClearToday, currentS
                             </div>
                             
                             <div className="pt-4 border-t border-stone-200 mt-4 space-y-3">
-                                <h4 className="text-xs font-bold text-stone-500 uppercase mb-2 flex items-center gap-1">
-                                    <Wrench className="w-3 h-3" /> Ferramentas de Teste
+                                <h4 className="text-xs font-bold text-red-600 uppercase mb-2 flex items-center gap-1">
+                                    <TriangleAlert className="w-3 h-3" /> Zona de Perigo
                                 </h4>
-                                
-                                <button 
-                                    onClick={handleGenerateData}
-                                    disabled={isGenerating}
-                                    className="w-full py-3 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors disabled:opacity-50"
-                                >
-                                    {isGenerating ? (
-                                        <>
-                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700"></div>
-                                            Gerando...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <TrendingUp className="w-4 h-4" /> Gerar Dados Fictícios (Mês Atual)
-                                        </>
-                                    )}
-                                </button>
 
                                 {!confirmClearToday ? (
                                     <button 
@@ -1433,16 +1311,16 @@ function DashboardScreen({ data, storeData }) {
   // 4. Conversão Vendas DETALHADA
   const conversionList = Object.entries(stats.attendantStats).map(([name, s]) => {
       const totalSales = s.vendaCli + s.vendaNew;
-      // LÓGICA ATUALIZADA: Share de Vendas (Vendas do Atendente / Vendas Totais da Loja)
-      const generalConversion = stats.totalVendas > 0 ? Math.round((totalSales / stats.totalVendas) * 100) : 0;
       
-      // 2. & 3. Share das vendas (Cliente vs Não Cliente)
+      // ALTERAÇÃO AQUI: Eficiência Real (Vendas / Atendimentos)
+      const conversionEfficiency = s.totalGeralAtendente > 0 ? Math.round((totalSales / s.totalGeralAtendente) * 100) : 0;
+
       const shareCli = totalSales > 0 ? Math.round((s.vendaCli / totalSales) * 100) : 0;
       const shareNew = totalSales > 0 ? Math.round((s.vendaNew / totalSales) * 100) : 0;
       
       return {
           name: name.split(' ')[0],
-          generalConversion,
+          generalConversion: conversionEfficiency, // Alterado
           shareCli,
           shareNew
       }
@@ -1546,7 +1424,7 @@ function DashboardScreen({ data, storeData }) {
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 disabled={availableMonths.length === 0}
-                className="block w-full pl-10 pr-10 py-3 text-sm font-bold border-2 border-orange-200 rounded-xl bg-white text-stone-800 shadow-sm focus:ring-orange-500"
+                className="block w-full pl-10 pr-10 py-3 text-sm font-bold border-2 border-orange-100 rounded-xl bg-white text-stone-800 shadow-sm focus:ring-orange-500"
              >
                 {availableMonths.length === 0 ? <option>Sem dados</option> : availableMonths.map(m => <option key={m} value={m}>{formatMonthLabel(m)}</option>)}
              </select>
@@ -1741,7 +1619,7 @@ function DashboardScreen({ data, storeData }) {
                     <h4 className="font-bold text-stone-700 text-sm mb-4 uppercase">Conversão de Vendas (Eficiência)</h4>
                     <div className="grid grid-cols-4 text-[9px] font-bold text-stone-400 border-b border-stone-100 pb-2 mb-2 text-center">
                         <div className="text-left">Atendente</div>
-                        <div>Venda Total</div>
+                        <div>% Conv. Total</div>
                         <div>% Cli</div>
                         <div>% Novo</div>
                     </div>
@@ -2112,7 +1990,8 @@ function DashboardScreen({ data, storeData }) {
   );
 }
 
-// --- ComparisonScreen (COM NOVO GRÁFICO ADICIONADO) ---
+// ... (Rest of the code: ComparisonScreen, App Main Component, etc.)
+// ... (Including ComparisonScreen and App component as defined in the previous complete version)
 
 function ComparisonScreen({ data }) {
     const availableMonths = useMemo(() => {
@@ -2183,7 +2062,6 @@ function ComparisonScreen({ data }) {
                     else metrics[store].newSales++;
                 }
                 
-                // IMPORTANTE: Manter contagem separada de Orçamentos e Retornos para os gráficos de conversão
                 if (entry.action === 'orcamento') {
                     metrics[store].orcamentos++;
                     if (entry.clientType === 'cliente') metrics[store].orcCli++;
@@ -2280,6 +2158,7 @@ function ComparisonScreen({ data }) {
             const totalSales = s.vendaCli + s.vendaNew;
             const totalInteractions = s.totalAtendimentos;
             
+            // ALTERAÇÃO AQUI: Eficiência Real (Vendas / Atendimentos)
             const conversionEfficiency = totalInteractions > 0 ? Math.round((totalSales / totalInteractions) * 100) : 0;
 
             const rateCli = totalSales > 0 ? Math.round((s.vendaCli / totalSales) * 100) : 0;
@@ -2553,7 +2432,8 @@ function ComparisonScreen({ data }) {
         </div>
     );
 }
-// ... (App Main Component)
+// ... (App Main Component) ...
+
 export default function App() {
   const [storeConfig, setStoreConfig] = useState(DEFAULT_CONFIG);
   const [user, setUser] = useState(null);
