@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
-// CORREÇÃO: Imports atualizados para Lucide v0.555.0
-// Nomes antigos (HelpCircle, Trash2, etc.) foram removidos nesta versão.
+// CORREÇÃO DE COMPATIBILIDADE:
+// Usando nomes "clássicos" do Lucide e apelidando (as) para os nomes usados no código.
+// Isso resolve o erro "undefined" se o ambiente estiver rodando uma versão do Lucide anterior à 0.460.
 import { 
   Users, 
   ShoppingBag, 
   Wrench, 
   CreditCard, 
-  CircleHelp,    // Nome oficial novo (era HelpCircle)
-  ChartBar,      // Nome oficial novo (era BarChart2)
-  CirclePlus,    // Nome oficial novo (era PlusCircle)
-  CircleCheck,   // Nome oficial novo (era CheckCircle)
+  HelpCircle as CircleHelp,    // Compatibilidade: HelpCircle (antigo) -> CircleHelp
+  BarChart2 as ChartBar,       // Compatibilidade: BarChart2 (antigo) -> ChartBar
+  PlusCircle as CirclePlus,    // Compatibilidade: PlusCircle (antigo) -> CirclePlus
+  CheckCircle as CircleCheck,  // Compatibilidade: CheckCircle (antigo) -> CircleCheck
   ArrowLeft, 
   Calendar, 
   Eye, 
@@ -22,7 +23,7 @@ import {
   Target, 
   ChevronDown, 
   Filter, 
-  CircleAlert,   // Nome oficial novo (era AlertCircle)
+  AlertCircle as CircleAlert,   // Compatibilidade: AlertCircle (antigo) -> CircleAlert
   Award, 
   CalendarDays, 
   Zap, 
@@ -31,25 +32,28 @@ import {
   Megaphone, 
   Lightbulb, 
   Settings, 
-  Trash,         // Nome oficial novo (era Trash2)
-  MonitorPlay,   // Nome oficial novo (era Monitor/MonitorPlay)
+  Trash2 as Trash,             // Compatibilidade: Trash2 (antigo) -> Trash
+  Monitor as MonitorPlay,      // Compatibilidade: Monitor (universal) -> MonitorPlay
   MessageCircle, 
   Lock, 
-  LockOpen,      // Nome oficial novo (era Unlock)
+  Unlock as LockOpen,          // Compatibilidade: Unlock (antigo) -> LockOpen
   X, 
   Smartphone, 
   Globe, 
-  TriangleAlert, // Nome oficial novo (era AlertTriangle)
+  AlertTriangle as TriangleAlert, // Compatibilidade: AlertTriangle (antigo) -> TriangleAlert
   Camera, 
   CalendarCheck, 
-  Ellipsis,      // Nome oficial novo (era MoreHorizontal)
+  MoreHorizontal as Ellipsis,     // Compatibilidade: MoreHorizontal (antigo) -> Ellipsis
   MessageSquare,
   Scale, 
-  ArrowLeftRight,
+  ArrowLeftRight, // Este costuma existir nas duas versões
   Plus,
   LogOut,
   Shield,
-  Key
+  Key,
+  Edit as Pencil, // Compatibilidade: Edit (antigo/universal) -> Pencil (garante que funcione)
+  List,          
+  Clock          
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -82,6 +86,7 @@ import {
   collection, 
   addDoc, 
   deleteDoc, 
+  updateDoc,
   doc, 
   writeBatch, 
   onSnapshot, 
@@ -350,6 +355,103 @@ function PinModal({ onClose, onSuccess, managerPin }) {
 
                     <Button onClick={handleVerify} className="w-full mt-2">
                         Acessar Painel
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// COMPONENTE NOVO: Modal de Edição Completa
+function EditEntryModal({ entry, onClose, onSave }) {
+    const [clientType, setClientType] = useState(entry.clientType || 'cliente');
+    const [marketingSource, setMarketingSource] = useState(entry.marketingSource || null);
+    const [saleValue, setSaleValue] = useState(entry.saleValue || 0);
+
+    const handleSave = () => {
+        const updatedData = {
+            clientType,
+            marketingSource,
+            // Só salva valor se houver marketing definido, ou se for uma venda/retorno e quisermos manter o valor mesmo sem marketing (opcional, aqui vou seguir a lógica de que vendas tem valor)
+            saleValue: parseFloat(saleValue) || 0
+        };
+        onSave(entry.id, updatedData);
+        onClose();
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+                <div className="bg-blue-600 p-4 flex justify-between items-center text-white">
+                    <h3 className="font-bold text-lg flex items-center gap-2">
+                        <Pencil className="w-5 h-5" /> Editar Registro
+                    </h3>
+                    <button onClick={onClose}><X className="w-5 h-5 opacity-80 hover:opacity-100" /></button>
+                </div>
+                
+                <div className="p-5 space-y-5">
+                    {/* 1. Tipo de Cliente */}
+                    <div>
+                        <label className="block text-xs font-bold text-stone-500 uppercase mb-2">Tipo de Cliente</label>
+                        <div className="flex bg-stone-100 p-1 rounded-lg">
+                            <button 
+                                onClick={() => setClientType('cliente')}
+                                className={`flex-1 py-2 rounded-md text-sm font-bold transition-all ${clientType === 'cliente' ? 'bg-white text-blue-600 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
+                            >
+                                Já é Cliente
+                            </button>
+                            <button 
+                                onClick={() => setClientType('nao_cliente')}
+                                className={`flex-1 py-2 rounded-md text-sm font-bold transition-all ${clientType === 'nao_cliente' ? 'bg-white text-blue-600 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
+                            >
+                                Novo Cliente
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* 2. Origem Marketing */}
+                    <div>
+                        <label className="block text-xs font-bold text-stone-500 uppercase mb-2">Origem (Marketing)</label>
+                        <div className="grid grid-cols-3 gap-2">
+                            <button 
+                                onClick={() => setMarketingSource(null)}
+                                className={`py-2 rounded-lg text-xs font-bold border transition-all ${!marketingSource ? 'bg-stone-600 text-white border-stone-600' : 'bg-white text-stone-500 border-stone-200'}`}
+                            >
+                                Nenhum
+                            </button>
+                            <button 
+                                onClick={() => setMarketingSource('anuncio')}
+                                className={`py-2 rounded-lg text-xs font-bold border transition-all flex flex-col items-center gap-1 ${marketingSource === 'anuncio' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-600 border-blue-200'}`}
+                            >
+                                <MonitorPlay className="w-4 h-4" /> Anúncio
+                            </button>
+                            <button 
+                                onClick={() => setMarketingSource('mensagem')}
+                                className={`py-2 rounded-lg text-xs font-bold border transition-all flex flex-col items-center gap-1 ${marketingSource === 'mensagem' ? 'bg-green-600 text-white border-green-600' : 'bg-white text-green-600 border-green-200'}`}
+                            >
+                                <MessageCircle className="w-4 h-4" /> Zap
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* 3. Valor (Condicional ou Sempre visível se for Venda) */}
+                    {(entry.action === 'venda' || entry.action === 'retorno') && (
+                        <div>
+                            <label className="block text-xs font-bold text-stone-500 uppercase mb-2">Valor da Venda (R$)</label>
+                            <div className="relative">
+                                <DollarSign className="absolute left-3 top-3 w-5 h-5 text-stone-400" />
+                                <input 
+                                    type="number" 
+                                    value={saleValue}
+                                    onChange={(e) => setSaleValue(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-3 border border-stone-300 rounded-xl font-bold text-lg text-stone-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    <Button onClick={handleSave} className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                        Salvar Alterações
                     </Button>
                 </div>
             </div>
@@ -822,18 +924,36 @@ function LoginScreen({ config, onLogin }) {
     );
 }
 
-function EntryScreen({ storeData, onSave }) {
+function EntryScreen({ storeData, onSave, entries, onDelete, onUpdate }) {
   const [step, setStep] = useState('menu');
   const [tempData, setTempData] = useState({});
   const [successMsg, setSuccessMsg] = useState('');
   const [marketingSource, setMarketingSource] = useState(null);
   const [saleValue, setSaleValue] = useState('');
+  const [entryToEdit, setEntryToEdit] = useState(null); // NOVO: Estado para abrir modal
 
   const resetFlow = () => {
     setStep('menu');
     setTempData({});
     setMarketingSource(null);
     setSaleValue('');
+  };
+
+  // --- LOGIC FOR DAILY LOG ---
+  const todayEntries = useMemo(() => {
+      if (!entries) return [];
+      const today = new Date();
+      return entries.filter(e => {
+          const d = e.date;
+          return d.getDate() === today.getDate() && 
+                 d.getMonth() === today.getMonth() && 
+                 d.getFullYear() === today.getFullYear();
+      });
+  }, [entries]);
+
+  // Função chamada ao clicar no lápis, abre o modal
+  const handleEditClick = (entry) => {
+      setEntryToEdit(entry);
   };
 
   const handleServiceClick = async (serviceId) => {
@@ -889,15 +1009,27 @@ function EntryScreen({ storeData, onSave }) {
 
   return (
     <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-300">
+      {/* RENDERIZA O MODAL SE TIVER ITEM SELECIONADO */}
+      {entryToEdit && (
+          <EditEntryModal 
+              entry={entryToEdit}
+              onClose={() => setEntryToEdit(null)}
+              onSave={onUpdate}
+          />
+      )}
+
       {step !== 'menu' && (
         <div className="flex items-center justify-between border-b border-stone-200 pb-4">
             <div>
                 <h2 className="text-2xl font-extrabold text-stone-800 tracking-tight">
-                {step === 'whatsapp_menu' ? 'Controle WhatsApp' : 'Comercial'}
+                {step === 'whatsapp_menu' ? 'Controle WhatsApp' : 
+                 step === 'daily_log' ? 'Movimento de Hoje' : 'Comercial'}
                 </h2>
-                <p className="text-sm text-stone-500">Registro de dados</p>
+                <p className="text-sm text-stone-500">
+                    {step === 'daily_log' ? 'Conferência e Ajustes' : 'Registro de dados'}
+                </p>
             </div>
-            <button onClick={resetFlow} className="px-4 py-2 text-xs font-bold text-red-600 bg-red-50 rounded-full hover:bg-red-100 uppercase tracking-wide transition-colors">Cancelar</button>
+            <button onClick={resetFlow} className="px-4 py-2 text-xs font-bold text-red-600 bg-red-50 rounded-full hover:bg-red-100 uppercase tracking-wide transition-colors">Voltar</button>
         </div>
       )}
 
@@ -966,9 +1098,141 @@ function EntryScreen({ storeData, onSave }) {
                     <CirclePlus className="w-6 h-6 text-green-700" />
                 </div>
                 </button>
+
+                {/* NOVO BOTÃO: MOVIMENTO DE HOJE (LOG) */}
+                <button
+                onClick={() => setStep('daily_log')}
+                className={`w-full bg-blue-50 border-2 border-blue-200 p-5 rounded-2xl shadow-sm flex items-center justify-between group hover:bg-blue-100 hover:border-blue-500 transition-all active:scale-95`}
+                >
+                <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-transform`}>
+                        <List className="w-6 h-6" />
+                    </div>
+                    <div className="text-left">
+                        <h3 className="font-bold text-lg text-blue-900">Movimento de Hoje</h3>
+                        <p className="text-xs text-blue-700 font-medium">Conferir lançamentos do dia</p>
+                    </div>
+                </div>
+                <div className="bg-white/50 p-2 rounded-full">
+                    <Eye className="w-6 h-6 text-blue-700" />
+                </div>
+                </button>
             </div>
           </section>
         </>
+      )}
+
+      {/* TELA DE LOG DIÁRIO */}
+      {step === 'daily_log' && (
+          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 pb-20">
+              
+              {/* Seção Comercial por Atendente */}
+              <div>
+                  <h3 className="text-sm font-bold text-stone-500 uppercase mb-3 flex items-center gap-2">
+                      <Users className="w-4 h-4" /> Atendimentos Comerciais
+                  </h3>
+                  
+                  {storeData.staff.map(attendantName => {
+                      const staffEntries = todayEntries.filter(e => e.category === 'comercial' && e.attendant === attendantName);
+                      if (staffEntries.length === 0) return null;
+
+                      return (
+                          <div key={attendantName} className="mb-4 bg-white border border-stone-200 rounded-xl overflow-hidden shadow-sm">
+                              <div className="bg-stone-50 p-3 border-b border-stone-200 flex justify-between items-center">
+                                  <span className="font-bold text-stone-700">{attendantName}</span>
+                                  <span className="text-xs bg-stone-200 px-2 py-1 rounded-full font-bold text-stone-600">{staffEntries.length} itens</span>
+                              </div>
+                              <div className="divide-y divide-stone-100">
+                                  {staffEntries.map(entry => (
+                                      <div key={entry.id} className="p-3 flex justify-between items-center hover:bg-stone-50 transition-colors">
+                                          <div className="flex flex-col">
+                                              <div className="flex items-center gap-2">
+                                                  <span className={`text-xs font-bold px-1.5 rounded uppercase ${entry.action === 'venda' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                                                      {entry.action}
+                                                  </span>
+                                                  <span className="text-xs text-stone-400 flex items-center gap-1">
+                                                      <Clock className="w-3 h-3" /> {entry.date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                  </span>
+                                              </div>
+                                              {(entry.action === 'venda' || entry.action === 'retorno') && (
+                                                  <span className="text-sm font-bold text-stone-800 mt-1">
+                                                      {entry.saleValue ? entry.saleValue.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}) : 'R$ 0,00'}
+                                                  </span>
+                                              )}
+                                              <div className="flex flex-wrap gap-1 mt-1">
+                                                  {entry.clientType && <span className="text-[9px] bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded border border-stone-200">{entry.clientType === 'cliente' ? 'Já Cliente' : 'Novo Cli.'}</span>}
+                                                  {entry.marketingSource && <span className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100 uppercase">{entry.marketingSource}</span>}
+                                              </div>
+                                          </div>
+                                          
+                                          <div className="flex items-center gap-2">
+                                              {/* Botão de Edição Completa */}
+                                              <button 
+                                                  onClick={() => handleEditClick(entry)}
+                                                  className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                                                  title="Editar Detalhes"
+                                              >
+                                                  <Pencil className="w-4 h-4" />
+                                              </button>
+                                              
+                                              <button 
+                                                  onClick={() => onDelete(entry.id)}
+                                                  className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                                  title="Excluir Registro"
+                                              >
+                                                  <Trash className="w-4 h-4" />
+                                              </button>
+                                          </div>
+                                      </div>
+                                  ))}
+                              </div>
+                          </div>
+                      );
+                  })}
+                  
+                  {todayEntries.filter(e => e.category === 'comercial').length === 0 && (
+                      <p className="text-center text-sm text-stone-400 py-4 italic">Nenhum atendimento comercial hoje.</p>
+                  )}
+              </div>
+
+              {/* Seção Outros (Serviços e WhatsApp) */}
+              <div>
+                  <h3 className="text-sm font-bold text-stone-500 uppercase mb-3 flex items-center gap-2">
+                      <Zap className="w-4 h-4" /> Serviços & WhatsApp (Geral)
+                  </h3>
+                  
+                  <div className="bg-white border border-stone-200 rounded-xl overflow-hidden shadow-sm divide-y divide-stone-100">
+                      {todayEntries.filter(e => e.category !== 'comercial').map(entry => (
+                          <div key={entry.id} className="p-3 flex justify-between items-center hover:bg-stone-50 transition-colors">
+                              <div className="flex items-center gap-3">
+                                  <div className={`p-2 rounded-lg ${entry.category === 'whatsapp' ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-600'}`}>
+                                      {entry.category === 'whatsapp' ? <MessageCircle className="w-4 h-4" /> : <Wrench className="w-4 h-4" />}
+                                  </div>
+                                  <div>
+                                      <span className="block text-sm font-bold text-stone-700 capitalize">
+                                          {entry.type ? entry.type.replace('_', ' ') : 'Serviço'}
+                                      </span>
+                                      <span className="text-xs text-stone-400 flex items-center gap-1">
+                                          <Clock className="w-3 h-3" /> {entry.date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                      </span>
+                                  </div>
+                              </div>
+                              <button 
+                                  onClick={() => onDelete(entry.id)}
+                                  className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                              >
+                                  <Trash className="w-4 h-4" />
+                              </button>
+                          </div>
+                      ))}
+                      
+                      {todayEntries.filter(e => e.category !== 'comercial').length === 0 && (
+                          <p className="text-center text-sm text-stone-400 py-4 italic">Nenhum serviço ou mensagem hoje.</p>
+                      )}
+                  </div>
+              </div>
+
+          </div>
       )}
 
       {/* TELA DE OPÇÕES DO WHATSAPP */}
@@ -2696,6 +2960,26 @@ export default function App() {
     }
   };
 
+  const handleDeleteEntry = async (id) => {
+      if (window.confirm('Tem certeza que deseja excluir este registro?')) {
+          try {
+              await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION_NAME, id));
+          } catch (error) {
+              console.error("Erro ao excluir:", error);
+              alert("Erro ao excluir registro.");
+          }
+      }
+  };
+
+  const handleUpdateEntry = async (id, newData) => {
+      try {
+          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION_NAME, id), newData);
+      } catch (error) {
+          console.error("Erro ao atualizar:", error);
+          alert("Erro ao atualizar registro.");
+      }
+  };
+
   const handleClearToday = async () => {
     const today = new Date();
     const entriesToDelete = entries.filter(entry => {
@@ -2815,7 +3099,10 @@ export default function App() {
         ) : view === 'entry' ? (
           <EntryScreen 
             storeData={storeConfig.stores[currentStore]} 
-            onSave={handleAddEntry} 
+            onSave={handleAddEntry}
+            entries={filteredEntries} // Passando dados filtrados para o Log
+            onDelete={handleDeleteEntry} // Passando função de deletar
+            onUpdate={handleUpdateEntry} // Passando função de editar
           />
         ) : view === 'dashboard' ? (
           <DashboardScreen 
