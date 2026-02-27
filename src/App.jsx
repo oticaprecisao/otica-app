@@ -23,6 +23,8 @@ import {
     Target,
     ChevronDown,
     Filter,
+    ArrowUpRight,
+    ArrowDownRight,
     AlertCircle as CircleAlert,   // Compatibilidade: AlertCircle (antigo) -> CircleAlert
     Award,
     CalendarDays,
@@ -56,7 +58,10 @@ import {
     Clock,
     ChevronRight,
     History,
-    Save
+    Save,
+    User,
+    Check,
+    Sparkles
 } from 'lucide-react';
 import {
     BarChart,
@@ -423,10 +428,10 @@ function EditEntryModal({ entry, onClose, onSave, storeData, isNew = false }) {
                         <div className="bg-white p-2.5 rounded-xl shadow-sm border border-stone-200 sm:col-span-2">
                             <p className="text-[9px] font-bold text-stone-400 uppercase tracking-wider mb-1.5 ml-1">Tipo de Registro</p>
                             <div className="grid grid-cols-3 gap-1.5">
-                                {[['comercial', '💰', 'Comercial'], ['servico', '🔧', 'Serviço'], ['whatsapp', '💬', 'WhatsApp']].map(([cat, icon, label]) => (
+                                {[['comercial', DollarSign, 'Comercial'], ['servico', Wrench, 'Serviço'], ['whatsapp', MessageCircle, 'WhatsApp']].map(([cat, Icon, label]) => (
                                     <button key={cat} onClick={() => setCategory(cat)}
                                         className={`py-1.5 rounded-lg border-2 text-center text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${category === cat ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-stone-100 bg-stone-50 text-stone-500 hover:border-stone-300'}`}>
-                                        <span>{icon}</span>
+                                        <Icon className={`w-3.5 h-3.5 ${category === cat ? 'text-orange-600' : 'text-stone-400'}`} />
                                         <span>{label}</span>
                                     </button>
                                 ))}
@@ -1044,16 +1049,16 @@ function TrendsScreen({ data, storeConfig }) {
                     </div>
                     <div className="p-4 h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={yearlyData} margin={{ top: 25, right: 25, left: 10, bottom: 5 }}>
+                            <BarChart data={yearlyData} margin={{ top: 35, right: 25, left: 10, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.5} />
                                 <XAxis dataKey="name" tick={{ fontSize: 10 }} padding={{ left: 10, right: 10 }} />
                                 <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
                                 <Tooltip />
                                 <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
-                                <Bar dataKey="TC_novosClientes" name="TC" fill="#16a34a" radius={[4, 4, 0, 0]} barSize={16}>
+                                <Bar dataKey="TC_novosClientes" name="TC" fill="#16a34a" stackId="a" radius={[0, 0, 0, 0]} barSize={24}>
                                     <LabelList dataKey="TC_novosClientes" position="top" style={{ fill: '#16a34a', fontSize: '10px', fontWeight: 'bold' }} />
                                 </Bar>
-                                <Bar dataKey="SGS_novosClientes" name="SGS" fill="#dc2626" radius={[4, 4, 0, 0]} barSize={16}>
+                                <Bar dataKey="SGS_novosClientes" name="SGS" fill="#dc2626" stackId="b" radius={[4, 4, 0, 0]} barSize={24}>
                                     <LabelList dataKey="SGS_novosClientes" position="top" style={{ fill: '#dc2626', fontSize: '10px', fontWeight: 'bold' }} />
                                 </Bar>
                             </BarChart>
@@ -1155,25 +1160,27 @@ function TrendsScreen({ data, storeConfig }) {
                         <h4 className="font-bold text-stone-700 text-sm uppercase">Origem das Vendas (Cliente x Novo)</h4>
                         <p className="text-[10px] text-stone-400 mt-1">Comparativo de vendas para clientes antigos vs novos</p>
                     </div>
-                    <div className="p-4 h-64">
+                    <div className="p-4 h-96">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={yearlyData} margin={{ top: 25, right: 25, left: 10, bottom: 5 }}>
+                            <BarChart data={yearlyData} margin={{ top: 45, right: 25, left: 10, bottom: 5 }} barGap={2}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.5} />
                                 <XAxis dataKey="name" tick={{ fontSize: 10 }} padding={{ left: 10, right: 10 }} />
                                 <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
                                 <Tooltip />
                                 <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
-                                <Bar dataKey="TC_vendasCli" name="TC (Cliente)" fill="#16a34a" radius={[4, 4, 0, 0]} barSize={12}>
-                                    <LabelList dataKey="TC_vendasCliPerc" position="top" formatter={(v) => v > 0 ? `${v}%` : ''} style={{ fill: '#16a34a', fontSize: '9px', fontWeight: 'bold' }} />
+                                {/* TC Stack */}
+                                <Bar dataKey="TC_vendasCli" name="TC (Cliente)" fill="#16a34a" stackId="tc" barSize={30}>
+                                    <LabelList dataKey="TC_vendasCliPerc" position="center" formatter={(v) => v > 5 ? `${v}%` : ''} style={{ fill: '#fff', fontSize: '9px', fontWeight: 'bold' }} />
                                 </Bar>
-                                <Bar dataKey="TC_novosClientes" name="TC (Novo)" fill="#4ade80" radius={[4, 4, 0, 0]} barSize={12}>
-                                    <LabelList dataKey="TC_novosClientesPerc" position="top" formatter={(v) => v > 0 ? `${v}%` : ''} style={{ fill: '#4ade80', fontSize: '9px', fontWeight: 'bold' }} />
+                                <Bar dataKey="TC_novosClientes" name="TC (Novo)" fill="#4ade80" stackId="tc" barSize={30}>
+                                    <LabelList dataKey="TC_novosClientesPerc" position="top" formatter={(v) => v > 0 ? `${v}%` : ''} style={{ fill: '#16a34a', fontSize: '10px', fontWeight: 'bold' }} />
                                 </Bar>
-                                <Bar dataKey="SGS_vendasCli" name="SGS (Cliente)" fill="#dc2626" radius={[4, 4, 0, 0]} barSize={12}>
-                                    <LabelList dataKey="SGS_vendasCliPerc" position="top" formatter={(v) => v > 0 ? `${v}%` : ''} style={{ fill: '#dc2626', fontSize: '9px', fontWeight: 'bold' }} />
+                                {/* SGS Stack */}
+                                <Bar dataKey="SGS_vendasCli" name="SGS (Cliente)" fill="#dc2626" stackId="sgs" barSize={30}>
+                                    <LabelList dataKey="SGS_vendasCliPerc" position="center" formatter={(v) => v > 5 ? `${v}%` : ''} style={{ fill: '#fff', fontSize: '9px', fontWeight: 'bold' }} />
                                 </Bar>
-                                <Bar dataKey="SGS_novosClientes" name="SGS (Novo)" fill="#f87171" radius={[4, 4, 0, 0]} barSize={12}>
-                                    <LabelList dataKey="SGS_novosClientesPerc" position="top" formatter={(v) => v > 0 ? `${v}%` : ''} style={{ fill: '#f87171', fontSize: '9px', fontWeight: 'bold' }} />
+                                <Bar dataKey="SGS_novosClientes" name="SGS (Novo)" fill="#f87171" stackId="sgs" barSize={30}>
+                                    <LabelList dataKey="SGS_novosClientesPerc" position="top" formatter={(v) => v > 0 ? `${v}%` : ''} style={{ fill: '#dc2626', fontSize: '10px', fontWeight: 'bold' }} />
                                 </Bar>
                             </BarChart>
                         </ResponsiveContainer>
@@ -1210,68 +1217,103 @@ function TrendsScreen({ data, storeConfig }) {
                             </div>
                         </div>
 
-                        {/* Linha 2: Métricas Consolidadas (Cards empilhados verticalmente) */}
-                        <div className="grid grid-cols-1 gap-8">
-                            {/* Card TC */}
-                            <div className="bg-white p-6 rounded-3xl shadow-sm border-2 border-green-50 relative overflow-hidden flex flex-col justify-between">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="pt-1">
-                                        <p className="text-[9px] font-bold text-green-600 uppercase tracking-widest mb-0.5">Unidade</p>
-                                        <h5 className="text-xl font-black text-stone-800 tracking-tight leading-none">Três Corações</h5>
-                                    </div>
-                                    <div className="flex flex-col items-end gap-1.5 scaled-90">
-                                        <span className="text-[9px] bg-green-50 text-green-700 px-2 py-1 rounded-full font-black uppercase tracking-tighter border border-green-100/50 whitespace-nowrap">Manhã {peakAnalysis.TC.manhaPerc}%</span>
-                                        <span className="text-[9px] bg-green-600 text-white px-2 py-1 rounded-full font-black uppercase tracking-tighter shadow-sm shadow-green-200 whitespace-nowrap">Tarde {peakAnalysis.TC.tardePerc}%</span>
-                                    </div>
-                                </div>
-                                <div className="space-y-3">
-                                    <div className="p-4 bg-stone-50/80 rounded-2xl border border-stone-100 flex flex-col gap-1">
-                                        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Dia de Pico</p>
-                                        <p className="text-xl font-black text-green-800">{peakAnalysis.TC.peak}</p>
-                                    </div>
-                                    <div className="p-4 bg-stone-50/80 rounded-2xl border border-stone-100 flex flex-col gap-1">
-                                        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Semana de Pico</p>
-                                        <p className="text-xl font-black text-green-800">{peakAnalysis.TC.peakWeek}</p>
-                                    </div>
-                                    <div className="p-4 bg-stone-50/80 rounded-2xl border border-stone-100 flex flex-col gap-1">
-                                        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Dia do Mês (Mais Vendas)</p>
-                                        <span className="text-xl font-black text-green-800">{peakAnalysis.TC.peakVolDay}</span>
-                                    </div>
-                                    <div className="p-4 bg-stone-50/80 rounded-2xl border border-stone-100 opacity-60 flex flex-col gap-1">
-                                        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Dia do Mês (Menos Vendas)</p>
-                                        <span className="text-lg font-bold text-stone-600">{peakAnalysis.TC.quietVolDay}</span>
-                                    </div>
-                                </div>
+                        {/* Linha 2: Métricas Consolidadas (Card Único Comparativo) */}
+                        <div className="bg-white p-4 rounded-3xl shadow-sm border border-stone-100 flex flex-col gap-4">
+                            {/* Header do Card Compacto */}
+                            <div className="flex justify-between items-center border-b border-stone-100 pb-2">
+                                <h4 className="font-bold text-stone-700 text-[10px] uppercase tracking-wider">Picos: <span className="text-green-600">TC</span> / <span className="text-red-600">SGS</span></h4>
+                                <TrendingUp className="w-4 h-4 text-stone-300" />
                             </div>
 
-                            {/* Card SGS */}
-                            <div className="bg-white p-6 rounded-3xl shadow-sm border-2 border-red-50 relative overflow-hidden flex flex-col justify-between">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="pt-1">
-                                        <p className="text-[9px] font-bold text-red-600 uppercase tracking-widest mb-0.5">Unidade</p>
-                                        <h5 className="text-xl font-black text-stone-800 tracking-tight leading-none">São Gonçalo</h5>
+                            {/* Grid de Métricas Compactas */}
+                            <div className="grid grid-cols-1 gap-3">
+                                {/* Manhã vs Tarde */}
+                                <div className="p-3 bg-stone-50/50 rounded-2xl border border-stone-100 flex flex-col gap-2">
+                                    <div className="flex items-center justify-center gap-2">
+                                        <Clock className="w-3 h-3 text-stone-400" />
+                                        <p className="text-[8px] font-bold text-stone-400 uppercase tracking-widest text-center">Concentração por Período (Manhã / Tarde)</p>
                                     </div>
-                                    <div className="flex flex-col items-end gap-1.5 scaled-90">
-                                        <span className="text-[9px] bg-red-50 text-red-700 px-2 py-1 rounded-full font-black uppercase tracking-tighter border border-red-100/50 whitespace-nowrap">Manhã {peakAnalysis.SGS.manhaPerc}%</span>
-                                        <span className="text-[9px] bg-red-600 text-white px-2 py-1 rounded-full font-black uppercase tracking-tighter shadow-sm shadow-red-200 whitespace-nowrap">Tarde {peakAnalysis.SGS.tardePerc}%</span>
+                                    <div className="flex justify-around items-center">
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-[9px] font-black text-green-600 uppercase mb-1">TC</span>
+                                            <div className="flex gap-1">
+                                                <span className="text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded font-black">{peakAnalysis.TC.manhaPerc}%</span>
+                                                <span className="text-stone-300">/</span>
+                                                <span className="text-[10px] bg-green-600 text-white px-1.5 py-0.5 rounded font-black">{peakAnalysis.TC.tardePerc}%</span>
+                                            </div>
+                                        </div>
+                                        <div className="w-[1px] h-8 bg-stone-200"></div>
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-[9px] font-black text-red-600 uppercase mb-1">SGS</span>
+                                            <div className="flex gap-1">
+                                                <span className="text-[10px] bg-red-50 text-red-700 px-1.5 py-0.5 rounded font-black">{peakAnalysis.SGS.manhaPerc}%</span>
+                                                <span className="text-stone-300">/</span>
+                                                <span className="text-[10px] bg-red-600 text-white px-1.5 py-0.5 rounded font-black">{peakAnalysis.SGS.tardePerc}%</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="space-y-3">
-                                    <div className="p-4 bg-stone-50/80 rounded-2xl border border-stone-100 flex flex-col gap-1">
-                                        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Dia de Pico</p>
-                                        <p className="text-xl font-black text-red-800">{peakAnalysis.SGS.peak}</p>
+
+                                {/* Demais Métricas em Linha Única */}
+                                <div className="grid grid-cols-1 gap-2">
+                                    <div className="p-3 bg-stone-50/50 rounded-xl border border-stone-100 flex justify-between items-center">
+                                        <div className="flex items-center gap-2">
+                                            <Zap className="w-3 h-3 text-orange-500" />
+                                            <span className="text-[9px] font-bold text-stone-400 uppercase tracking-tight">Dia de Pico</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-black text-green-700">{peakAnalysis.TC.peak}</span>
+                                            <span className="text-stone-300 font-light">/</span>
+                                            <span className="text-xs font-black text-red-700">{peakAnalysis.SGS.peak}</span>
+                                        </div>
                                     </div>
-                                    <div className="p-4 bg-stone-50/80 rounded-2xl border border-stone-100 flex flex-col gap-1">
-                                        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Semana de Pico</p>
-                                        <p className="text-xl font-black text-red-800">{peakAnalysis.SGS.peakWeek}</p>
+
+                                    <div className="p-3 bg-stone-50/50 rounded-xl border border-stone-100 flex justify-between items-center">
+                                        <div className="flex items-center gap-2">
+                                            <Calendar className="w-3 h-3 text-orange-500" />
+                                            <span className="text-[9px] font-bold text-stone-400 uppercase tracking-tight">Semana de Pico</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-black text-green-700">{peakAnalysis.TC.peakWeek.split(' ')[0]}</span>
+                                            <span className="text-stone-300 font-light">/</span>
+                                            <span className="text-xs font-black text-red-700">{peakAnalysis.SGS.peakWeek.split(' ')[0]}</span>
+                                        </div>
                                     </div>
-                                    <div className="p-4 bg-stone-50/80 rounded-2xl border border-stone-100 flex flex-col gap-1">
-                                        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Dia do Mês (Mais Vendas)</p>
-                                        <span className="text-xl font-black text-red-800">{peakAnalysis.SGS.peakVolDay}</span>
+
+                                    <div className="p-3 bg-stone-50/50 rounded-xl border border-stone-100 flex justify-between items-center opacity-75">
+                                        <div className="flex items-center gap-2">
+                                            <CalendarDays className="w-3 h-3 text-orange-400" />
+                                            <span className="text-[9px] font-bold text-stone-400 uppercase tracking-tight">Semana mais vazia</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-bold text-green-600/70">{peakAnalysis.TC.quietWeek.split(' ')[0]}</span>
+                                            <span className="text-stone-300 font-light">/</span>
+                                            <span className="text-xs font-bold text-red-600/70">{peakAnalysis.SGS.quietWeek.split(' ')[0]}</span>
+                                        </div>
                                     </div>
-                                    <div className="p-4 bg-stone-50/80 rounded-2xl border border-stone-100 opacity-60 flex flex-col gap-1">
-                                        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Dia do Mês (Menos Vendas)</p>
-                                        <span className="text-lg font-bold text-stone-600">{peakAnalysis.SGS.quietVolDay}</span>
+
+                                    <div className="p-3 bg-stone-50/50 rounded-xl border border-stone-100 flex justify-between items-center">
+                                        <div className="flex items-center gap-2">
+                                            <ArrowUpRight className="w-3 h-3 text-green-500" />
+                                            <span className="text-[9px] font-bold text-stone-400 uppercase tracking-tight">Dia (Mais Vendas)</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-black text-green-700">{peakAnalysis.TC.peakVolDay}</span>
+                                            <span className="text-stone-300 font-light">/</span>
+                                            <span className="text-xs font-black text-red-700">{peakAnalysis.SGS.peakVolDay}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-3 bg-stone-50/50 rounded-xl border border-stone-100 flex justify-between items-center opacity-75">
+                                        <div className="flex items-center gap-2">
+                                            <ArrowDownRight className="w-3 h-3 text-red-400" />
+                                            <span className="text-[9px] font-bold text-stone-400 uppercase tracking-tight">Dia (Menos Vendas)</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-bold text-green-600/70">{peakAnalysis.TC.quietVolDay}</span>
+                                            <span className="text-stone-300 font-light">/</span>
+                                            <span className="text-xs font-bold text-red-600/70">{peakAnalysis.SGS.quietVolDay}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1702,7 +1744,12 @@ function EntryScreen({ storeData, onSave, entries, onDelete, onUpdate }) {
                                         <div key={entry.id} className="p-3 flex justify-between items-start hover:bg-stone-50 transition-colors">
                                             <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 flex-wrap">
-                                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase shrink-0 ${entry.category === 'comercial' ? (entry.action === 'venda' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700') : entry.category === 'whatsapp' ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-600'}`}>
+                                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase shrink-0 flex items-center gap-1 ${entry.category === 'comercial' ? (entry.action === 'venda' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700') : entry.category === 'whatsapp' ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-600'}`}>
+                                                        {entry.category === 'comercial' ? (
+                                                            entry.action === 'venda' ? <DollarSign className="w-2.5 h-2.5" /> :
+                                                                entry.action === 'orcamento' ? <FileText className="w-2.5 h-2.5" /> :
+                                                                    entry.action === 'retorno' ? <Calendar className="w-2.5 h-2.5" /> : null
+                                                        ) : entry.category === 'whatsapp' ? <MessageCircle className="w-2.5 h-2.5" /> : <Wrench className="w-2.5 h-2.5" />}
                                                         {entry.category === 'comercial' ? (entry.action || 'Comercial') : entry.category === 'whatsapp' ? 'WhatsApp' : (entry.type || 'Serviço')}
                                                     </span>
                                                     <span className="text-[10px] text-stone-400">{entry.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -1712,10 +1759,15 @@ function EntryScreen({ storeData, onSave, entries, onDelete, onUpdate }) {
                                                         </span>
                                                     )}
                                                 </div>
-                                                {entry.attendant && <span className="text-xs text-stone-500">👤 {entry.attendant}</span>}
-                                                {entry.clientType && <span className="text-xs text-stone-500 capitalize">{entry.clientType === 'cliente' ? '✓ Já Cliente' : '✦ Novo Cliente'}</span>}
-                                                {entry.marketingSource && <span className="text-xs text-stone-500">📣 {entry.marketingSource}</span>}
-                                                {entry.message && <span className="text-xs text-stone-500 truncate">💬 {entry.message}</span>}
+                                                {entry.attendant && <span className="text-xs text-stone-500 flex items-center gap-1"><User className="w-3 h-3" /> {entry.attendant}</span>}
+                                                {entry.clientType && (
+                                                    <span className="text-xs text-stone-500 capitalize flex items-center gap-1">
+                                                        {entry.clientType === 'cliente' ? <Check className="w-3 h-3 text-green-500" /> : <Sparkles className="w-3 h-3 text-blue-500" />}
+                                                        {entry.clientType === 'cliente' ? 'Já Cliente' : 'Novo Cliente'}
+                                                    </span>
+                                                )}
+                                                {entry.marketingSource && <span className="text-xs text-stone-500 flex items-center gap-1"><Megaphone className="w-3 h-3 text-blue-400" /> {entry.marketingSource}</span>}
+                                                {entry.message && <span className="text-xs text-stone-500 truncate flex items-center gap-1"><MessageCircle className="w-3 h-3" /> {entry.message}</span>}
                                             </div>
                                             <div className="flex items-center gap-1 ml-2 shrink-0">
                                                 <button onClick={() => setEntryToEdit(entry)} className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors">
@@ -1759,7 +1811,10 @@ function EntryScreen({ storeData, onSave, entries, onDelete, onUpdate }) {
                                             <div key={entry.id} className="p-3 flex justify-between items-center hover:bg-stone-50 transition-colors">
                                                 <div className="flex flex-col">
                                                     <div className="flex items-center gap-2">
-                                                        <span className={`text-xs font-bold px-1.5 rounded uppercase ${entry.action === 'venda' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                                                        <span className={`text-xs font-bold px-1.5 rounded uppercase flex items-center gap- recruiting ${entry.action === 'venda' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                                                            {entry.action === 'venda' ? <DollarSign className="w-3 h-3 mr-1" /> :
+                                                                entry.action === 'orcamento' ? <FileText className="w-3 h-3 mr-1" /> :
+                                                                    entry.action === 'retorno' ? <Calendar className="w-3 h-3 mr-1" /> : null}
                                                             {entry.action}
                                                         </span>
                                                         <span className="text-xs text-stone-400 flex items-center gap-1">

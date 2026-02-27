@@ -1,0 +1,65 @@
+﻿
+> otica-app@0.0.0 build
+> vite build
+
+[36mvite v7.2.4 [32mbuilding client environment for production...[36m[39m
+node.exe : [baseline-browser-mapping] The data in 
+this module is over two months old.  To ensure 
+accurate Baseline data, please update: `npm i 
+baseline-browser-mapping@latest -D`
+No linha:1 caractere:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([baseli 
+   ne-brows...ping@latest -D`:String) [], RemoteExc  
+  eption
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+transforming...
+[32mÔ£ô[39m 5 modules transformed.
+[31mÔ£ù[39m Build failed in 498ms
+[31merror during build:
+[31m[vite:esbuild] Transform failed with 1 error:
+D:/jobs/oticas_precisao/06_app/otica-app/src/App.jsx:
+1080:24: ERROR: The symbol "setEntryToEdit" has 
+already been declared[31m
+file: [36mD:/jobs/oticas_precisao/06_app/otica-app/s
+rc/App.jsx:1080:24[31m
+[33m
+[33mThe symbol "setEntryToEdit" has already been 
+declared[33m
+1078 |      const [saleValue, setSaleValue] = 
+useState('');
+1079 |      // entryToEdit state is managed by the 
+parent App component
+1080 |      const [entryToEdit, setEntryToEdit] = 
+useState(null);
+     |                          ^
+1081 |  
+1082 |      const resetFlow = () => {
+[31m
+    at failureErrorWithLog (D:\jobs\oticas_precisao\0
+6_app\otica-app\node_modules\esbuild\lib\main.js:1467
+:15)
+    at D:\jobs\oticas_precisao\06_app\otica-app\node_
+modules\esbuild\lib\main.js:736:50
+    at responseCallbacks.<computed> (D:\jobs\oticas_p
+recisao\06_app\otica-app\node_modules\esbuild\lib\mai
+n.js:603:9)
+    at handleIncomingPacket (D:\jobs\oticas_precisao\
+06_app\otica-app\node_modules\esbuild\lib\main.js:658
+:12)
+    at Socket.readFromStdout (D:\jobs\oticas_precisao
+\06_app\otica-app\node_modules\esbuild\lib\main.js:58
+1:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk 
+(node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode 
+(node:internal/streams/readable:510:3)
+    at Readable.push 
+(node:internal/streams/readable:390:5)
+    at Pipe.onStreamRead 
+(node:internal/stream_base_commons:189:23)[39m
