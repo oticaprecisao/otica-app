@@ -2225,6 +2225,7 @@ function DashboardScreen({ data, storeData }) {
             uniqueDays,
             weekdayCounts: { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 },
             dateCounts: {},
+            dateSales: {},
             weekCounts: {}
         };
 
@@ -2250,6 +2251,10 @@ function DashboardScreen({ data, storeData }) {
             metrics.weekdayCounts[dayOfWeek]++;
             metrics.weekCounts[weekKey] = (metrics.weekCounts[weekKey] || 0) + 1;
             metrics.dateCounts[dayOfMonth] = (metrics.dateCounts[dayOfMonth] || 0) + 1;
+
+            if (entry.category === 'comercial' && (entry.action === 'venda' || entry.action === 'retorno')) {
+                metrics.dateSales[dayOfMonth] = (metrics.dateSales[dayOfMonth] || 0) + 1;
+            }
 
             if (entry.period === 'manha') metrics.morningCount++;
             if (entry.period === 'tarde') metrics.afternoonCount++;
@@ -2951,13 +2956,19 @@ function DashboardScreen({ data, storeData }) {
                                 {/* NOVOS CAMPOS: Dia do Mês */}
                                 <div>
                                     <p className="text-[10px] font-bold text-green-600 uppercase">Data + Cheia</p>
-                                    <span className="text-sm font-bold text-stone-800">Dia {stats.busiestDate[0]}</span>
-                                    <span className="block text-[10px] text-stone-500">{stats.busiestDate[1]} atendimentos</span>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-stone-800">Dia {stats.busiestDate[0]}</span>
+                                        <span className="text-[10px] text-stone-500">{stats.busiestDate[1]} atendimentos</span>
+                                        <span className="text-[10px] font-bold text-green-700">{stats.dateSales[stats.busiestDate[0]] || 0} vendas</span>
+                                    </div>
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-bold text-red-500 uppercase">Data + Vazia</p>
-                                    <span className="text-sm font-bold text-stone-800">Dia {stats.quietestDate[0]}</span>
-                                    <span className="block text-[10px] text-stone-500">{stats.quietestDate[1]} atendimentos</span>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-stone-800">Dia {stats.quietestDate[0]}</span>
+                                        <span className="text-[10px] text-stone-500">{stats.quietestDate[1]} atendimentos</span>
+                                        <span className="text-[10px] font-bold text-red-700">{stats.dateSales[stats.quietestDate[0]] || 0} vendas</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -3303,9 +3314,10 @@ function ComparisonScreen({ data }) {
         });
     });
 
-    const topStaff = [...allStaff].sort((a, b) => b.vendas - a.vendas).slice(0, 10);
+    const topStaffTC = allStaff.filter(s => s.store === 'TC').sort((a, b) => b.conversion - a.conversion);
+    const topStaffSGS = allStaff.filter(s => s.store === 'SGS').sort((a, b) => b.conversion - a.conversion);
 
-    const staffEfficiency = [...allStaff].sort((a, b) => b.vendas - a.vendas);
+    const staffEfficiency = [...allStaff].sort((a, b) => b.conversion - a.conversion);
 
     const CustomEfficiencyTooltip = ({ active, payload, label }) => {
         if (active && payload && payload.length) {
@@ -3444,23 +3456,60 @@ function ComparisonScreen({ data }) {
 
             {/* ... Rest of the component ... */}
             <Card className="p-4">
-                <h4 className="font-bold text-stone-700 text-sm mb-4 uppercase">Volume de Atendimento</h4>
-                <div className="h-56">
+                <div className="flex justify-between items-center mb-4">
+                    <h4 className="font-bold text-stone-700 text-sm uppercase">Volume de Atendimento</h4>
+                    <div className="flex flex-col text-[9px] font-bold text-stone-500 text-right">
+                        <span>Diferença % (TC vs SGS)</span>
+                    </div>
+                </div>
+                <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={serviceCompData} layout="vertical" margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
+                        <BarChart data={serviceCompData} layout="vertical" margin={{ top: 10, right: 30, left: 10, bottom: 20 }}>
                             <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                             <XAxis type="number" hide />
                             <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 10, fontWeight: 'bold' }} />
                             <Tooltip cursor={{ fill: '#f5f5f4' }} />
-                            <Legend iconSize={8} />
-                            <Bar dataKey="TC" fill="#fb923c" radius={[0, 4, 4, 0]} barSize={20}>
-                                <LabelList dataKey="TC" position="right" style={{ fill: '#c2410c', fontSize: '10px' }} />
+                            <Legend iconSize={8} wrapperStyle={{ paddingTop: '10px' }} />
+                            <Bar dataKey="TC" fill="#fb923c" radius={[0, 4, 4, 0]} barSize={24}>
+                                <LabelList dataKey="TC" position="right" style={{ fill: '#c2410c', fontSize: '10px', fontWeight: 'bold' }} />
                             </Bar>
-                            <Bar dataKey="SGS" fill="#f87171" radius={[0, 4, 4, 0]} barSize={20}>
-                                <LabelList dataKey="SGS" position="right" style={{ fill: '#991b1b', fontSize: '10px' }} />
+                            <Bar dataKey="SGS" fill="#f87171" radius={[0, 4, 4, 0]} barSize={24}>
+                                <LabelList dataKey="SGS" position="right" style={{ fill: '#991b1b', fontSize: '10px', fontWeight: 'bold' }} />
                             </Bar>
                         </BarChart>
                     </ResponsiveContainer>
+                </div>
+                <div className="mt-4 pt-4 border-t border-stone-100 grid grid-cols-1 gap-2">
+                    {serviceCompData.map(item => {
+                        const tc = item.TC;
+                        const sgs = item.SGS;
+                        let diffText = "";
+                        let colorClass = "";
+
+                        if (sgs > 0) {
+                            const diff = Math.round(((tc - sgs) / sgs) * 100);
+                            if (diff > 0) {
+                                diffText = `TC tem ${diff}% mais movimento que SGS`;
+                                colorClass = "text-orange-600";
+                            } else if (diff < 0) {
+                                diffText = `SGS tem ${Math.abs(diff)}% mais movimento que TC`;
+                                colorClass = "text-red-600";
+                            } else {
+                                diffText = "As lojas têm o mesmo movimento";
+                                colorClass = "text-stone-500";
+                            }
+                        } else if (tc > 0) {
+                            diffText = "TC tem 100% do movimento";
+                            colorClass = "text-orange-600";
+                        }
+
+                        return (
+                            <div key={item.name} className="flex justify-between items-center bg-stone-50 p-2 rounded-lg border border-stone-100">
+                                <span className="text-[10px] font-bold text-stone-500 uppercase">{item.name}</span>
+                                <span className={`text-[10px] font-black ${colorClass}`}>{diffText}</span>
+                            </div>
+                        );
+                    })}
                 </div>
             </Card>
 
@@ -3513,45 +3562,62 @@ function ComparisonScreen({ data }) {
 
 
             <Card className="p-4">
-                <h4 className="font-bold text-stone-700 text-sm mb-4 uppercase flex items-center gap-2">
-                    <Award className="w-4 h-4 text-yellow-500" /> Top Atendentes
+                <h4 className="font-bold text-stone-700 text-sm mb-6 uppercase flex items-center gap-2">
+                    <Award className="w-4 h-4 text-yellow-500" /> Top Atendentes por Loja
                 </h4>
-                <div className="space-y-2">
-                    <div className="grid grid-cols-6 text-[9px] font-bold text-stone-400 border-b border-stone-100 pb-2 text-center">
-                        <div className="text-left col-span-2">Nome</div>
-                        <div>Vendas</div>
-                        <div>C.Total</div>
-                        <div>% Cli</div>
-                        <div>% Novo</div>
-                    </div>
-                    {topStaff.map((s, i) => (
-                        <div key={`${s.store}-${s.name}`} className="grid grid-cols-6 items-center py-3 border-b border-stone-50 text-xs text-center">
-                            <div className="text-left col-span-2">
-                                <span className="font-bold text-stone-700 block">{i + 1}. {s.name}</span>
-                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${s.store === 'TC' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`}>
-                                    {s.store}
-                                </span>
-                            </div>
-                            <div className="flex flex-col items-center">
-                                <span className="font-black text-stone-800 text-sm">{s.vendas}</span>
-                                <span className="text-[9px] text-stone-400 font-medium">de {s.atendimentos} atd</span>
-                            </div>
 
-                            <div>
-                                <span className={`font-bold px-2 py-1 rounded ${s.conversion >= 30 ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-600'}`}>
-                                    {s.conversion}%
-                                </span>
+                <div className="space-y-8">
+                    {/* Loja TC */}
+                    <div>
+                        <h5 className="text-sm font-black text-orange-600 uppercase mb-3 px-2 border-l-4 border-orange-500">Três Corações (TC)</h5>
+                        <div className="space-y-2">
+                            <div className="grid grid-cols-6 text-[9px] font-bold text-stone-400 border-b border-stone-100 pb-2 text-center">
+                                <div className="text-left col-span-2">Nome</div>
+                                <div>Vendas</div>
+                                <div>C.Total</div>
+                                <div>% Cli</div>
+                                <div>% Novo</div>
                             </div>
-
-                            <div className="font-medium text-orange-700">
-                                {s.rateCli}%
-                            </div>
-
-                            <div className="font-medium text-stone-500">
-                                {s.rateNew}%
-                            </div>
+                            {topStaffTC.map((s, i) => (
+                                <div key={`TC-${s.name}`} className="grid grid-cols-6 items-center py-3 border-b border-stone-50 text-xs text-center">
+                                    <div className="text-left col-span-2 font-bold text-stone-700">{i + 1}. {s.name}</div>
+                                    <div className="flex flex-col items-center">
+                                        <span className="font-black text-stone-800 text-sm">{s.vendas}</span>
+                                        <span className="text-[9px] text-stone-400 font-medium">de {s.atendimentos} atd</span>
+                                    </div>
+                                    <div><span className={`font-bold px-2 py-1 rounded ${s.conversion >= 30 ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-600'}`}>{s.conversion}%</span></div>
+                                    <div className="font-medium text-orange-700">{s.rateCli}%</div>
+                                    <div className="font-medium text-stone-500">{s.rateNew}%</div>
+                                </div>
+                            ))}
                         </div>
-                    ))}
+                    </div>
+
+                    {/* Loja SGS */}
+                    <div>
+                        <h5 className="text-sm font-black text-red-600 uppercase mb-3 px-2 border-l-4 border-red-500">São Gonçalo (SGS)</h5>
+                        <div className="space-y-2">
+                            <div className="grid grid-cols-6 text-[9px] font-bold text-stone-400 border-b border-stone-100 pb-2 text-center">
+                                <div className="text-left col-span-2">Nome</div>
+                                <div>Vendas</div>
+                                <div>C.Total</div>
+                                <div>% Cli</div>
+                                <div>% Novo</div>
+                            </div>
+                            {topStaffSGS.map((s, i) => (
+                                <div key={`SGS-${s.name}`} className="grid grid-cols-6 items-center py-3 border-b border-stone-50 text-xs text-center">
+                                    <div className="text-left col-span-2 font-bold text-stone-700">{i + 1}. {s.name}</div>
+                                    <div className="flex flex-col items-center">
+                                        <span className="font-black text-stone-800 text-sm">{s.vendas}</span>
+                                        <span className="text-[9px] text-stone-400 font-medium">de {s.atendimentos} atd</span>
+                                    </div>
+                                    <div><span className={`font-bold px-2 py-1 rounded ${s.conversion >= 30 ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-600'}`}>{s.conversion}%</span></div>
+                                    <div className="font-medium text-orange-700">{s.rateCli}%</div>
+                                    <div className="font-medium text-stone-500">{s.rateNew}%</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </Card>
         </div>
