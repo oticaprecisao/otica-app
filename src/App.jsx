@@ -1049,16 +1049,16 @@ function TrendsScreen({ data, storeConfig }) {
                     </div>
                     <div className="p-4 h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={yearlyData} margin={{ top: 35, right: 25, left: 10, bottom: 5 }}>
+                            <BarChart data={yearlyData} margin={{ top: 35, right: 25, left: 10, bottom: 5 }} barCategoryGap="35%">
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.5} />
-                                <XAxis dataKey="name" tick={{ fontSize: 10 }} padding={{ left: 10, right: 10 }} />
+                                <XAxis dataKey="name" tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} />
                                 <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
                                 <Tooltip />
                                 <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
-                                <Bar dataKey="TC_novosClientes" name="TC" fill="#16a34a" stackId="a" radius={[0, 0, 0, 0]} barSize={24}>
+                                <Bar dataKey="TC_novosClientes" name="TC" fill="#16a34a" stackId="a" radius={[0, 0, 0, 0]} barSize={12}>
                                     <LabelList dataKey="TC_novosClientes" position="top" style={{ fill: '#16a34a', fontSize: '10px', fontWeight: 'bold' }} />
                                 </Bar>
-                                <Bar dataKey="SGS_novosClientes" name="SGS" fill="#dc2626" stackId="b" radius={[4, 4, 0, 0]} barSize={24}>
+                                <Bar dataKey="SGS_novosClientes" name="SGS" fill="#dc2626" stackId="b" radius={[4, 4, 0, 0]} barSize={12}>
                                     <LabelList dataKey="SGS_novosClientes" position="top" style={{ fill: '#dc2626', fontSize: '10px', fontWeight: 'bold' }} />
                                 </Bar>
                             </BarChart>
