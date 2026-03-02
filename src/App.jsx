@@ -109,12 +109,12 @@ import {
 // ============================================================================
 
 const firebaseConfig = {
-    apiKey: "AIzaSyAu25o6sVXnAGIBRaEheBwHdTCM8lkCuxo",
-    authDomain: "otica-precisao-app.firebaseapp.com",
-    projectId: "otica-precisao-app",
-    storageBucket: "otica-precisao-app.firebasestorage.app",
-    messagingSenderId: "216643068456",
-    appId: "1:216643068456:web:3e98fa915c996e603d4b1d"
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);
@@ -129,19 +129,19 @@ const DATA_COLLECTION_NAME = 'optical_records_final_v11';
 
 // --- Constantes Iniciais ---
 const DEFAULT_CONFIG = {
-    managerPassword: '2025',
+    managerPassword: '', // Removido do código fonte por segurança
     stores: {
         TC: {
             id: 'TC',
             name: 'Três Corações',
             staff: ['Ana Laura', 'Elaine', 'Ketlin', 'Eleonora', 'Paulo Habel'],
-            password: '4572'
+            password: '' // Removido do código fonte por segurança
         },
         SGS: {
             id: 'SGS',
             name: 'São Gonçalo do Sapucaí',
             staff: ['Vitoria', 'Roberta', 'Fernanda', 'Kawane'],
-            password: '3748'
+            password: '' // Removido do código fonte por segurança
         }
     }
 };
