@@ -139,19 +139,19 @@ const DATA_COLLECTION_NAME = 'optical_records_final_v11';
 
 // --- Constantes Iniciais ---
 const DEFAULT_CONFIG = {
-    managerPassword: '', // Removido do código fonte por segurança
+    managerPassword: null, // Bloqueado, depende do Firebase
     stores: {
         TC: {
             id: 'TC',
             name: 'Três Corações',
             staff: ['Ana Laura', 'Elaine', 'Ketlin', 'Eleonora', 'Paulo Habel'],
-            password: '' // Removido do código fonte por segurança
+            password: null // Bloqueado, depende do Firebase
         },
         SGS: {
             id: 'SGS',
             name: 'São Gonçalo do Sapucaí',
             staff: ['Vitoria', 'Roberta', 'Fernanda', 'Kawane'],
-            password: '' // Removido do código fonte por segurança
+            password: null // Bloqueado, depende do Firebase
         }
     }
 };
@@ -1341,14 +1341,23 @@ function TrendsScreen({ data, storeConfig }) {
 
 // ... (LoginScreen e EntryScreen sem alteração de lógica, apenas reutilização)
 
-function LoginScreen({ config, onLogin }) {
+function LoginScreen({ config, onLogin, isConfigLoaded }) {
     const [selectedStore, setSelectedStore] = useState('TC');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
     const handleLogin = () => {
+        if (!isConfigLoaded) return;
+
         const storePass = config.stores[selectedStore].password;
         const managerPass = config.managerPassword;
+
+        // Se a senha do banco for nula, o sistema barra qualquer senha temporariamente
+        if (!storePass || !managerPass) {
+            setError('Chaves bloqueadas ou carregando...');
+            setTimeout(() => setError(''), 2000);
+            return;
+        }
 
         if (password === storePass) {
             onLogin(selectedStore, false);
@@ -1410,10 +1419,16 @@ function LoginScreen({ config, onLogin }) {
 
                     <button
                         onClick={handleLogin}
-                        className="w-full bg-orange-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-orange-200 hover:bg-orange-700 active:scale-95 transition-all"
+                        disabled={!isConfigLoaded}
+                        className={`w-full text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition-all ${isConfigLoaded ? 'bg-orange-600 shadow-orange-200 hover:bg-orange-700' : 'bg-stone-300 shadow-none cursor-not-allowed hidden'}`}
                     >
-                        Entrar
+                        {isConfigLoaded ? 'Entrar' : 'Aguarde...'}
                     </button>
+                    {!isConfigLoaded && (
+                        <div className="w-full flex justify-center py-4">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="mt-8 text-center">
@@ -3655,6 +3670,7 @@ export default function App() {
     }
 
     const [storeConfig, setStoreConfig] = useState(DEFAULT_CONFIG);
+    const [configLoaded, setConfigLoaded] = useState(false);
     const [user, setUser] = useState(null);
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -3704,11 +3720,13 @@ export default function App() {
                     const parsed = JSON.parse(savedConfig);
                     setStoreConfig(parsed);
                     // Seed Firestore with local config if it's the first time
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'app_settings'), parsed);
+                    await setDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'app_settings'), parsed);
                 }
             }
         } catch (error) {
             console.error("Error fetching config:", error);
+        } finally {
+            setConfigLoaded(true);
         }
     };
 
@@ -3882,7 +3900,7 @@ export default function App() {
     };
 
     if (!isAuthenticated) {
-        return <LoginScreen config={storeConfig} onLogin={handleLogin} />;
+        return <LoginScreen config={storeConfig} onLogin={handleLogin} isConfigLoaded={configLoaded} />;
     }
 
     return (
