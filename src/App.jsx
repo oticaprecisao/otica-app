@@ -96,6 +96,8 @@ import {
     deleteDoc,
     updateDoc,
     doc,
+    getDoc,
+    setDoc,
     writeBatch,
     onSnapshot,
     query,
@@ -460,7 +462,7 @@ function EditEntryModal({ entry, onClose, onSave, storeData, isNew = false }) {
                                     {staffList.length > 0 && (
                                         <div className="bg-white p-2.5 rounded-xl shadow-sm border border-stone-200">
                                             <p className="text-[9px] font-bold text-stone-400 uppercase tracking-wider mb-1.5 ml-1">Atendente</p>
-                                            <div className="grid grid-cols-2 gap-1.5 max-h-24 overflow-y-auto pr-1">
+                                            <div className="grid grid-cols-2 gap-1.5">
                                                 {staffList.map(s => (
                                                     <button key={s} onClick={() => setAttendant(s)}
                                                         className={`py-1.5 px-2 rounded-lg border-2 text-xs font-bold text-left transition-all flex items-center gap-2 ${attendant === s ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-stone-100 bg-stone-50 text-stone-600 hover:border-stone-300'}`}>
@@ -3642,16 +3644,36 @@ export default function App() {
     const [pendingAction, setPendingAction] = useState(null);
     const [pendingStore, setPendingStore] = useState(null);
 
-    useEffect(() => {
-        const savedConfig = localStorage.getItem('optical_store_config_v2');
-        if (savedConfig) {
-            setStoreConfig(JSON.parse(savedConfig));
+    const fetchConfig = async () => {
+        try {
+            const configDoc = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'app_settings'));
+            if (configDoc.exists()) {
+                setStoreConfig(configDoc.data());
+            } else {
+                const savedConfig = localStorage.getItem('optical_store_config_v2');
+                if (savedConfig) {
+                    setStoreConfig(JSON.parse(savedConfig));
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching config:", error);
         }
-    }, []);
+    };
 
-    const handleUpdateConfig = (newConfig) => {
+    useEffect(() => {
+        if (user) {
+            fetchConfig();
+        }
+    }, [user]);
+
+    const handleUpdateConfig = async (newConfig) => {
         setStoreConfig(newConfig);
         localStorage.setItem('optical_store_config_v2', JSON.stringify(newConfig));
+        try {
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'app_settings'), newConfig);
+        } catch (error) {
+            console.error("Error updating remote config:", error);
+        }
     };
 
     useEffect(() => {
