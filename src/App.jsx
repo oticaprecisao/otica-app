@@ -3649,14 +3649,16 @@ export default function App() {
             const configDoc = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'app_settings'));
             if (configDoc.exists()) {
                 const remoteData = configDoc.data();
-                // Garante que novos funcionários no DEFAULT_CONFIG apareçam mesmo se o cloud estiver antigo
                 const merged = { ...remoteData };
+                if (!merged.stores) merged.stores = {};
+
                 Object.keys(DEFAULT_CONFIG.stores).forEach(sId => {
                     if (merged.stores[sId]) {
                         const remoteStaff = merged.stores[sId].staff || [];
                         const defaultStaff = DEFAULT_CONFIG.stores[sId].staff;
-                        // Combina sem duplicatas
                         merged.stores[sId].staff = [...new Set([...remoteStaff, ...defaultStaff])];
+                    } else {
+                        merged.stores[sId] = { ...DEFAULT_CONFIG.stores[sId] };
                     }
                 });
                 setStoreConfig(merged);
