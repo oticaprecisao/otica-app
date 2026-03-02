@@ -108,18 +108,28 @@ import {
 // CONFIGURAÇÃO FIREBASE (PRODUÇÃO)
 // ============================================================================
 
-const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId: import.meta.env.VITE_FIREBASE_APP_ID
-};
+let firebaseConfig = {};
+let app, auth, db;
+let firebaseInitError = null;
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+try {
+    firebaseConfig = {
+        apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+        authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+        projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+        storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+        messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+        appId: import.meta.env.VITE_FIREBASE_APP_ID
+    };
+
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+} catch (error) {
+    console.error("FIREBASE INIT ERROR:", error);
+    firebaseInitError = error;
+}
+
 const databaseAppId = 'otica-precisao-main-app';
 const DATA_COLLECTION_NAME = 'optical_records_final_v11';
 
@@ -3628,6 +3638,22 @@ function ComparisonScreen({ data }) {
 // ... (App Main Component) ...
 
 export default function App() {
+    if (firebaseInitError) {
+        return (
+            <div style={{ padding: '20px', color: 'red', fontFamily: 'monospace' }}>
+                <h2>Falha Crítica na Inicialização</h2>
+                <p>O aplicativo não pôde conectar ao Firebase.</p>
+                <pre style={{ background: '#fee', padding: '10px', borderRadius: '5px', whiteSpace: 'pre-wrap' }}>
+                    {firebaseInitError.toString()}
+                </pre>
+                <p>Verifique se as variáveis de ambiente (VITE_FIREBASE_...) estão definidas corretamente na Vercel.</p>
+                <pre>
+                    API KEY: {import.meta.env.VITE_FIREBASE_API_KEY ? 'Presente' : 'Faltando'}
+                </pre>
+            </div>
+        );
+    }
+
     const [storeConfig, setStoreConfig] = useState(DEFAULT_CONFIG);
     const [user, setUser] = useState(null);
 
@@ -3649,6 +3675,16 @@ export default function App() {
             const configDoc = await getDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'app_settings'));
             if (configDoc.exists()) {
                 const remoteData = configDoc.data();
+
+                // TEMPORARY FIX: Restore missing passwords
+                let needsUpdate = false;
+                if (!remoteData.managerPassword) { remoteData.managerPassword = '2025'; needsUpdate = true; }
+                if (remoteData.stores && remoteData.stores.TC && !remoteData.stores.TC.password) { remoteData.stores.TC.password = '4572'; needsUpdate = true; }
+                if (remoteData.stores && remoteData.stores.SGS && !remoteData.stores.SGS.password) { remoteData.stores.SGS.password = '3748'; needsUpdate = true; }
+                if (needsUpdate) {
+                    await setDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'app_settings'), remoteData);
+                }
+
                 const merged = { ...remoteData };
                 if (!merged.stores) merged.stores = {};
 
@@ -3686,7 +3722,7 @@ export default function App() {
         setStoreConfig(newConfig);
         localStorage.setItem('optical_store_config_v2', JSON.stringify(newConfig));
         try {
-            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'app_settings'), newConfig);
+            await setDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'app_settings'), newConfig);
         } catch (error) {
             console.error("Error updating remote config:", error);
         }
