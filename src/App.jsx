@@ -3688,7 +3688,7 @@ export default function App() {
 
     const fetchConfig = async () => {
         try {
-            const configDoc = await getDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'app_settings'));
+            const configDoc = await getDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'app_settings', 'config'));
             if (configDoc.exists()) {
                 const remoteData = configDoc.data();
 
@@ -3698,7 +3698,7 @@ export default function App() {
                 if (remoteData.stores && remoteData.stores.TC && !remoteData.stores.TC.password) { remoteData.stores.TC.password = '4572'; needsUpdate = true; }
                 if (remoteData.stores && remoteData.stores.SGS && !remoteData.stores.SGS.password) { remoteData.stores.SGS.password = '3748'; needsUpdate = true; }
                 if (needsUpdate) {
-                    await setDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'app_settings'), remoteData);
+                    await setDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'app_settings', 'config'), remoteData);
                 }
 
                 const merged = { ...remoteData };
@@ -3720,7 +3720,7 @@ export default function App() {
                     const parsed = JSON.parse(savedConfig);
                     setStoreConfig(parsed);
                     // Seed Firestore with local config if it's the first time
-                    await setDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'app_settings'), parsed);
+                    await setDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'app_settings', 'config'), parsed);
                 }
             }
         } catch (error) {
@@ -3740,7 +3740,7 @@ export default function App() {
         setStoreConfig(newConfig);
         localStorage.setItem('optical_store_config_v2', JSON.stringify(newConfig));
         try {
-            await setDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'app_settings'), newConfig);
+            await setDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'app_settings', 'config'), newConfig);
         } catch (error) {
             console.error("Error updating remote config:", error);
         }
