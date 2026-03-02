@@ -120,7 +120,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const appId = 'otica-precisao-main-app';
+const databaseAppId = 'otica-precisao-main-app';
 const DATA_COLLECTION_NAME = 'optical_records_final_v11';
 
 // ============================================================================
@@ -3646,7 +3646,7 @@ export default function App() {
 
     const fetchConfig = async () => {
         try {
-            const configDoc = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'app_settings'));
+            const configDoc = await getDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'app_settings'));
             if (configDoc.exists()) {
                 const remoteData = configDoc.data();
                 const merged = { ...remoteData };
@@ -3715,7 +3715,7 @@ export default function App() {
     useEffect(() => {
         if (!user) return;
         const q = query(
-            collection(db, 'artifacts', appId, 'public', 'data', 'optical_records_final_v11')
+            collection(db, 'artifacts', databaseAppId, 'public', 'data', 'optical_records_final_v11')
         );
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map(doc => ({
@@ -3753,7 +3753,7 @@ export default function App() {
             const customDate = dataToSave.date;
             if (customDate) delete dataToSave.date; // Remove the temporary Date object from the root
 
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'optical_records_final_v11'), {
+            await addDoc(collection(db, 'artifacts', databaseAppId, 'public', 'data', 'optical_records_final_v11'), {
                 ...dataToSave,
                 store: currentStore,
                 createdAt: customDate ? customDate : serverTimestamp(),
@@ -3770,7 +3770,7 @@ export default function App() {
     const handleDeleteEntry = async (id) => {
         if (window.confirm('Tem certeza que deseja excluir este registro?')) {
             try {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION_NAME, id));
+                await deleteDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', DATA_COLLECTION_NAME, id));
             } catch (error) {
                 console.error("Erro ao excluir:", error);
                 alert("Erro ao excluir registro.");
@@ -3780,7 +3780,7 @@ export default function App() {
 
     const handleUpdateEntry = async (id, newData) => {
         try {
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION_NAME, id), newData);
+            await updateDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', DATA_COLLECTION_NAME, id), newData);
         } catch (error) {
             console.error("Erro ao atualizar:", error);
             alert("Erro ao atualizar registro.");
@@ -3805,7 +3805,7 @@ export default function App() {
         try {
             const batch = writeBatch(db);
             entriesToDelete.forEach(entry => {
-                const ref = doc(db, 'artifacts', appId, 'public', 'data', 'optical_records_final_v11', entry.id);
+                const ref = doc(db, 'artifacts', databaseAppId, 'public', 'data', 'optical_records_final_v11', entry.id);
                 batch.delete(ref);
             });
             await batch.commit();
