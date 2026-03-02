@@ -3652,7 +3652,10 @@ export default function App() {
             } else {
                 const savedConfig = localStorage.getItem('optical_store_config_v2');
                 if (savedConfig) {
-                    setStoreConfig(JSON.parse(savedConfig));
+                    const parsed = JSON.parse(savedConfig);
+                    setStoreConfig(parsed);
+                    // Seed Firestore with local config if it's the first time
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'app_settings'), parsed);
                 }
             }
         } catch (error) {
