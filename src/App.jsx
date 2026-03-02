@@ -134,7 +134,7 @@ const DEFAULT_CONFIG = {
         TC: {
             id: 'TC',
             name: 'Três Corações',
-            staff: ['Ana Laura', 'Elaine', 'Ketlin', 'Eleonora'],
+            staff: ['Ana Laura', 'Elaine', 'Ketlin', 'Eleonora', 'Paulo Habel'],
             password: '4572'
         },
         SGS: {
@@ -462,14 +462,14 @@ function EditEntryModal({ entry, onClose, onSave, storeData, isNew = false }) {
                                     {staffList.length > 0 && (
                                         <div className="bg-white p-2.5 rounded-xl shadow-sm border border-stone-200">
                                             <p className="text-[9px] font-bold text-stone-400 uppercase tracking-wider mb-1.5 ml-1">Atendente</p>
-                                            <div className="grid grid-cols-2 gap-1.5">
+                                            <div className="grid grid-cols-3 gap-1.5">
                                                 {staffList.map(s => (
                                                     <button key={s} onClick={() => setAttendant(s)}
-                                                        className={`py-1.5 px-2 rounded-lg border-2 text-xs font-bold text-left transition-all flex items-center gap-2 ${attendant === s ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-stone-100 bg-stone-50 text-stone-600 hover:border-stone-300'}`}>
-                                                        <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 ${attendant === s ? 'bg-orange-500 text-white' : 'bg-orange-100 text-orange-700'}`}>
+                                                        className={`py-1 px-1.5 rounded-lg border-2 text-[10px] font-bold text-center transition-all flex flex-col items-center gap-1 ${attendant === s ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-stone-100 bg-stone-50 text-stone-600 hover:border-stone-300'}`}>
+                                                        <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[7px] font-black shrink-0 ${attendant === s ? 'bg-orange-500 text-white' : 'bg-orange-100 text-orange-700'}`}>
                                                             {s.substring(0, 2).toUpperCase()}
                                                         </span>
-                                                        <span className="truncate">{s}</span>
+                                                        <span className="truncate w-full">{s.split(' ')[0]}</span>
                                                     </button>
                                                 ))}
                                             </div>
@@ -3648,7 +3648,18 @@ export default function App() {
         try {
             const configDoc = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'app_settings'));
             if (configDoc.exists()) {
-                setStoreConfig(configDoc.data());
+                const remoteData = configDoc.data();
+                // Garante que novos funcionários no DEFAULT_CONFIG apareçam mesmo se o cloud estiver antigo
+                const merged = { ...remoteData };
+                Object.keys(DEFAULT_CONFIG.stores).forEach(sId => {
+                    if (merged.stores[sId]) {
+                        const remoteStaff = merged.stores[sId].staff || [];
+                        const defaultStaff = DEFAULT_CONFIG.stores[sId].staff;
+                        // Combina sem duplicatas
+                        merged.stores[sId].staff = [...new Set([...remoteStaff, ...defaultStaff])];
+                    }
+                });
+                setStoreConfig(merged);
             } else {
                 const savedConfig = localStorage.getItem('optical_store_config_v2');
                 if (savedConfig) {
