@@ -3546,6 +3546,80 @@ function ComparisonScreen({ data }) {
                 </div>
             </Card>
 
+            {/* 5. Volume de Atendimento (Restaurado) */}
+            <Card className="p-4">
+                <div className="flex justify-between items-center mb-4">
+                    <h4 className="font-bold text-stone-700 text-sm uppercase">Volume de Atendimento</h4>
+                    <div className="flex gap-4 text-[11px] font-black">
+                        <span className="text-orange-600 flex items-center gap-1.5"><div className="w-3 h-3 bg-orange-600 rounded-full shadow-sm"></div> TC</span>
+                        <span className="text-red-600 flex items-center gap-1.5"><div className="w-3 h-3 bg-red-600 rounded-full shadow-sm"></div> SGS</span>
+                    </div>
+                </div>
+                <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={serviceCompData} layout="vertical" margin={{ top: 10, right: 30, left: 10, bottom: 20 }}>
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                            <XAxis type="number" hide />
+                            <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 10, fontWeight: 'bold' }} />
+                            <Bar dataKey="TC" fill="#fb923c" radius={[0, 4, 4, 0]} barSize={24}>
+                                <LabelList dataKey="TC" position="right" style={{ fill: '#c2410c', fontSize: '10px', fontWeight: 'bold' }} />
+                            </Bar>
+                            <Bar dataKey="SGS" fill="#f87171" radius={[0, 4, 4, 0]} barSize={24}>
+                                <LabelList dataKey="SGS" position="right" style={{ fill: '#991b1b', fontSize: '10px', fontWeight: 'bold' }} />
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+                <div className="mt-4 pt-4 border-t border-stone-100 grid grid-cols-1 gap-2">
+                    {serviceCompData.map(item => {
+                        const tc = item.TC;
+                        const sgs = item.SGS;
+                        let diffText = "";
+                        let colorClass = "";
+
+                        if (sgs > 0) {
+                            const diff = Math.round(((tc - sgs) / sgs) * 100);
+                            if (diff > 0) {
+                                diffText = `TC tem ${diff}% mais movimento que SGS`;
+                                colorClass = "text-orange-600";
+                            } else if (diff < 0) {
+                                diffText = `SGS tem ${Math.abs(diff)}% mais movimento que TC`;
+                                colorClass = "text-red-600";
+                            } else {
+                                diffText = "As lojas têm o mesmo movimento";
+                                colorClass = "text-stone-500";
+                            }
+                        } else if (tc > 0) {
+                            diffText = "TC tem 100% do movimento";
+                            colorClass = "text-orange-600";
+                        }
+
+                        return (
+                            <div key={item.name} className="flex justify-between items-center bg-stone-50 p-2 rounded-lg border border-stone-100">
+                                <span className="text-[10px] font-bold text-stone-500 uppercase">{item.name}</span>
+                                <span className={`text-[10px] font-black ${colorClass}`}>{diffText}</span>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {/* Resumo Total: Movimento */}
+                <div className="mt-2 flex justify-between items-center bg-stone-100/50 p-2 rounded-lg border border-stone-200">
+                    <span className="text-[10px] font-black text-stone-700 uppercase italic">Movimento Total</span>
+                    {(() => {
+                        const tc = compStats.TC.atendimentos;
+                        const sgs = compStats.SGS.atendimentos;
+                        if (sgs > 0) {
+                            const diff = Math.round(((tc - sgs) / sgs) * 100);
+                            const color = diff > 0 ? "text-orange-600" : diff < 0 ? "text-red-600" : "text-stone-500";
+                            const text = diff > 0 ? `TC tem ${diff}% mais que SGS` : diff < 0 ? `SGS tem ${Math.abs(diff)}% mais que TC` : "Mesmo volume total";
+                            return <span className={`text-[10px] font-black ${color}`}>{text}</span>;
+                        }
+                        return <span className="text-[10px] font-black text-orange-600">TC detém 100% do total</span>;
+                    })()}
+                </div>
+            </Card>
+
             {/* 2. Perfil de Vendas (%) */}
             <Card className="p-4">
                 <div className="flex justify-between items-center mb-4">
@@ -3632,80 +3706,6 @@ function ComparisonScreen({ data }) {
                             {compStats.SGS.orcamentos > 0 ? Math.round((compStats.SGS.retornos / compStats.SGS.orcamentos) * 100) : 0}%
                         </span>
                     </div>
-                </div>
-            </Card>
-
-            {/* 5. Volume de Atendimento (Restaurado) */}
-            <Card className="p-4">
-                <div className="flex justify-between items-center mb-4">
-                    <h4 className="font-bold text-stone-700 text-sm uppercase">Volume de Atendimento</h4>
-                    <div className="flex gap-4 text-[11px] font-black">
-                        <span className="text-orange-600 flex items-center gap-1.5"><div className="w-3 h-3 bg-orange-600 rounded-full shadow-sm"></div> TC</span>
-                        <span className="text-red-600 flex items-center gap-1.5"><div className="w-3 h-3 bg-red-600 rounded-full shadow-sm"></div> SGS</span>
-                    </div>
-                </div>
-                <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={serviceCompData} layout="vertical" margin={{ top: 10, right: 30, left: 10, bottom: 20 }}>
-                            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                            <XAxis type="number" hide />
-                            <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 10, fontWeight: 'bold' }} />
-                            <Bar dataKey="TC" fill="#fb923c" radius={[0, 4, 4, 0]} barSize={24}>
-                                <LabelList dataKey="TC" position="right" style={{ fill: '#c2410c', fontSize: '10px', fontWeight: 'bold' }} />
-                            </Bar>
-                            <Bar dataKey="SGS" fill="#f87171" radius={[0, 4, 4, 0]} barSize={24}>
-                                <LabelList dataKey="SGS" position="right" style={{ fill: '#991b1b', fontSize: '10px', fontWeight: 'bold' }} />
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
-                <div className="mt-4 pt-4 border-t border-stone-100 grid grid-cols-1 gap-2">
-                    {serviceCompData.map(item => {
-                        const tc = item.TC;
-                        const sgs = item.SGS;
-                        let diffText = "";
-                        let colorClass = "";
-
-                        if (sgs > 0) {
-                            const diff = Math.round(((tc - sgs) / sgs) * 100);
-                            if (diff > 0) {
-                                diffText = `TC tem ${diff}% mais movimento que SGS`;
-                                colorClass = "text-orange-600";
-                            } else if (diff < 0) {
-                                diffText = `SGS tem ${Math.abs(diff)}% mais movimento que TC`;
-                                colorClass = "text-red-600";
-                            } else {
-                                diffText = "As lojas têm o mesmo movimento";
-                                colorClass = "text-stone-500";
-                            }
-                        } else if (tc > 0) {
-                            diffText = "TC tem 100% do movimento";
-                            colorClass = "text-orange-600";
-                        }
-
-                        return (
-                            <div key={item.name} className="flex justify-between items-center bg-stone-50 p-2 rounded-lg border border-stone-100">
-                                <span className="text-[10px] font-bold text-stone-500 uppercase">{item.name}</span>
-                                <span className={`text-[10px] font-black ${colorClass}`}>{diffText}</span>
-                            </div>
-                        );
-                    })}
-                </div>
-
-                {/* Resumo Total: Movimento */}
-                <div className="mt-2 flex justify-between items-center bg-stone-100/50 p-2 rounded-lg border border-stone-200">
-                    <span className="text-[10px] font-black text-stone-700 uppercase italic">Movimento Total</span>
-                    {(() => {
-                        const tc = compStats.TC.atendimentos;
-                        const sgs = compStats.SGS.atendimentos;
-                        if (sgs > 0) {
-                            const diff = Math.round(((tc - sgs) / sgs) * 100);
-                            const color = diff > 0 ? "text-orange-600" : diff < 0 ? "text-red-600" : "text-stone-500";
-                            const text = diff > 0 ? `TC tem ${diff}% mais que SGS` : diff < 0 ? `SGS tem ${Math.abs(diff)}% mais que TC` : "Mesmo volume total";
-                            return <span className={`text-[10px] font-black ${color}`}>{text}</span>;
-                        }
-                        return <span className="text-[10px] font-black text-orange-600">TC detém 100% do total</span>;
-                    })()}
                 </div>
             </Card>
 
