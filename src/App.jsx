@@ -3040,7 +3040,7 @@ function DashboardScreen({ data, storeData }) {
                                 <p className="text-[10px] font-bold text-stone-400 uppercase mb-2">Movimento Semana Atual (Tempo Real)</p>
                                 <div className="h-32">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={currentWeekChartData}>
+                                        <BarChart data={currentWeekChartData} margin={{ top: 30, right: 10, left: 10, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                             <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                                             <Bar dataKey="movement" fill="#78716c" radius={[4, 4, 0, 0]}>
@@ -3056,7 +3056,7 @@ function DashboardScreen({ data, storeData }) {
                                 <p className="text-[10px] font-bold text-red-500 uppercase mb-2">Vendas Semana Atual (Tempo Real)</p>
                                 <div className="h-32">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={currentWeekChartData}>
+                                        <BarChart data={currentWeekChartData} margin={{ top: 30, right: 10, left: 10, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                             <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                                             <Bar dataKey="sales" fill="#ef4444" radius={[4, 4, 0, 0]}>
@@ -3072,7 +3072,7 @@ function DashboardScreen({ data, storeData }) {
                                 <p className="text-[10px] font-bold text-stone-400 uppercase mb-2">Por Semana do Mês</p>
                                 <div className="h-32">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={weekData}>
+                                        <BarChart data={weekData} margin={{ top: 30, right: 10, left: 10, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                             <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                                             <Bar dataKey="value" fill="#fb923c" radius={[4, 4, 0, 0]}>
@@ -3541,7 +3541,7 @@ function ComparisonScreen({ data }) {
                 </div>
                 <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={salesCompData} margin={{ top: 20, right: 5, left: -20, bottom: 0 }}>
+                        <BarChart data={salesCompData} margin={{ top: 30, right: 5, left: -20, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold' }} />
                             <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
@@ -3568,7 +3568,7 @@ function ComparisonScreen({ data }) {
                 </div>
                 <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={budgetProfileData} margin={{ top: 20, right: 5, left: -20, bottom: 0 }}>
+                        <BarChart data={budgetProfileData} margin={{ top: 30, right: 5, left: -20, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold' }} />
                             <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
@@ -3589,7 +3589,7 @@ function ComparisonScreen({ data }) {
                 <h4 className="font-bold text-stone-700 text-sm mb-4 uppercase">Orçamentos & Retornos</h4>
                 <div className="h-56">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={quoteCompData} margin={{ top: 20, right: 5, left: -20, bottom: 0 }}>
+                        <BarChart data={quoteCompData} margin={{ top: 30, right: 5, left: -20, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold' }} />
                             <YAxis tick={{ fontSize: 10 }} />
@@ -3683,7 +3683,7 @@ function ComparisonScreen({ data }) {
                 </h4>
                 <div className="h-48">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={msgData} margin={{ top: 20, right: 5, left: -20, bottom: 0 }}>
+                        <BarChart data={msgData} margin={{ top: 30, right: 5, left: -20, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold' }} />
                             <YAxis tick={{ fontSize: 10 }} />
