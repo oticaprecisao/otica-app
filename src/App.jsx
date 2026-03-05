@@ -3488,6 +3488,22 @@ function ComparisonScreen({ data }) {
                     })}
                 </div>
 
+                {/* Resumo Total: Vendas */}
+                <div className="mt-2 flex justify-between items-center bg-stone-100/50 p-2 rounded-lg border border-stone-200">
+                    <span className="text-[10px] font-black text-stone-700 uppercase italic">Vendas Totais</span>
+                    {(() => {
+                        const tc = compStats.TC.vendas;
+                        const sgs = compStats.SGS.vendas;
+                        if (sgs > 0) {
+                            const diff = Math.round(((tc - sgs) / sgs) * 100);
+                            const color = diff > 0 ? "text-orange-600" : diff < 0 ? "text-red-600" : "text-stone-500";
+                            const text = diff > 0 ? `TC vendeu ${diff}% mais que SGS` : diff < 0 ? `SGS vendeu ${Math.abs(diff)}% mais que TC` : "Mesmo volume total";
+                            return <span className={`text-[10px] font-black ${color}`}>{text}</span>;
+                        }
+                        return <span className="text-[10px] font-black text-orange-600">TC detém 100% do total</span>;
+                    })()}
+                </div>
+
                 {/* Métricas de Conversão */}
                 <div className="mt-6 pt-4 border-t-2 border-dashed border-stone-200">
                     <h5 className="text-[11px] font-black text-stone-700 uppercase mb-4 flex items-center gap-2">
@@ -3674,6 +3690,22 @@ function ComparisonScreen({ data }) {
                             </div>
                         );
                     })}
+                </div>
+
+                {/* Resumo Total: Movimento */}
+                <div className="mt-2 flex justify-between items-center bg-stone-100/50 p-2 rounded-lg border border-stone-200">
+                    <span className="text-[10px] font-black text-stone-700 uppercase italic">Movimento Total</span>
+                    {(() => {
+                        const tc = compStats.TC.atendimentos;
+                        const sgs = compStats.SGS.atendimentos;
+                        if (sgs > 0) {
+                            const diff = Math.round(((tc - sgs) / sgs) * 100);
+                            const color = diff > 0 ? "text-orange-600" : diff < 0 ? "text-red-600" : "text-stone-500";
+                            const text = diff > 0 ? `TC tem ${diff}% mais que SGS` : diff < 0 ? `SGS tem ${Math.abs(diff)}% mais que TC` : "Mesmo volume total";
+                            return <span className={`text-[10px] font-black ${color}`}>{text}</span>;
+                        }
+                        return <span className="text-[10px] font-black text-orange-600">TC detém 100% do total</span>;
+                    })()}
                 </div>
             </Card>
 
