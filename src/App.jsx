@@ -240,7 +240,7 @@ const generateMockData = async (storeConfig) => {
                 saleValue: isSale ? Math.floor(Math.random() * 800) + 150 : 0
             };
 
-            const ref = doc(collection(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION_NAME));
+            const ref = doc(collection(db, 'artifacts', databaseAppId, 'public', 'data', DATA_COLLECTION_NAME));
             batch.set(ref, entry);
             count++;
         }
@@ -256,7 +256,7 @@ const generateMockData = async (storeConfig) => {
                 dateString: date.toLocaleDateString('pt-BR'),
                 userId: 'mock-user'
             };
-            const ref = doc(collection(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION_NAME));
+            const ref = doc(collection(db, 'artifacts', databaseAppId, 'public', 'data', DATA_COLLECTION_NAME));
             batch.set(ref, entry);
             count++;
         }
@@ -273,7 +273,7 @@ const generateMockData = async (storeConfig) => {
                 dateString: date.toLocaleDateString('pt-BR'),
                 userId: 'mock-user'
             };
-            const ref = doc(collection(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION_NAME));
+            const ref = doc(collection(db, 'artifacts', databaseAppId, 'public', 'data', DATA_COLLECTION_NAME));
             batch.set(ref, entry);
             count++;
         }
@@ -1039,7 +1039,7 @@ function TrendsScreen({ data, storeConfig }) {
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.5} />
                                 <XAxis dataKey="name" tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} />
                                 <YAxis tick={{ fontSize: 10 }} />
-                                <Tooltip />
+
                                 <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
                                 <Line type="monotone" dataKey="TC_vendas" name="TC" stroke="#16a34a" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }}>
                                     <LabelList dataKey="TC_vendas" position="top" offset={10} style={{ fill: '#16a34a', fontSize: '10px', fontWeight: 'bold' }} />
@@ -1065,7 +1065,7 @@ function TrendsScreen({ data, storeConfig }) {
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.5} />
                                 <XAxis dataKey="name" tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} />
                                 <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
-                                <Tooltip />
+
                                 <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
                                 <Bar dataKey="TC_novosClientes" name="TC" fill="#16a34a" stackId="a" radius={[0, 0, 0, 0]} barSize={12}>
                                     <LabelList dataKey="TC_novosClientes" position="top" style={{ fill: '#16a34a', fontSize: '10px', fontWeight: 'bold' }} />
@@ -1103,7 +1103,7 @@ function TrendsScreen({ data, storeConfig }) {
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.5} />
                                 <XAxis dataKey="name" tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} />
                                 <YAxis tick={{ fontSize: 10 }} />
-                                <Tooltip />
+
                                 <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
                                 <Area type="monotone" dataKey="TC_volumeTotal" name="TC" stroke="#16a34a" fillOpacity={1} fill="url(#colorTC)">
                                     <LabelList dataKey="TC_volumeTotal" position="top" offset={10} style={{ fill: '#16a34a', fontSize: '10px', fontWeight: 'bold' }} />
@@ -1128,7 +1128,7 @@ function TrendsScreen({ data, storeConfig }) {
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.5} />
                                 <XAxis dataKey="name" tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} />
                                 <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
-                                <Tooltip formatter={(v) => [`${v}%`, 'Eficiência']} />
+
                                 <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
                                 <Line type="monotone" dataKey="TC_eficiencia" name="TC" stroke="#16a34a" strokeWidth={3} dot={{ r: 4 }}>
                                     <LabelList dataKey="TC_eficiencia" position="top" offset={10} formatter={(v) => `${v}%`} style={{ fill: '#16a34a', fontSize: '10px', fontWeight: 'bold' }} />
@@ -1153,7 +1153,7 @@ function TrendsScreen({ data, storeConfig }) {
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.5} />
                                 <XAxis dataKey="name" tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} />
                                 <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
-                                <Tooltip formatter={(v) => [`${v}%`, 'Conversão Retorno']} />
+
                                 <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
                                 <Line type="monotone" dataKey="TC_convOrc" name="TC" stroke="#16a34a" strokeWidth={3} dot={{ r: 4 }}>
                                     <LabelList dataKey="TC_convOrc" position="top" offset={10} formatter={(v) => `${v}%`} style={{ fill: '#16a34a', fontSize: '10px', fontWeight: 'bold' }} />
@@ -1178,7 +1178,7 @@ function TrendsScreen({ data, storeConfig }) {
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.5} />
                                 <XAxis dataKey="name" tick={{ fontSize: 10 }} padding={{ left: 10, right: 10 }} />
                                 <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
-                                <Tooltip />
+
                                 <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
                                 {/* TC Stack */}
                                 <Bar dataKey="TC_vendasCli" name="TC (Cliente)" fill="#16a34a" stackId="tc" barSize={30}>
@@ -1217,7 +1217,7 @@ function TrendsScreen({ data, storeConfig }) {
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
                                         <XAxis dataKey="name" tick={{ fontSize: 9, fontWeight: 'bold' }} axisLine={false} tickLine={false} />
                                         <YAxis tick={{ fontSize: 9 }} hide />
-                                        <Tooltip cursor={{ fill: '#f5f5f5' }} />
+
                                         <Bar dataKey="TC" fill="#16a34a" radius={[4, 4, 0, 0]} barSize={12}>
                                             <LabelList dataKey="TC" position="top" style={{ fill: '#16a34a', fontSize: '10px', fontWeight: '900' }} />
                                         </Bar>
@@ -2707,7 +2707,7 @@ function DashboardScreen({ data, storeData }) {
                                             <Pie data={salesCompositionData} cx="50%" cy="50%" innerRadius={30} outerRadius={50} paddingAngle={2} dataKey="value">
                                                 {salesCompositionData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} stroke="none" />)}
                                             </Pie>
-                                            <Tooltip />
+
                                         </PieChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -2825,7 +2825,7 @@ function DashboardScreen({ data, storeData }) {
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
                                             <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold' }} axisLine={false} tickLine={false} />
                                             <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                                            <Tooltip contentStyle={{ fontSize: '12px', borderRadius: '8px', border: '1px solid #e7e5e4' }} />
+
                                             <Legend iconSize={8} wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
                                             <Bar dataKey="Orçamentos" fill="#a8a29e" barSize={20} radius={[4, 4, 0, 0]}>
                                                 <LabelList dataKey="Orçamentos" position="top" style={{ fill: '#78716c', fontSize: '9px', fontWeight: 'bold' }} />
@@ -2871,7 +2871,7 @@ function DashboardScreen({ data, storeData }) {
                                             <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e7e5e4" />
                                             <XAxis type="number" hide />
                                             <YAxis dataKey="name" type="category" width={70} tick={{ fontSize: 10, fontWeight: 'bold', fill: '#44403c' }} axisLine={false} tickLine={false} />
-                                            <Tooltip cursor={{ fill: '#f5f5f4' }} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} />
+
                                             <Legend iconSize={8} wrapperStyle={{ fontSize: '10px' }} />
 
                                             <Bar dataKey="Orçamentos" fill="#d6d3d1" barSize={12} radius={[0, 4, 4, 0]}>
@@ -3170,31 +3170,79 @@ function ComparisonScreen({ data }) {
         return Array.from(monthSet).sort().reverse();
     }, [data]);
 
-    const yearlyCompData = useMemo(() => {
-        const months = {};
+    const [selectedMonth, setSelectedMonth] = useState(availableMonths[0] || '');
+
+    const dailyCompData = useMemo(() => {
+        if (!selectedMonth) return [];
+        const [year, month] = selectedMonth.split('-').map(Number);
+        const now = new Date();
+        const isCurrentMonth = now.getFullYear() === year && now.getMonth() === (month - 1);
+        const lastDay = isCurrentMonth ? now.getDate() : new Date(year, month, 0).getDate();
+
+        const daily = Array.from({ length: lastDay }, (_, i) => ({
+            day: i + 1,
+            TC_sales: 0,
+            SGS_sales: 0,
+            TC_returns: 0,
+            SGS_returns: 0,
+            total_sales: 0,
+            total_returns: 0
+        }));
+
         data.forEach(item => {
             const d = item.date;
             if (!d || typeof d.getFullYear !== 'function') return;
-            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-            if (!months[key]) {
-                months[key] = {
-                    key,
-                    name: `${d.toLocaleString('pt-BR', { month: 'short' })}/${d.getFullYear().toString().substr(2)}`,
-                    TC_novosClientes: 0,
-                    SGS_novosClientes: 0
-                };
-            }
-            if (item.category === 'comercial' && (item.action === 'venda' || item.action === 'retorno') && item.clientType === 'nao_cliente') {
-                const storePrefix = item.store === 'TC' ? 'TC_' : 'SGS_';
-                months[key][storePrefix + 'novosClientes']++;
+            if (d.getFullYear() === year && (d.getMonth() + 1) === month) {
+                const day = d.getDate();
+                if (day <= lastDay) {
+                    const store = item.store;
+                    if (item.category === 'comercial') {
+                        if (item.action === 'venda' || item.action === 'retorno') {
+                            daily[day - 1][`${store}_sales`]++;
+                            daily[day - 1].total_sales++;
+                        }
+                        if (item.action === 'retorno') {
+                            daily[day - 1][`${store}_returns`]++;
+                            daily[day - 1].total_returns++;
+                        }
+                    }
+                }
             }
         });
-        return Object.values(months)
-            .sort((a, b) => a.key.localeCompare(b.key))
-            .slice(-6); // Últimos 6 meses para visualização clara
-    }, [data]);
 
-    const [selectedMonth, setSelectedMonth] = useState(availableMonths[0] || '');
+        return daily;
+    }, [data, selectedMonth]);
+
+    const dailyMetrics = useMemo(() => {
+        if (dailyCompData.length === 0) return null;
+
+        const getStoreMetrics = (store) => {
+            const salesKey = `${store}_sales`;
+            const returnsKey = `${store}_returns`;
+
+            const salesSorted = [...dailyCompData].sort((a, b) => b[salesKey] - a[salesKey]);
+            const salesMinSorted = [...dailyCompData].sort((a, b) => a[salesKey] - b[salesKey]);
+
+            const returnsSorted = [...dailyCompData].sort((a, b) => b[returnsKey] - a[returnsKey]);
+            const returnsMinSorted = [...dailyCompData].sort((a, b) => a[returnsKey] - b[returnsKey]);
+
+            return {
+                maxSalesDay: salesSorted[0][salesKey] > 0 ? salesSorted[0].day : '-',
+                maxSalesVal: salesSorted[0][salesKey],
+                minSalesDay: salesMinSorted[0].day,
+                minSalesVal: salesMinSorted[0][salesKey],
+                maxReturnsDay: returnsSorted[0][returnsKey] > 0 ? returnsSorted[0].day : '-',
+                maxReturnsVal: returnsSorted[0][returnsKey],
+                minReturnsDay: returnsMinSorted[0].day,
+                minReturnsVal: returnsMinSorted[0][returnsKey],
+            };
+        };
+
+        return {
+            TC: getStoreMetrics('TC'),
+            SGS: getStoreMetrics('SGS')
+        };
+    }, [dailyCompData]);
 
     useEffect(() => {
         if (availableMonths.length > 0 && !selectedMonth) {
@@ -3620,6 +3668,109 @@ function ComparisonScreen({ data }) {
                 </div>
             </Card>
 
+            {/* NOVOS GRÁFICOS: QUANDO AS VENDAS ACONTECEM */}
+            <Card className="p-4">
+                <div className="flex justify-between items-center mb-4">
+                    <h4 className="font-bold text-stone-700 text-sm uppercase">Quando as vendas acontecem</h4>
+                    <div className="flex gap-4 text-[11px] font-black">
+                        <span className="text-orange-600 flex items-center gap-1.5"><div className="w-2 h-2 bg-orange-600 rounded-full shadow-sm"></div> TC</span>
+                        <span className="text-red-600 flex items-center gap-1.5"><div className="w-2 h-2 bg-red-600 rounded-full shadow-sm"></div> SGS</span>
+                    </div>
+                </div>
+                <div className="h-48">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={dailyCompData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }} barGap={2}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
+                            <XAxis dataKey="day" tick={{ fontSize: 9, fontWeight: 'bold' }} axisLine={false} tickLine={false} />
+                            <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
+                            <Bar dataKey="TC_sales" name="TC" fill="#fb923c" radius={[2, 2, 0, 0]} barSize={4}>
+                                <LabelList dataKey="TC_sales" position="top" formatter={(v) => v > 0 ? v : ''} style={{ fill: '#fb923c', fontSize: '8px', fontWeight: 'bold' }} />
+                            </Bar>
+                            <Bar dataKey="SGS_sales" name="SGS" fill="#f87171" radius={[2, 2, 0, 0]} barSize={4}>
+                                <LabelList dataKey="SGS_sales" position="top" formatter={(v) => v > 0 ? v : ''} style={{ fill: '#f87171', fontSize: '8px', fontWeight: 'bold' }} />
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+                {dailyMetrics && (
+                    <div className="mt-4 flex flex-col gap-3">
+                        {/* TC Metrics */}
+                        <div className="grid grid-cols-2 gap-2 p-2 bg-orange-50/50 rounded-xl border border-orange-100">
+                            <div className="flex flex-col">
+                                <p className="text-[8px] font-black text-orange-600 uppercase tracking-wider">TC: Maior Venda</p>
+                                <p className="text-xs font-black text-orange-800">Dia {dailyMetrics.TC.maxSalesDay} <span className="text-[10px] font-bold opacity-60">({dailyMetrics.TC.maxSalesVal} vds)</span></p>
+                            </div>
+                            <div className="flex flex-col">
+                                <p className="text-[8px] font-black text-stone-400 uppercase tracking-wider">TC: Menor Venda</p>
+                                <p className="text-xs font-black text-stone-600">Dia {dailyMetrics.TC.minSalesDay} <span className="text-[10px] font-bold opacity-60">({dailyMetrics.TC.minSalesVal} vds)</span></p>
+                            </div>
+                        </div>
+                        {/* SGS Metrics */}
+                        <div className="grid grid-cols-2 gap-2 p-2 bg-red-50/50 rounded-xl border border-red-100">
+                            <div className="flex flex-col">
+                                <p className="text-[8px] font-black text-red-600 uppercase tracking-wider">SGS: Maior Venda</p>
+                                <p className="text-xs font-black text-red-800">Dia {dailyMetrics.SGS.maxSalesDay} <span className="text-[10px] font-bold opacity-60">({dailyMetrics.SGS.maxSalesVal} vds)</span></p>
+                            </div>
+                            <div className="flex flex-col">
+                                <p className="text-[8px] font-black text-stone-400 uppercase tracking-wider">SGS: Menor Venda</p>
+                                <p className="text-xs font-black text-stone-600">Dia {dailyMetrics.SGS.minSalesDay} <span className="text-[10px] font-bold opacity-60">({dailyMetrics.SGS.minSalesVal} vds)</span></p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </Card>
+
+            {/* NOVOS GRÁFICOS: QUANDO OS ORÇAMENTOS RETORNAM */}
+            <Card className="p-4">
+                <div className="flex justify-between items-center mb-4">
+                    <h4 className="font-bold text-stone-700 text-sm uppercase">Quando os orçamentos retornam</h4>
+                    <div className="flex gap-4 text-[11px] font-black">
+                        <span className="text-orange-600 flex items-center gap-1.5"><div className="w-2 h-2 bg-orange-600 rounded-full shadow-sm"></div> TC</span>
+                        <span className="text-red-600 flex items-center gap-1.5"><div className="w-2 h-2 bg-red-600 rounded-full shadow-sm"></div> SGS</span>
+                    </div>
+                </div>
+                <div className="h-48">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={dailyCompData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }} barGap={2}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
+                            <XAxis dataKey="day" tick={{ fontSize: 9, fontWeight: 'bold' }} axisLine={false} tickLine={false} />
+                            <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
+                            <Bar dataKey="TC_returns" name="TC" fill="#ea580c" radius={[2, 2, 0, 0]} barSize={4}>
+                                <LabelList dataKey="TC_returns" position="top" formatter={(v) => v > 0 ? v : ''} style={{ fill: '#ea580c', fontSize: '8px', fontWeight: 'bold' }} />
+                            </Bar>
+                            <Bar dataKey="SGS_returns" name="SGS" fill="#991b1b" radius={[2, 2, 0, 0]} barSize={4}>
+                                <LabelList dataKey="SGS_returns" position="top" formatter={(v) => v > 0 ? v : ''} style={{ fill: '#991b1b', fontSize: '8px', fontWeight: 'bold' }} />
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+                {dailyMetrics && (
+                    <div className="mt-4 flex flex-col gap-3">
+                        {/* TC Metrics */}
+                        <div className="grid grid-cols-2 gap-2 p-2 bg-orange-50/50 rounded-xl border border-orange-100">
+                            <div className="flex flex-col">
+                                <p className="text-[8px] font-black text-orange-600 uppercase tracking-wider">TC: Maior Retorno</p>
+                                <p className="text-xs font-black text-orange-800">Dia {dailyMetrics.TC.maxReturnsDay} <span className="text-[10px] font-bold opacity-60">({dailyMetrics.TC.maxReturnsVal} ret)</span></p>
+                            </div>
+                            <div className="flex flex-col">
+                                <p className="text-[8px] font-black text-stone-400 uppercase tracking-wider">TC: Menor Retorno</p>
+                                <p className="text-xs font-black text-stone-600">Dia {dailyMetrics.TC.minReturnsDay} <span className="text-[10px] font-bold opacity-60">({dailyMetrics.TC.minReturnsVal} ret)</span></p>
+                            </div>
+                        </div>
+                        {/* SGS Metrics */}
+                        <div className="grid grid-cols-2 gap-2 p-2 bg-red-50/50 rounded-xl border border-red-100">
+                            <div className="flex flex-col">
+                                <p className="text-[8px] font-black text-red-600 uppercase tracking-wider">SGS: Maior Retorno</p>
+                                <p className="text-xs font-black text-red-800">Dia {dailyMetrics.SGS.maxReturnsDay} <span className="text-[10px] font-bold opacity-60">({dailyMetrics.SGS.maxReturnsVal} ret)</span></p>
+                            </div>
+                            <div className="flex flex-col">
+                                <p className="text-[8px] font-black text-stone-400 uppercase tracking-wider">SGS: Menor Retorno</p>
+                                <p className="text-xs font-black text-stone-600">Dia {dailyMetrics.SGS.minReturnsDay} <span className="text-[10px] font-bold opacity-60">({dailyMetrics.SGS.minReturnsVal} ret)</span></p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </Card>
             {/* 2. Perfil de Vendas (%) */}
             <Card className="p-4">
                 <div className="flex justify-between items-center mb-4">
@@ -3635,7 +3786,7 @@ function ComparisonScreen({ data }) {
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold' }} />
                             <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
-                            <Tooltip cursor={{ fill: '#f5f5f4' }} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} formatter={(value) => [`${value}%`, '']} />
+
                             <Bar dataKey="TC" fill="#ea580c" radius={[4, 4, 0, 0]} barSize={40}>
                                 <LabelList dataKey="TC" position="top" formatter={(v) => `${v}%`} style={{ fill: '#c2410c', fontSize: '11px', fontWeight: 'bold' }} />
                             </Bar>
@@ -3662,7 +3813,7 @@ function ComparisonScreen({ data }) {
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold' }} />
                             <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
-                            <Tooltip cursor={{ fill: '#f5f5f4' }} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} formatter={(value) => [`${value}%`, '']} />
+
                             <Bar dataKey="TC" fill="#ea580c" radius={[4, 4, 0, 0]} barSize={40}>
                                 <LabelList dataKey="TC" position="top" formatter={(v) => `${v}%`} style={{ fill: '#c2410c', fontSize: '11px', fontWeight: 'bold' }} />
                             </Bar>
@@ -3683,7 +3834,7 @@ function ComparisonScreen({ data }) {
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold' }} />
                             <YAxis tick={{ fontSize: 10 }} />
-                            <Tooltip cursor={{ fill: '#f5f5f4' }} />
+
                             <Bar dataKey="TC" fill="#ea580c" radius={[4, 4, 0, 0]} barSize={30}>
                                 <LabelList dataKey="TC" position="top" style={{ fill: '#c2410c', fontSize: '10px', fontWeight: 'bold' }} />
                             </Bar>
@@ -3719,7 +3870,7 @@ function ComparisonScreen({ data }) {
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold' }} />
                             <YAxis tick={{ fontSize: 10 }} />
-                            <Tooltip />
+
                             <Bar dataKey="TC" fill="#16a34a" radius={[4, 4, 0, 0]} barSize={30}>
                                 <LabelList dataKey="TC" position="top" style={{ fill: '#14532d', fontSize: '10px', fontWeight: 'bold' }} />
                             </Bar>
@@ -3743,7 +3894,7 @@ function ComparisonScreen({ data }) {
                             <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                             <XAxis type="number" hide />
                             <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 11, fontWeight: 'bold' }} />
-                            <Tooltip content={<CustomEfficiencyTooltip />} cursor={{ fill: '#f5f5f4' }} />
+
                             <Legend iconSize={8} wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
                             <Bar name="Cliente (%)" dataKey="rateCli" fill="#ea580c" radius={[0, 4, 4, 0]} barSize={15}>
                                 <LabelList dataKey="rateCli" position="right" formatter={(v) => `${v}%`} style={{ fill: '#9a3412', fontSize: '10px', fontWeight: 'bold' }} />
@@ -3822,22 +3973,6 @@ function ComparisonScreen({ data }) {
 // ... (App Main Component) ...
 
 export default function App() {
-    if (firebaseInitError) {
-        return (
-            <div style={{ padding: '20px', color: 'red', fontFamily: 'monospace' }}>
-                <h2>Falha Crítica na Inicialização</h2>
-                <p>O aplicativo não pôde conectar ao Firebase.</p>
-                <pre style={{ background: '#fee', padding: '10px', borderRadius: '5px', whiteSpace: 'pre-wrap' }}>
-                    {firebaseInitError.toString()}
-                </pre>
-                <p>Verifique se as variáveis de ambiente (VITE_FIREBASE_...) estão definidas corretamente na Vercel.</p>
-                <pre>
-                    API KEY: {import.meta.env.VITE_FIREBASE_API_KEY ? 'Presente' : 'Faltando'}
-                </pre>
-            </div>
-        );
-    }
-
     const [storeConfig, setStoreConfig] = useState(DEFAULT_CONFIG);
     const [configLoaded, setConfigLoaded] = useState(false);
     const [user, setUser] = useState(null);
@@ -3918,8 +4053,8 @@ export default function App() {
     useEffect(() => {
         const initAuth = async () => {
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
+                if (typeof window.__initial_auth_token !== 'undefined' && window.__initial_auth_token) {
+                    await signInWithCustomToken(auth, window.__initial_auth_token);
                 } else {
                     await signInAnonymously(auth);
                 }
@@ -4067,6 +4202,22 @@ export default function App() {
         setPendingAction(null);
         setPendingStore(null);
     };
+
+    if (firebaseInitError) {
+        return (
+            <div style={{ padding: '20px', color: 'red', fontFamily: 'monospace' }}>
+                <h2>Falha Crítica na Inicialização</h2>
+                <p>O aplicativo não pôde conectar ao Firebase.</p>
+                <pre style={{ background: '#fee', padding: '10px', borderRadius: '5px', whiteSpace: 'pre-wrap' }}>
+                    {firebaseInitError.toString()}
+                </pre>
+                <p>Verifique se as variáveis de ambiente (VITE_FIREBASE_...) estão definidas corretamente na Vercel.</p>
+                <pre>
+                    API KEY: {import.meta.env.VITE_FIREBASE_API_KEY ? 'Presente' : 'Faltando'}
+                </pre>
+            </div>
+        );
+    }
 
     if (!isAuthenticated) {
         return <LoginScreen config={storeConfig} onLogin={handleLogin} isConfigLoaded={configLoaded} />;
