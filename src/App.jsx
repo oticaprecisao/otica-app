@@ -3244,6 +3244,9 @@ function ComparisonScreen({ data }) {
         };
     }, [dailyCompData]);
 
+    const dailyCompDataSales = useMemo(() => dailyCompData.filter(d => d.total_sales > 0), [dailyCompData]);
+    const dailyCompDataReturns = useMemo(() => dailyCompData.filter(d => d.total_returns > 0), [dailyCompData]);
+
     useEffect(() => {
         if (availableMonths.length > 0 && !selectedMonth) {
             setSelectedMonth(availableMonths[0]);
@@ -3674,20 +3677,20 @@ function ComparisonScreen({ data }) {
                     <h4 className="font-bold text-stone-700 text-sm uppercase">Quando as vendas acontecem</h4>
                     <div className="flex gap-4 text-[11px] font-black">
                         <span className="text-orange-600 flex items-center gap-1.5"><div className="w-2 h-2 bg-orange-600 rounded-full shadow-sm"></div> TC</span>
-                        <span className="text-red-600 flex items-center gap-1.5"><div className="w-2 h-2 bg-red-600 rounded-full shadow-sm"></div> SGS</span>
+                        <span className="text-red-900 flex items-center gap-1.5"><div className="w-2 h-2 bg-[#991b1b] rounded-full shadow-sm"></div> SGS</span>
                     </div>
                 </div>
                 <div className="h-48">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={dailyCompData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }} barGap={2}>
+                        <BarChart data={dailyCompDataSales} margin={{ top: 25, right: 10, left: -20, bottom: 0 }} barGap={5} barCategoryGap="70%">
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
                             <XAxis dataKey="day" tick={{ fontSize: 9, fontWeight: 'bold' }} axisLine={false} tickLine={false} />
                             <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
-                            <Bar dataKey="TC_sales" name="TC" fill="#fb923c" radius={[2, 2, 0, 0]} barSize={4}>
-                                <LabelList dataKey="TC_sales" position="top" formatter={(v) => v > 0 ? v : ''} style={{ fill: '#fb923c', fontSize: '8px', fontWeight: 'bold' }} />
+                            <Bar dataKey="TC_sales" name="TC" fill="#fb923c" radius={[1, 1, 0, 0]} barSize={4}>
+                                <LabelList dataKey="TC_sales" position="top" offset={12} formatter={(v) => v > 0 ? v : ''} style={{ fill: '#fb923c', fontSize: '8px', fontWeight: 'bold' }} />
                             </Bar>
-                            <Bar dataKey="SGS_sales" name="SGS" fill="#f87171" radius={[2, 2, 0, 0]} barSize={4}>
-                                <LabelList dataKey="SGS_sales" position="top" formatter={(v) => v > 0 ? v : ''} style={{ fill: '#f87171', fontSize: '8px', fontWeight: 'bold' }} />
+                            <Bar dataKey="SGS_sales" name="SGS" fill="#991b1b" radius={[1, 1, 0, 0]} barSize={4}>
+                                <LabelList dataKey="SGS_sales" position="top" offset={2} formatter={(v) => v > 0 ? v : ''} style={{ fill: '#991b1b', fontSize: '8px', fontWeight: 'bold' }} />
                             </Bar>
                         </BarChart>
                     </ResponsiveContainer>
@@ -3697,22 +3700,22 @@ function ComparisonScreen({ data }) {
                         {/* TC Metrics */}
                         <div className="grid grid-cols-2 gap-2 p-2 bg-orange-50/50 rounded-xl border border-orange-100">
                             <div className="flex flex-col">
-                                <p className="text-[8px] font-black text-orange-600 uppercase tracking-wider">TC: Maior Venda</p>
+                                <p className="text-[8px] font-black text-orange-600 uppercase tracking-wider">dia c/ mais vendas</p>
                                 <p className="text-xs font-black text-orange-800">Dia {dailyMetrics.TC.maxSalesDay} <span className="text-[10px] font-bold opacity-60">({dailyMetrics.TC.maxSalesVal} vds)</span></p>
                             </div>
                             <div className="flex flex-col">
-                                <p className="text-[8px] font-black text-stone-400 uppercase tracking-wider">TC: Menor Venda</p>
+                                <p className="text-[8px] font-black text-stone-400 uppercase tracking-wider">dia c/ menos vendas</p>
                                 <p className="text-xs font-black text-stone-600">Dia {dailyMetrics.TC.minSalesDay} <span className="text-[10px] font-bold opacity-60">({dailyMetrics.TC.minSalesVal} vds)</span></p>
                             </div>
                         </div>
                         {/* SGS Metrics */}
                         <div className="grid grid-cols-2 gap-2 p-2 bg-red-50/50 rounded-xl border border-red-100">
                             <div className="flex flex-col">
-                                <p className="text-[8px] font-black text-red-600 uppercase tracking-wider">SGS: Maior Venda</p>
+                                <p className="text-[8px] font-black text-red-600 uppercase tracking-wider">dia c/ mais vendas</p>
                                 <p className="text-xs font-black text-red-800">Dia {dailyMetrics.SGS.maxSalesDay} <span className="text-[10px] font-bold opacity-60">({dailyMetrics.SGS.maxSalesVal} vds)</span></p>
                             </div>
                             <div className="flex flex-col">
-                                <p className="text-[8px] font-black text-stone-400 uppercase tracking-wider">SGS: Menor Venda</p>
+                                <p className="text-[8px] font-black text-stone-400 uppercase tracking-wider">dia c/ menos vendas</p>
                                 <p className="text-xs font-black text-stone-600">Dia {dailyMetrics.SGS.minSalesDay} <span className="text-[10px] font-bold opacity-60">({dailyMetrics.SGS.minSalesVal} vds)</span></p>
                             </div>
                         </div>
@@ -3726,20 +3729,20 @@ function ComparisonScreen({ data }) {
                     <h4 className="font-bold text-stone-700 text-sm uppercase">Quando os orçamentos retornam</h4>
                     <div className="flex gap-4 text-[11px] font-black">
                         <span className="text-orange-600 flex items-center gap-1.5"><div className="w-2 h-2 bg-orange-600 rounded-full shadow-sm"></div> TC</span>
-                        <span className="text-red-600 flex items-center gap-1.5"><div className="w-2 h-2 bg-red-600 rounded-full shadow-sm"></div> SGS</span>
+                        <span className="text-red-900 flex items-center gap-1.5"><div className="w-2 h-2 bg-[#991b1b] rounded-full shadow-sm"></div> SGS</span>
                     </div>
                 </div>
                 <div className="h-48">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={dailyCompData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }} barGap={2}>
+                        <BarChart data={dailyCompDataReturns} margin={{ top: 25, right: 10, left: -20, bottom: 0 }} barGap={5} barCategoryGap="70%">
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
                             <XAxis dataKey="day" tick={{ fontSize: 9, fontWeight: 'bold' }} axisLine={false} tickLine={false} />
                             <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
-                            <Bar dataKey="TC_returns" name="TC" fill="#ea580c" radius={[2, 2, 0, 0]} barSize={4}>
-                                <LabelList dataKey="TC_returns" position="top" formatter={(v) => v > 0 ? v : ''} style={{ fill: '#ea580c', fontSize: '8px', fontWeight: 'bold' }} />
+                            <Bar dataKey="TC_returns" name="TC" fill="#ea580c" radius={[1, 1, 0, 0]} barSize={4}>
+                                <LabelList dataKey="TC_returns" position="top" offset={12} formatter={(v) => v > 0 ? v : ''} style={{ fill: '#ea580c', fontSize: '8px', fontWeight: 'bold' }} />
                             </Bar>
-                            <Bar dataKey="SGS_returns" name="SGS" fill="#991b1b" radius={[2, 2, 0, 0]} barSize={4}>
-                                <LabelList dataKey="SGS_returns" position="top" formatter={(v) => v > 0 ? v : ''} style={{ fill: '#991b1b', fontSize: '8px', fontWeight: 'bold' }} />
+                            <Bar dataKey="SGS_returns" name="SGS" fill="#991b1b" radius={[1, 1, 0, 0]} barSize={4}>
+                                <LabelList dataKey="SGS_returns" position="top" offset={2} formatter={(v) => v > 0 ? v : ''} style={{ fill: '#991b1b', fontSize: '8px', fontWeight: 'bold' }} />
                             </Bar>
                         </BarChart>
                     </ResponsiveContainer>
@@ -3749,22 +3752,22 @@ function ComparisonScreen({ data }) {
                         {/* TC Metrics */}
                         <div className="grid grid-cols-2 gap-2 p-2 bg-orange-50/50 rounded-xl border border-orange-100">
                             <div className="flex flex-col">
-                                <p className="text-[8px] font-black text-orange-600 uppercase tracking-wider">TC: Maior Retorno</p>
+                                <p className="text-[8px] font-black text-orange-600 uppercase tracking-wider">dia c/ mais retornos</p>
                                 <p className="text-xs font-black text-orange-800">Dia {dailyMetrics.TC.maxReturnsDay} <span className="text-[10px] font-bold opacity-60">({dailyMetrics.TC.maxReturnsVal} ret)</span></p>
                             </div>
                             <div className="flex flex-col">
-                                <p className="text-[8px] font-black text-stone-400 uppercase tracking-wider">TC: Menor Retorno</p>
+                                <p className="text-[8px] font-black text-stone-400 uppercase tracking-wider">dia c/ menos retornos</p>
                                 <p className="text-xs font-black text-stone-600">Dia {dailyMetrics.TC.minReturnsDay} <span className="text-[10px] font-bold opacity-60">({dailyMetrics.TC.minReturnsVal} ret)</span></p>
                             </div>
                         </div>
                         {/* SGS Metrics */}
                         <div className="grid grid-cols-2 gap-2 p-2 bg-red-50/50 rounded-xl border border-red-100">
                             <div className="flex flex-col">
-                                <p className="text-[8px] font-black text-red-600 uppercase tracking-wider">SGS: Maior Retorno</p>
+                                <p className="text-[8px] font-black text-red-600 uppercase tracking-wider">dia c/ mais retornos</p>
                                 <p className="text-xs font-black text-red-800">Dia {dailyMetrics.SGS.maxReturnsDay} <span className="text-[10px] font-bold opacity-60">({dailyMetrics.SGS.maxReturnsVal} ret)</span></p>
                             </div>
                             <div className="flex flex-col">
-                                <p className="text-[8px] font-black text-stone-400 uppercase tracking-wider">SGS: Menor Retorno</p>
+                                <p className="text-[8px] font-black text-stone-400 uppercase tracking-wider">dia c/ menos retornos</p>
                                 <p className="text-xs font-black text-stone-600">Dia {dailyMetrics.SGS.minReturnsDay} <span className="text-[10px] font-bold opacity-60">({dailyMetrics.SGS.minReturnsVal} ret)</span></p>
                             </div>
                         </div>
