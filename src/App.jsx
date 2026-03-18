@@ -1156,10 +1156,34 @@ function TrendsScreen({ data, storeConfig }) {
 
                                 <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
                                 <Line type="monotone" dataKey="TC_convOrc" name="TC" stroke="#16a34a" strokeWidth={3} dot={{ r: 4 }}>
-                                    <LabelList dataKey="TC_convOrc" position="top" offset={10} formatter={(v) => `${v}%`} style={{ fill: '#16a34a', fontSize: '10px', fontWeight: 'bold' }} />
+                                    <LabelList 
+                                        dataKey="TC_convOrc" 
+                                        content={(props) => {
+                                            const { x, y, value, index } = props;
+                                            const otherVal = yearlyData[index]?.SGS_convOrc || 0;
+                                            const isHigher = value >= otherVal;
+                                            return (
+                                                <text x={x} y={y} dy={isHigher ? -12 : 22} fill="#16a34a" fontSize="10" fontWeight="bold" textAnchor="middle">
+                                                    {value}%
+                                                </text>
+                                            );
+                                        }}
+                                    />
                                 </Line>
                                 <Line type="monotone" dataKey="SGS_convOrc" name="SGS" stroke="#dc2626" strokeWidth={3} dot={{ r: 4 }}>
-                                    <LabelList dataKey="SGS_convOrc" position="bottom" offset={10} formatter={(v) => `${v}%`} style={{ fill: '#dc2626', fontSize: '10px', fontWeight: 'bold' }} />
+                                    <LabelList 
+                                        dataKey="SGS_convOrc" 
+                                        content={(props) => {
+                                            const { x, y, value, index } = props;
+                                            const otherVal = yearlyData[index]?.TC_convOrc || 0;
+                                            const isHigher = value > otherVal;
+                                            return (
+                                                <text x={x} y={y} dy={isHigher ? -12 : 22} fill="#dc2626" fontSize="10" fontWeight="bold" textAnchor="middle">
+                                                    {value}%
+                                                </text>
+                                            );
+                                        }}
+                                    />
                                 </Line>
                             </LineChart>
                         </ResponsiveContainer>
@@ -3682,7 +3706,7 @@ function ComparisonScreen({ data }) {
                 </div>
                 <div className="h-48">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={dailyCompDataSales} margin={{ top: 25, right: 10, left: -20, bottom: 0 }} barGap={5} barCategoryGap="70%">
+                        <BarChart data={dailyCompDataSales} margin={{ top: 25, right: 10, left: -20, bottom: 0 }} barGap={0} barCategoryGap="85%">
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
                             <XAxis dataKey="day" tick={{ fontSize: 9, fontWeight: 'bold' }} axisLine={false} tickLine={false} />
                             <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
@@ -3734,7 +3758,7 @@ function ComparisonScreen({ data }) {
                 </div>
                 <div className="h-48">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={dailyCompDataReturns} margin={{ top: 25, right: 10, left: -20, bottom: 0 }} barGap={5} barCategoryGap="70%">
+                        <BarChart data={dailyCompDataReturns} margin={{ top: 25, right: 10, left: -20, bottom: 0 }} barGap={0} barCategoryGap="85%">
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
                             <XAxis dataKey="day" tick={{ fontSize: 9, fontWeight: 'bold' }} axisLine={false} tickLine={false} />
                             <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
