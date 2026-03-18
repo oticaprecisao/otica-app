@@ -852,8 +852,8 @@ function TrendsScreen({ data, storeConfig }) {
                 months[key] = {
                     key,
                     name: `${d.toLocaleString('pt-BR', { month: 'short' })}/${d.getFullYear().toString().substr(2)}`,
-                    TC_vendas: 0, TC_orcamentos: 0, TC_novosClientes: 0, TC_atendimentos: 0, TC_volumeTotal: 0, TC_retornos_only: 0,
-                    SGS_vendas: 0, SGS_orcamentos: 0, SGS_novosClientes: 0, SGS_atendimentos: 0, SGS_volumeTotal: 0, SGS_retornos_only: 0
+                    TC_vendas: 0, TC_orcamentos: 0, TC_novosClientes: 0, TC_atendimentos: 0, TC_servicos: 0, TC_volumeTotal: 0, TC_retornos_only: 0,
+                    SGS_vendas: 0, SGS_orcamentos: 0, SGS_novosClientes: 0, SGS_atendimentos: 0, SGS_servicos: 0, SGS_volumeTotal: 0, SGS_retornos_only: 0
                 };
             }
 
@@ -870,6 +870,9 @@ function TrendsScreen({ data, storeConfig }) {
                 if ((item.action === 'venda' || item.action === 'retorno') && item.clientType === 'nao_cliente') {
                     months[key][storePrefix + 'novosClientes']++;
                 }
+            } else if (item.category === 'servico') {
+                const storePrefix = item.store === 'TC' ? 'TC_' : 'SGS_';
+                months[key][storePrefix + 'servicos']++;
             }
 
             // Volume Total (Interações globais)
@@ -885,6 +888,8 @@ function TrendsScreen({ data, storeConfig }) {
                 SGS_taxa: m.SGS_vendas + m.SGS_orcamentos > 0 ? Math.round((m.SGS_vendas / (m.SGS_vendas + m.SGS_orcamentos)) * 100) : 0,
                 TC_eficiencia: m.TC_atendimentos > 0 ? Math.round((m.TC_vendas / m.TC_atendimentos) * 100) : 0,
                 SGS_eficiencia: m.SGS_atendimentos > 0 ? Math.round((m.SGS_vendas / m.SGS_atendimentos) * 100) : 0,
+                TC_convTotal: (m.TC_atendimentos + m.TC_servicos) > 0 ? Math.round((m.TC_vendas / (m.TC_atendimentos + m.TC_servicos)) * 100) : 0,
+                SGS_convTotal: (m.SGS_atendimentos + m.SGS_servicos) > 0 ? Math.round((m.SGS_vendas / (m.SGS_atendimentos + m.SGS_servicos)) * 100) : 0,
                 TC_convOrc: m.TC_orcamentos > 0 ? Math.round((m.TC_retornos_only / m.TC_orcamentos) * 100) : 0,
                 SGS_convOrc: m.SGS_orcamentos > 0 ? Math.round((m.SGS_retornos_only / m.SGS_orcamentos) * 100) : 0,
                 TC_vendasCli: m.TC_vendas - m.TC_novosClientes,
@@ -1042,10 +1047,34 @@ function TrendsScreen({ data, storeConfig }) {
 
                                 <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
                                 <Line type="monotone" dataKey="TC_vendas" name="TC" stroke="#16a34a" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }}>
-                                    <LabelList dataKey="TC_vendas" position="top" offset={10} style={{ fill: '#16a34a', fontSize: '10px', fontWeight: 'bold' }} />
+                                    <LabelList 
+                                        dataKey="TC_vendas" 
+                                        content={(props) => {
+                                            const { x, y, value, index } = props;
+                                            const otherVal = yearlyData[index]?.SGS_vendas || 0;
+                                            const isHigher = value >= otherVal;
+                                            return (
+                                                <text x={x} y={y} dy={isHigher ? -12 : 22} fill="#16a34a" fontSize="10" fontWeight="bold" textAnchor="middle">
+                                                    {value}
+                                                </text>
+                                            );
+                                        }}
+                                    />
                                 </Line>
                                 <Line type="monotone" dataKey="SGS_vendas" name="SGS" stroke="#dc2626" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }}>
-                                    <LabelList dataKey="SGS_vendas" position="bottom" offset={10} style={{ fill: '#dc2626', fontSize: '10px', fontWeight: 'bold' }} />
+                                    <LabelList 
+                                        dataKey="SGS_vendas" 
+                                        content={(props) => {
+                                            const { x, y, value, index } = props;
+                                            const otherVal = yearlyData[index]?.TC_vendas || 0;
+                                            const isHigher = value > otherVal;
+                                            return (
+                                                <text x={x} y={y} dy={isHigher ? -12 : 22} fill="#dc2626" fontSize="10" fontWeight="bold" textAnchor="middle">
+                                                    {value}
+                                                </text>
+                                            );
+                                        }}
+                                    />
                                 </Line>
                             </LineChart>
                         </ResponsiveContainer>
@@ -1106,10 +1135,34 @@ function TrendsScreen({ data, storeConfig }) {
 
                                 <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
                                 <Area type="monotone" dataKey="TC_volumeTotal" name="TC" stroke="#16a34a" fillOpacity={1} fill="url(#colorTC)">
-                                    <LabelList dataKey="TC_volumeTotal" position="top" offset={10} style={{ fill: '#16a34a', fontSize: '10px', fontWeight: 'bold' }} />
+                                    <LabelList 
+                                        dataKey="TC_volumeTotal" 
+                                        content={(props) => {
+                                            const { x, y, value, index } = props;
+                                            const otherVal = yearlyData[index]?.SGS_volumeTotal || 0;
+                                            const isHigher = value >= otherVal;
+                                            return (
+                                                <text x={x} y={y} dy={isHigher ? -12 : 22} fill="#16a34a" fontSize="10" fontWeight="bold" textAnchor="middle">
+                                                    {value}
+                                                </text>
+                                            );
+                                        }}
+                                    />
                                 </Area>
                                 <Area type="monotone" dataKey="SGS_volumeTotal" name="SGS" stroke="#dc2626" fillOpacity={1} fill="url(#colorSGS)">
-                                    <LabelList dataKey="SGS_volumeTotal" position="bottom" offset={10} style={{ fill: '#dc2626', fontSize: '10px', fontWeight: 'bold' }} />
+                                    <LabelList 
+                                        dataKey="SGS_volumeTotal" 
+                                        content={(props) => {
+                                            const { x, y, value, index } = props;
+                                            const otherVal = yearlyData[index]?.TC_volumeTotal || 0;
+                                            const isHigher = value > otherVal;
+                                            return (
+                                                <text x={x} y={y} dy={isHigher ? -12 : 22} fill="#dc2626" fontSize="10" fontWeight="bold" textAnchor="middle">
+                                                    {value}
+                                                </text>
+                                            );
+                                        }}
+                                    />
                                 </Area>
                             </AreaChart>
                         </ResponsiveContainer>
@@ -1131,10 +1184,83 @@ function TrendsScreen({ data, storeConfig }) {
 
                                 <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
                                 <Line type="monotone" dataKey="TC_eficiencia" name="TC" stroke="#16a34a" strokeWidth={3} dot={{ r: 4 }}>
-                                    <LabelList dataKey="TC_eficiencia" position="top" offset={10} formatter={(v) => `${v}%`} style={{ fill: '#16a34a', fontSize: '10px', fontWeight: 'bold' }} />
+                                    <LabelList 
+                                        dataKey="TC_eficiencia" 
+                                        content={(props) => {
+                                            const { x, y, value, index } = props;
+                                            const otherVal = yearlyData[index]?.SGS_eficiencia || 0;
+                                            const isHigher = value >= otherVal;
+                                            return (
+                                                <text x={x} y={y} dy={isHigher ? -12 : 22} fill="#16a34a" fontSize="10" fontWeight="bold" textAnchor="middle">
+                                                    {value}%
+                                                </text>
+                                            );
+                                        }}
+                                    />
                                 </Line>
                                 <Line type="monotone" dataKey="SGS_eficiencia" name="SGS" stroke="#dc2626" strokeWidth={3} dot={{ r: 4 }}>
-                                    <LabelList dataKey="SGS_eficiencia" position="bottom" offset={10} formatter={(v) => `${v}%`} style={{ fill: '#dc2626', fontSize: '10px', fontWeight: 'bold' }} />
+                                    <LabelList 
+                                        dataKey="SGS_eficiencia" 
+                                        content={(props) => {
+                                            const { x, y, value, index } = props;
+                                            const otherVal = yearlyData[index]?.TC_eficiencia || 0;
+                                            const isHigher = value > otherVal;
+                                            return (
+                                                <text x={x} y={y} dy={isHigher ? -12 : 22} fill="#dc2626" fontSize="10" fontWeight="bold" textAnchor="middle">
+                                                    {value}%
+                                                </text>
+                                            );
+                                        }}
+                                    />
+                                </Line>
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Grafico NOVO: Conversão Total */}
+                <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
+                    <div className="p-4 border-b border-stone-100 bg-stone-50/50">
+                        <h4 className="font-bold text-stone-700 text-sm uppercase">Conversão Total</h4>
+                        <p className="text-[10px] text-stone-400 mt-1">Vendas / Total de Entradas (Comercial + Serviço)</p>
+                    </div>
+                    <div className="p-4 h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={yearlyData} margin={{ top: 25, right: 25, left: 10, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.5} />
+                                <XAxis dataKey="name" tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} />
+                                <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
+
+                                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
+                                <Line type="monotone" dataKey="TC_convTotal" name="TC" stroke="#16a34a" strokeWidth={3} dot={{ r: 4 }}>
+                                    <LabelList 
+                                        dataKey="TC_convTotal" 
+                                        content={(props) => {
+                                            const { x, y, value, index } = props;
+                                            const otherVal = yearlyData[index]?.SGS_convTotal || 0;
+                                            const isHigher = value >= otherVal;
+                                            return (
+                                                <text x={x} y={y} dy={isHigher ? -12 : 22} fill="#16a34a" fontSize="10" fontWeight="bold" textAnchor="middle">
+                                                    {value}%
+                                                </text>
+                                            );
+                                        }}
+                                    />
+                                </Line>
+                                <Line type="monotone" dataKey="SGS_convTotal" name="SGS" stroke="#dc2626" strokeWidth={3} dot={{ r: 4 }}>
+                                    <LabelList 
+                                        dataKey="SGS_convTotal" 
+                                        content={(props) => {
+                                            const { x, y, value, index } = props;
+                                            const otherVal = yearlyData[index]?.TC_convTotal || 0;
+                                            const isHigher = value > otherVal;
+                                            return (
+                                                <text x={x} y={y} dy={isHigher ? -12 : 22} fill="#dc2626" fontSize="10" fontWeight="bold" textAnchor="middle">
+                                                    {value}%
+                                                </text>
+                                            );
+                                        }}
+                                    />
                                 </Line>
                             </LineChart>
                         </ResponsiveContainer>
