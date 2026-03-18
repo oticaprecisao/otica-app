@@ -3778,12 +3778,13 @@ function ComparisonScreen({ data }) {
                         let diffText = "";
                         let colorClass = "";
 
-                        if (sgs > 0) {
-                            const diff = Math.round(((tc - sgs) / sgs) * 100);
-                            if (diff > 0) {
+                        if (sgs > 0 && tc > 0) {
+                            if (tc > sgs) {
+                                const diff = Math.round(((tc - sgs) / sgs) * 100);
                                 diffText = `TC tem ${diff}% mais movimento que SGS`;
                                 colorClass = "text-orange-600";
-                            } else if (diff < 0) {
+                            } else if (sgs > tc) {
+                                const diff = Math.round(((sgs - tc) / tc) * 100);
                                 diffText = `SGS tem ${Math.abs(diff)}% mais movimento que TC`;
                                 colorClass = "text-red-600";
                             } else {
@@ -3793,6 +3794,9 @@ function ComparisonScreen({ data }) {
                         } else if (tc > 0) {
                             diffText = "TC tem 100% do movimento";
                             colorClass = "text-orange-600";
+                        } else if (sgs > 0) {
+                            diffText = "SGS tem 100% do movimento";
+                            colorClass = "text-red-600";
                         }
 
                         return (
@@ -3808,15 +3812,25 @@ function ComparisonScreen({ data }) {
                 <div className="mt-2 flex justify-between items-center bg-stone-100/50 p-2 rounded-lg border border-stone-200">
                     <span className="text-[10px] font-black text-stone-700 uppercase italic">Movimento Total</span>
                     {(() => {
-                        const tc = compStats.TC.atendimentos;
-                        const sgs = compStats.SGS.atendimentos;
-                        if (sgs > 0) {
-                            const diff = Math.round(((tc - sgs) / sgs) * 100);
-                            const color = diff > 0 ? "text-orange-600" : diff < 0 ? "text-red-600" : "text-stone-500";
-                            const text = diff > 0 ? `TC tem ${diff}% mais que SGS` : diff < 0 ? `SGS tem ${Math.abs(diff)}% mais que TC` : "Mesmo volume total";
-                            return <span className={`text-[10px] font-black ${color}`}>{text}</span>;
+                        const tc = compStats.TC.atendimentos + compStats.TC.servicos;
+                        const sgs = compStats.SGS.atendimentos + compStats.SGS.servicos;
+                        
+                        if (tc > 0 && sgs > 0) {
+                            if (tc > sgs) {
+                                const diff = Math.round(((tc - sgs) / sgs) * 100);
+                                return <span className="text-[10px] font-black text-orange-600">TC tem {diff}% mais que SGS</span>;
+                            } else if (sgs > tc) {
+                                const diff = Math.round(((sgs - tc) / tc) * 100);
+                                return <span className="text-[10px] font-black text-red-600">SGS tem {diff}% mais que TC</span>;
+                            } else {
+                                return <span className="text-[10px] font-black text-stone-500">Mesmo volume total</span>;
+                            }
+                        } else if (tc > 0) {
+                            return <span className="text-[10px] font-black text-orange-600">TC detém 100% do total</span>;
+                        } else if (sgs > 0) {
+                            return <span className="text-[10px] font-black text-red-600">SGS detém 100% do total</span>;
                         }
-                        return <span className="text-[10px] font-black text-orange-600">TC detém 100% do total</span>;
+                        return null;
                     })()}
                 </div>
             </Card>
