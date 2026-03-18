@@ -3695,13 +3695,32 @@ function ComparisonScreen({ data }) {
                     {(() => {
                         const tc = compStats.TC.vendas;
                         const sgs = compStats.SGS.vendas;
-                        if (sgs > 0) {
-                            const diff = Math.round(((tc - sgs) / sgs) * 100);
-                            const color = diff > 0 ? "text-orange-600" : diff < 0 ? "text-red-600" : "text-stone-500";
-                            const text = diff > 0 ? `TC vendeu ${diff}% mais que SGS` : diff < 0 ? `SGS vendeu ${Math.abs(diff)}% mais que TC` : "Mesmo volume total";
-                            return <span className={`text-[10px] font-black ${color}`}>{text}</span>;
+                        if (sgs > 0 && tc > 0) {
+                            const diff = tc > sgs ? Math.round(((tc - sgs) / sgs) * 100) : Math.round(((sgs - tc) / tc) * 100);
+                            const color = tc > sgs ? "text-orange-600" : sgs > tc ? "text-red-600" : "text-stone-500";
+                            const msg = tc > sgs ? `TC vendeu ${diff}% mais que SGS` : sgs > tc ? `SGS vendeu ${diff}% mais que TC` : "Mesmo volume total";
+                            
+                            return (
+                                <div className="flex flex-col items-end gap-0.5">
+                                    <span className="text-[10px] font-extrabold text-stone-700 leading-tight">[TC: {tc} | SGS: {sgs}]</span>
+                                    <span className={`text-[10px] font-black ${color} leading-tight`}>{msg}</span>
+                                </div>
+                            );
+                        } else if (tc > 0) {
+                            return (
+                                <div className="flex flex-col items-end gap-0.5">
+                                    <span className="text-[10px] font-extrabold text-stone-700 leading-tight">[TC: {tc} | SGS: 0]</span>
+                                    <span className="text-[10px] font-black text-orange-600 leading-tight">TC detém 100% das vendas</span>
+                                </div>
+                            );
+                        } else if (sgs > 0) {
+                            return (
+                                <div className="flex flex-col items-end gap-0.5">
+                                    <span className="text-[10px] font-extrabold text-stone-700 leading-tight">[TC: 0 | SGS: {sgs}]</span>
+                                    <span className="text-[10px] font-black text-red-600 leading-tight">SGS detém 100% das vendas</span>
+                                </div>
+                            );
                         }
-                        return <span className="text-[10px] font-black text-orange-600">TC detém 100% do total</span>;
                     })()}
                 </div>
 
@@ -3816,19 +3835,30 @@ function ComparisonScreen({ data }) {
                         const sgs = compStats.SGS.atendimentos + compStats.SGS.servicos;
                         
                         if (tc > 0 && sgs > 0) {
-                            if (tc > sgs) {
-                                const diff = Math.round(((tc - sgs) / sgs) * 100);
-                                return <span className="text-[10px] font-black text-orange-600">TC tem {diff}% mais que SGS</span>;
-                            } else if (sgs > tc) {
-                                const diff = Math.round(((sgs - tc) / tc) * 100);
-                                return <span className="text-[10px] font-black text-red-600">SGS tem {diff}% mais que TC</span>;
-                            } else {
-                                return <span className="text-[10px] font-black text-stone-500">Mesmo volume total</span>;
-                            }
+                            const diff = tc > sgs ? Math.round(((tc - sgs) / sgs) * 100) : Math.round(((sgs - tc) / tc) * 100);
+                            const color = tc > sgs ? "text-orange-600" : sgs > tc ? "text-red-600" : "text-stone-500";
+                            const msg = tc > sgs ? `TC tem ${diff}% mais que SGS` : sgs > tc ? `SGS tem ${diff}% mais que TC` : "Mesmo volume total";
+
+                            return (
+                                <div className="flex flex-col items-end gap-0.5">
+                                    <span className="text-[10px] font-extrabold text-stone-700 leading-tight">[TC: {tc} | SGS: {sgs}]</span>
+                                    <span className={`text-[10px] font-black ${color} leading-tight`}>{msg}</span>
+                                </div>
+                            );
                         } else if (tc > 0) {
-                            return <span className="text-[10px] font-black text-orange-600">TC detém 100% do total</span>;
+                            return (
+                                <div className="flex flex-col items-end gap-0.5">
+                                    <span className="text-[10px] font-extrabold text-stone-700 leading-tight">[TC: {tc} | SGS: 0]</span>
+                                    <span className="text-[10px] font-black text-orange-600 leading-tight">TC detém 100% do total</span>
+                                </div>
+                            );
                         } else if (sgs > 0) {
-                            return <span className="text-[10px] font-black text-red-600">SGS detém 100% do total</span>;
+                            return (
+                                <div className="flex flex-col items-end gap-0.5">
+                                    <span className="text-[10px] font-extrabold text-stone-700 leading-tight">[TC: 0 | SGS: {sgs}]</span>
+                                    <span className="text-[10px] font-black text-red-600 leading-tight">SGS detém 100% do total</span>
+                                </div>
+                            );
                         }
                         return null;
                     })()}
