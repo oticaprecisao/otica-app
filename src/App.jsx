@@ -1007,7 +1007,7 @@ function TrendsScreen({ data, storeConfig }) {
     }
 
     return (
-        <div className="space-y-6 animate-in slide-in-from-right-4 duration-500 pb-10 px-4 md:px-0">
+        <div className="space-y-6 animate-in slide-in-from-right-4 duration-500 pb-10">
             {/* Header */}
             <div className="flex flex-col gap-4 border-b border-stone-200 pb-6 mb-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1038,9 +1038,9 @@ function TrendsScreen({ data, storeConfig }) {
                     <div className="p-4 border-b border-stone-100 bg-stone-50/50">
                         <h4 className="font-bold text-stone-700 text-sm uppercase">Evolução de Vendas</h4>
                     </div>
-                    <div className="p-4 h-64">
+                    <div className="px-1 py-4 h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={yearlyData} margin={{ top: 25, right: 25, left: 10, bottom: 5 }}>
+                            <LineChart data={yearlyData} margin={{ top: 25, right: 0, left: -15, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.5} />
                                 <XAxis dataKey="name" tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} />
                                 <YAxis tick={{ fontSize: 10 }} />
@@ -1088,9 +1088,9 @@ function TrendsScreen({ data, storeConfig }) {
                         <h4 className="font-bold text-stone-700 text-sm uppercase">Novos Clientes por Mês</h4>
                         <p className="text-[10px] text-stone-400 mt-1">Vendas concluídas com clientes que chegaram pela 1ª vez</p>
                     </div>
-                    <div className="p-4 h-64">
+                    <div className="px-1 py-4 h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={yearlyData} margin={{ top: 35, right: 25, left: 10, bottom: 5 }} barCategoryGap="35%">
+                            <BarChart data={yearlyData} margin={{ top: 35, right: 0, left: -10, bottom: 5 }} barCategoryGap="35%">
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.5} />
                                 <XAxis dataKey="name" tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} />
                                 <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
@@ -1116,9 +1116,9 @@ function TrendsScreen({ data, storeConfig }) {
                         <h4 className="font-bold text-stone-700 text-sm uppercase">Fluxo Total de Pessoas</h4>
                         <p className="text-[10px] text-stone-400 mt-1">Pessoas que passaram na ótica este mês</p>
                     </div>
-                    <div className="p-4 h-64">
+                    <div className="px-1 py-4 h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={yearlyData} margin={{ top: 25, right: 25, left: 10, bottom: 5 }}>
+                            <AreaChart data={yearlyData} margin={{ top: 25, right: 0, left: -10, bottom: 5 }}>
                                 <defs>
                                     <linearGradient id="colorTC" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#16a34a" stopOpacity={0.1} />
@@ -1175,9 +1175,9 @@ function TrendsScreen({ data, storeConfig }) {
                         <h4 className="font-bold text-stone-700 text-sm uppercase">Conversão de Vendas (Eficiência)</h4>
                         <p className="text-[10px] text-stone-400 mt-1">Vendas / Total de Atendimentos</p>
                     </div>
-                    <div className="p-4 h-64">
+                    <div className="px-1 py-4 h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={yearlyData} margin={{ top: 25, right: 25, left: 10, bottom: 5 }}>
+                            <LineChart data={yearlyData} margin={{ top: 25, right: 0, left: -15, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.5} />
                                 <XAxis dataKey="name" tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} />
                                 <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
@@ -1224,9 +1224,9 @@ function TrendsScreen({ data, storeConfig }) {
                         <h4 className="font-bold text-stone-700 text-sm uppercase">Conversão Total</h4>
                         <p className="text-[10px] text-stone-400 mt-1">Vendas / Total de Entradas (Comercial + Serviço)</p>
                     </div>
-                    <div className="p-4 h-64">
+                    <div className="px-1 py-4 h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={yearlyData} margin={{ top: 25, right: 25, left: 10, bottom: 5 }}>
+                            <LineChart data={yearlyData} margin={{ top: 25, right: 0, left: -15, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.5} />
                                 <XAxis dataKey="name" tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} />
                                 <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
@@ -1273,9 +1273,9 @@ function TrendsScreen({ data, storeConfig }) {
                         <h4 className="font-bold text-stone-700 text-sm uppercase">Conversão de Orçamentos (Retorno)</h4>
                         <p className="text-[10px] text-stone-400 mt-1">Retornos / Total de Orçamentos</p>
                     </div>
-                    <div className="p-4 h-64">
+                    <div className="px-1 py-4 h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={yearlyData} margin={{ top: 25, right: 25, left: 10, bottom: 5 }}>
+                            <LineChart data={yearlyData} margin={{ top: 25, right: 0, left: -15, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.5} />
                                 <XAxis dataKey="name" tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} />
                                 <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
@@ -1322,9 +1322,9 @@ function TrendsScreen({ data, storeConfig }) {
                         <h4 className="font-bold text-stone-700 text-sm uppercase">Origem das Vendas (Cliente x Novo)</h4>
                         <p className="text-[10px] text-stone-400 mt-1">Comparativo de vendas para clientes antigos vs novos</p>
                     </div>
-                    <div className="p-4 h-96">
+                    <div className="px-1 py-4 h-96">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={yearlyData} margin={{ top: 45, right: 25, left: 10, bottom: 5 }} barGap={2}>
+                            <BarChart data={yearlyData} margin={{ top: 45, right: 0, left: -10, bottom: 5 }} barGap={2}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.5} />
                                 <XAxis dataKey="name" tick={{ fontSize: 10 }} padding={{ left: 10, right: 10 }} />
                                 <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
@@ -1361,19 +1361,30 @@ function TrendsScreen({ data, storeConfig }) {
                             <div className="p-5 border-b border-stone-100 bg-stone-50/30">
                                 <h4 className="font-bold text-stone-700 text-sm uppercase">Fluxo por Dia da Semana</h4>
                             </div>
-                            <div className="p-6 h-80">
+                            <div className="px-1 py-6 h-80">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={peakAnalysis.weekdayData} margin={{ top: 20, right: 30, left: 10, bottom: 5 }} barGap={8} barCategoryGap="40%">
+                                    <BarChart data={peakAnalysis.weekdayData} margin={{ top: 20, right: 0, left: 0, bottom: 65 }} barGap={0} barCategoryGap="70%">
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
-                                        <XAxis dataKey="name" tick={{ fontSize: 9, fontWeight: 'bold' }} axisLine={false} tickLine={false} />
+                                        <XAxis 
+                                            dataKey="name" 
+                                            axisLine={false} 
+                                            tickLine={false} 
+                                            tick={(props) => {
+                                                const { x, y, payload } = props;
+                                                const dayData = peakAnalysis.weekdayData.find(d => d.name === payload.value);
+                                                return (
+                                                    <g transform={`translate(${x},${y})`}>
+                                                        <text x={0} y={0} dy={16} textAnchor="middle" fill="#44403c" fontSize={10} fontWeight="bold">{payload.value}</text>
+                                                        <text x={0} y={0} dy={32} textAnchor="middle" fill="#16a34a" fontSize={11} fontWeight="900">{dayData?.TC}</text>
+                                                        <text x={0} y={0} dy={46} textAnchor="middle" fill="#dc2626" fontSize={11} fontWeight="900">{dayData?.SGS}</text>
+                                                    </g>
+                                                );
+                                            }}
+                                        />
                                         <YAxis tick={{ fontSize: 9 }} hide />
 
-                                        <Bar dataKey="TC" fill="#16a34a" radius={[4, 4, 0, 0]} barSize={12}>
-                                            <LabelList dataKey="TC" position="top" style={{ fill: '#16a34a', fontSize: '10px', fontWeight: '900' }} />
-                                        </Bar>
-                                        <Bar dataKey="SGS" fill="#dc2626" radius={[4, 4, 0, 0]} barSize={12}>
-                                            <LabelList dataKey="SGS" position="top" style={{ fill: '#dc2626', fontSize: '10px', fontWeight: '900' }} />
-                                        </Bar>
+                                        <Bar dataKey="TC" fill="#16a34a" radius={[4, 4, 0, 0]} barSize={12} />
+                                        <Bar dataKey="SGS" fill="#dc2626" radius={[4, 4, 0, 0]} barSize={12} />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>
@@ -2666,7 +2677,7 @@ function DashboardScreen({ data, storeData }) {
     }).sort((a, b) => b.Orçamentos - a.Orçamentos);
 
     const salesCompositionData = [
-        { name: 'Venda Cliente', value: stats.vendaCliente, fill: '#c2410c' },
+        { name: 'Venda Cliente', value: stats.vendaCliente, fill: '#166534' },
         { name: 'Venda Não Cliente', value: stats.vendaNaoCliente, fill: '#fb923c' },
     ];
 
@@ -2980,8 +2991,8 @@ function DashboardScreen({ data, storeData }) {
                                             <Bar dataKey="Orçamentos" fill="#a8a29e" barSize={20} radius={[4, 4, 0, 0]}>
                                                 <LabelList dataKey="Orçamentos" position="top" style={{ fill: '#78716c', fontSize: '9px', fontWeight: 'bold' }} />
                                             </Bar>
-                                            <Bar dataKey="Retornos" fill="#ea580c" barSize={20} radius={[4, 4, 0, 0]}>
-                                                <LabelList dataKey="Retornos" position="top" style={{ fill: '#c2410c', fontSize: '9px', fontWeight: 'bold' }} />
+                                            <Bar dataKey="Retornos" fill="#16a34a" barSize={20} radius={[4, 4, 0, 0]}>
+                                                <LabelList dataKey="Retornos" position="top" style={{ fill: '#166534', fontSize: '9px', fontWeight: 'bold' }} />
                                             </Bar>
                                         </ComposedChart>
                                     </ResponsiveContainer>
@@ -3029,7 +3040,7 @@ function DashboardScreen({ data, storeData }) {
                                             </Bar>
 
                                             <Bar dataKey="Retornos" fill="#f97316" barSize={12} radius={[0, 4, 4, 0]}>
-                                                <LabelList dataKey="Retornos" position="right" style={{ fill: '#c2410c', fontSize: '9px', fontWeight: 'bold' }} />
+                                                <LabelList dataKey="Retornos" position="right" style={{ fill: '#166534', fontSize: '9px', fontWeight: 'bold' }} />
                                             </Bar>
                                         </BarChart>
                                     </ResponsiveContainer>
@@ -3226,7 +3237,7 @@ function DashboardScreen({ data, storeData }) {
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                             <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                                             <Bar dataKey="value" fill="#fb923c" radius={[4, 4, 0, 0]}>
-                                                <LabelList dataKey="value" position="top" style={{ fontSize: '10px', fontWeight: 'bold', fill: '#c2410c' }} />
+                                                <LabelList dataKey="value" position="top" style={{ fontSize: '10px', fontWeight: 'bold', fill: '#166534' }} />
                                             </Bar>
                                         </BarChart>
                                     </ResponsiveContainer>
@@ -3605,7 +3616,7 @@ function ComparisonScreen({ data }) {
     };
 
     return (
-        <div className="space-y-6 animate-in slide-in-from-right-4 duration-500 pb-10 px-4 md:px-0">
+        <div className="space-y-6 animate-in slide-in-from-right-4 duration-500 pb-10">
             {/* Header Comparativo */}
             <div className="flex flex-col gap-4 border-b border-stone-200 pb-6 mb-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -3635,7 +3646,7 @@ function ComparisonScreen({ data }) {
                 <div className="flex justify-between items-center mb-4">
                     <h4 className="font-bold text-stone-700 text-sm uppercase">Volume de Vendas</h4>
                     <div className="flex gap-4 text-[11px] font-black">
-                        <span className="text-orange-600 flex items-center gap-1.5"><div className="w-3 h-3 bg-orange-600 rounded-full shadow-sm"></div> TC</span>
+                        <span className="text-green-600 flex items-center gap-1.5"><div className="w-3 h-3 bg-green-600 rounded-full shadow-sm"></div> TC</span>
                         <span className="text-red-600 flex items-center gap-1.5"><div className="w-3 h-3 bg-red-600 rounded-full shadow-sm"></div> SGS</span>
                     </div>
                 </div>
@@ -3645,10 +3656,10 @@ function ComparisonScreen({ data }) {
                             <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                             <XAxis type="number" hide />
                             <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 10, fontWeight: 'bold' }} />
-                            <Bar dataKey="TC" fill="#fb923c" radius={[0, 4, 4, 0]} barSize={24}>
-                                <LabelList dataKey="TC" position="right" style={{ fill: '#c2410c', fontSize: '10px', fontWeight: 'bold' }} />
+                            <Bar dataKey="TC" fill="#16a34a" radius={[0, 4, 4, 0]} barSize={24}>
+                                <LabelList dataKey="TC" position="right" style={{ fill: '#166534', fontSize: '10px', fontWeight: 'bold' }} />
                             </Bar>
-                            <Bar dataKey="SGS" fill="#f87171" radius={[0, 4, 4, 0]} barSize={24}>
+                            <Bar dataKey="SGS" fill="#dc2626" radius={[0, 4, 4, 0]} barSize={24}>
                                 <LabelList dataKey="SGS" position="right" style={{ fill: '#991b1b', fontSize: '10px', fontWeight: 'bold' }} />
                             </Bar>
                         </BarChart>
@@ -3667,7 +3678,7 @@ function ComparisonScreen({ data }) {
                             const diff = Math.round(((tc - sgs) / sgs) * 100);
                             if (diff > 0) {
                                 diffText = `TC vendeu ${diff}% mais que SGS`;
-                                colorClass = "text-orange-600";
+                                colorClass = "text-green-600";
                             } else if (diff < 0) {
                                 diffText = `SGS vendeu ${Math.abs(diff)}% mais que TC`;
                                 colorClass = "text-red-600";
@@ -3677,7 +3688,7 @@ function ComparisonScreen({ data }) {
                             }
                         } else if (tc > 0) {
                             diffText = "TC detém 100% das vendas";
-                            colorClass = "text-orange-600";
+                            colorClass = "text-green-600";
                         }
 
                         return (
@@ -3697,7 +3708,7 @@ function ComparisonScreen({ data }) {
                         const sgs = compStats.SGS.vendas;
                         if (sgs > 0 && tc > 0) {
                             const diff = tc > sgs ? Math.round(((tc - sgs) / sgs) * 100) : Math.round(((sgs - tc) / tc) * 100);
-                            const color = tc > sgs ? "text-orange-600" : sgs > tc ? "text-red-600" : "text-stone-500";
+                            const color = tc > sgs ? "text-green-600" : sgs > tc ? "text-red-600" : "text-stone-500";
                             const msg = tc > sgs ? `TC vendeu ${diff}% mais que SGS` : sgs > tc ? `SGS vendeu ${diff}% mais que TC` : "Mesmo volume total";
                             
                             return (
@@ -3709,8 +3720,8 @@ function ComparisonScreen({ data }) {
                         } else if (tc > 0) {
                             return (
                                 <div className="flex flex-col items-end gap-0.5">
-                                    <span className="text-[10px] font-extrabold text-stone-700 leading-tight">[TC: {tc} | SGS: 0]</span>
-                                    <span className="text-[10px] font-black text-orange-600 leading-tight">TC detém 100% das vendas</span>
+                                    <span className="text-[10px] font-extrabold text-stone-700 leading-tight">[TC: {tc} | SGS: {sgs}]</span>
+                                    <span className="text-[10px] font-black text-green-600 leading-tight">TC detém 100% das vendas</span>
                                 </div>
                             );
                         } else if (sgs > 0) {
@@ -3732,14 +3743,14 @@ function ComparisonScreen({ data }) {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-3">
-                            <p className="text-[10px] font-bold text-orange-600 uppercase border-b border-orange-100 pb-1">Loja TC</p>
+                            <p className="text-[10px] font-bold text-green-600 uppercase border-b border-green-100 pb-1">Loja TC</p>
                             <div className="flex justify-between items-center">
                                 <span className="text-[10px] text-stone-500 font-bold uppercase">Total (Geral)</span>
                                 <span className="text-sm font-black text-stone-800">{compStats.TC.atendimentos > 0 ? Math.round((compStats.TC.vendas / compStats.TC.atendimentos) * 100) : 0}%</span>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-[10px] text-stone-500 font-bold uppercase">Clientes Antigos</span>
-                                <span className="text-sm font-black text-orange-700">{compStats.TC.atendimentosCli > 0 ? Math.round((compStats.TC.cliSales / compStats.TC.atendimentosCli) * 100) : 0}%</span>
+                                <span className="text-sm font-black text-green-700">{compStats.TC.atendimentosCli > 0 ? Math.round((compStats.TC.cliSales / compStats.TC.atendimentosCli) * 100) : 0}%</span>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-[10px] text-stone-500 font-bold uppercase">Novos Clientes</span>
@@ -3771,7 +3782,7 @@ function ComparisonScreen({ data }) {
                 <div className="flex justify-between items-center mb-4">
                     <h4 className="font-bold text-stone-700 text-sm uppercase">Volume de Atendimento</h4>
                     <div className="flex gap-4 text-[11px] font-black">
-                        <span className="text-orange-600 flex items-center gap-1.5"><div className="w-3 h-3 bg-orange-600 rounded-full shadow-sm"></div> TC</span>
+                        <span className="text-green-600 flex items-center gap-1.5"><div className="w-3 h-3 bg-green-600 rounded-full shadow-sm"></div> TC</span>
                         <span className="text-red-600 flex items-center gap-1.5"><div className="w-3 h-3 bg-red-600 rounded-full shadow-sm"></div> SGS</span>
                     </div>
                 </div>
@@ -3781,10 +3792,10 @@ function ComparisonScreen({ data }) {
                             <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                             <XAxis type="number" hide />
                             <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 10, fontWeight: 'bold' }} />
-                            <Bar dataKey="TC" fill="#fb923c" radius={[0, 4, 4, 0]} barSize={24}>
-                                <LabelList dataKey="TC" position="right" style={{ fill: '#c2410c', fontSize: '10px', fontWeight: 'bold' }} />
+                            <Bar dataKey="TC" fill="#16a34a" radius={[0, 4, 4, 0]} barSize={24}>
+                                <LabelList dataKey="TC" position="right" style={{ fill: '#166534', fontSize: '10px', fontWeight: 'bold' }} />
                             </Bar>
-                            <Bar dataKey="SGS" fill="#f87171" radius={[0, 4, 4, 0]} barSize={24}>
+                            <Bar dataKey="SGS" fill="#dc2626" radius={[0, 4, 4, 0]} barSize={24}>
                                 <LabelList dataKey="SGS" position="right" style={{ fill: '#991b1b', fontSize: '10px', fontWeight: 'bold' }} />
                             </Bar>
                         </BarChart>
@@ -3801,7 +3812,7 @@ function ComparisonScreen({ data }) {
                             if (tc > sgs) {
                                 const diff = Math.round(((tc - sgs) / sgs) * 100);
                                 diffText = `TC tem ${diff}% mais movimento que SGS`;
-                                colorClass = "text-orange-600";
+                                colorClass = "text-green-600";
                             } else if (sgs > tc) {
                                 const diff = Math.round(((sgs - tc) / tc) * 100);
                                 diffText = `SGS tem ${Math.abs(diff)}% mais movimento que TC`;
@@ -3812,7 +3823,7 @@ function ComparisonScreen({ data }) {
                             }
                         } else if (tc > 0) {
                             diffText = "TC tem 100% do movimento";
-                            colorClass = "text-orange-600";
+                            colorClass = "text-green-600";
                         } else if (sgs > 0) {
                             diffText = "SGS tem 100% do movimento";
                             colorClass = "text-red-600";
@@ -3836,7 +3847,7 @@ function ComparisonScreen({ data }) {
                         
                         if (tc > 0 && sgs > 0) {
                             const diff = tc > sgs ? Math.round(((tc - sgs) / sgs) * 100) : Math.round(((sgs - tc) / tc) * 100);
-                            const color = tc > sgs ? "text-orange-600" : sgs > tc ? "text-red-600" : "text-stone-500";
+                            const color = tc > sgs ? "text-green-600" : sgs > tc ? "text-red-600" : "text-stone-500";
                             const msg = tc > sgs ? `TC tem ${diff}% mais que SGS` : sgs > tc ? `SGS tem ${diff}% mais que TC` : "Mesmo volume total";
 
                             return (
@@ -3849,7 +3860,7 @@ function ComparisonScreen({ data }) {
                             return (
                                 <div className="flex flex-col items-end gap-0.5">
                                     <span className="text-[10px] font-extrabold text-stone-700 leading-tight">[TC: {tc} | SGS: 0]</span>
-                                    <span className="text-[10px] font-black text-orange-600 leading-tight">TC detém 100% do total</span>
+                                    <span className="text-[10px] font-black text-green-600 leading-tight">TC detém 100% do total</span>
                                 </div>
                             );
                         } else if (sgs > 0) {
@@ -3870,32 +3881,44 @@ function ComparisonScreen({ data }) {
                 <div className="flex justify-between items-center mb-4">
                     <h4 className="font-bold text-stone-700 text-sm uppercase">Quando as vendas acontecem</h4>
                     <div className="flex gap-4 text-[11px] font-black">
-                        <span className="text-orange-600 flex items-center gap-1.5"><div className="w-2 h-2 bg-orange-600 rounded-full shadow-sm"></div> TC</span>
-                        <span className="text-red-900 flex items-center gap-1.5"><div className="w-2 h-2 bg-[#991b1b] rounded-full shadow-sm"></div> SGS</span>
+                        <span className="text-green-600 flex items-center gap-1.5"><div className="w-2 h-2 bg-green-600 rounded-full shadow-sm"></div> TC</span>
+                        <span className="text-red-600 flex items-center gap-1.5"><div className="w-2 h-2 bg-red-600 rounded-full shadow-sm"></div> SGS</span>
                     </div>
                 </div>
-                <div className="h-48">
+                <div className="h-48 -mx-3">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={dailyCompDataSales} margin={{ top: 25, right: 10, left: -20, bottom: 0 }} barGap={0} barCategoryGap="85%">
+                        <BarChart data={dailyCompDataSales} margin={{ top: 25, right: 0, left: -25, bottom: 50 }} barGap={0} barCategoryGap="85%">
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
-                            <XAxis dataKey="day" tick={{ fontSize: 9, fontWeight: 'bold' }} axisLine={false} tickLine={false} />
+                            <XAxis 
+                                dataKey="day" 
+                                axisLine={false} 
+                                tickLine={false} 
+                                interval={0} 
+                                tick={(props) => {
+                                    const { x, y, payload } = props;
+                                    const dayData = dailyCompDataSales.find(d => d.day === payload.value);
+                                    return (
+                                        <g transform={`translate(${x},${y})`}>
+                                            <text x={0} y={0} dy={16} textAnchor="middle" fill="#44403c" fontSize={8} fontWeight="bold">{payload.value}</text>
+                                            <text x={0} y={0} dy={28} textAnchor="middle" fill="#16a34a" fontSize={9} fontWeight="900">{dayData?.TC_sales || ''}</text>
+                                            <text x={0} y={0} dy={40} textAnchor="middle" fill="#dc2626" fontSize={9} fontWeight="900">{dayData?.SGS_sales || ''}</text>
+                                        </g>
+                                    );
+                                }}
+                            />
                             <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
-                            <Bar dataKey="TC_sales" name="TC" fill="#fb923c" radius={[1, 1, 0, 0]} barSize={4}>
-                                <LabelList dataKey="TC_sales" position="top" offset={12} formatter={(v) => v > 0 ? v : ''} style={{ fill: '#fb923c', fontSize: '8px', fontWeight: 'bold' }} />
-                            </Bar>
-                            <Bar dataKey="SGS_sales" name="SGS" fill="#991b1b" radius={[1, 1, 0, 0]} barSize={4}>
-                                <LabelList dataKey="SGS_sales" position="top" offset={2} formatter={(v) => v > 0 ? v : ''} style={{ fill: '#991b1b', fontSize: '8px', fontWeight: 'bold' }} />
-                            </Bar>
+                            <Bar dataKey="TC_sales" name="TC" fill="#16a34a" radius={[1, 1, 0, 0]} barSize={4} />
+                            <Bar dataKey="SGS_sales" name="SGS" fill="#dc2626" radius={[1, 1, 0, 0]} barSize={4} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
                 {dailyMetrics && (
                     <div className="mt-4 flex flex-col gap-3">
                         {/* TC Metrics */}
-                        <div className="grid grid-cols-2 gap-2 p-2 bg-orange-50/50 rounded-xl border border-orange-100">
+                        <div className="grid grid-cols-2 gap-2 p-2 bg-green-50/50 rounded-xl border border-green-100">
                             <div className="flex flex-col">
-                                <p className="text-[8px] font-black text-orange-600 uppercase tracking-wider">dia c/ mais vendas</p>
-                                <p className="text-xs font-black text-orange-800">Dia {dailyMetrics.TC.maxSalesDay} <span className="text-[10px] font-bold opacity-60">({dailyMetrics.TC.maxSalesVal} vds)</span></p>
+                                <p className="text-[8px] font-black text-green-600 uppercase tracking-wider">dia c/ mais vendas</p>
+                                <p className="text-xs font-black text-green-800">Dia {dailyMetrics.TC.maxSalesDay} <span className="text-[10px] font-bold opacity-60">({dailyMetrics.TC.maxSalesVal} vds)</span></p>
                             </div>
                             <div className="flex flex-col">
                                 <p className="text-[8px] font-black text-stone-400 uppercase tracking-wider">dia c/ menos vendas</p>
@@ -3915,6 +3938,69 @@ function ComparisonScreen({ data }) {
                         </div>
                     </div>
                 )}
+
+                {/* TABELA DE VENDAS DIA A DIA */}
+                <div className="mt-4 border-t border-stone-100 pt-3 overflow-x-auto">
+                    <h5 className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2 ml-1">Detalhamento Diário</h5>
+                    <table className="w-fit text-left border-collapse mx-auto">
+                        <thead>
+                            <tr className="border-b border-stone-100">
+                                <th className="py-1 pr-4 pl-2 text-[10px] font-black text-stone-500 uppercase tracking-tight">Data</th>
+                                <th className="py-1 px-3 text-[10px] font-black text-green-600 uppercase tracking-tight text-center">Vendas TC</th>
+                                <th className="py-1 px-3 text-[10px] font-black text-red-600 uppercase tracking-tight text-center">Vendas SGS</th>
+                                <th className="py-1 px-3 text-[10px] font-black text-stone-700 uppercase tracking-tight text-center">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-stone-50">
+                            {dailyCompDataSales.map((row) => {
+                                const [year, month] = selectedMonth.split('-').map(Number);
+                                const dateObj = new Date(year, month - 1, row.day);
+                                const weekday = dateObj.toLocaleString('pt-BR', { weekday: 'short' }).replace('.', '');
+                                const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+
+                                return (
+                                    <tr key={row.day} className={`hover:bg-stone-50 transition-colors ${isWeekend ? 'bg-green-50/20' : ''}`}>
+                                        <td className="py-1 pr-4 pl-2 text-[11px] font-bold text-stone-600 border-r border-stone-50">
+                                            <span className="font-black text-stone-400 mr-1">{row.day}</span>
+                                            <span className="text-[9px] uppercase opacity-70">({weekday})</span>
+                                        </td>
+                                        <td className="py-1 px-3 text-xs font-bold text-green-600 text-center">
+                                            {row.TC_sales > 0 ? (
+                                                <span className="inline-block bg-green-50 px-1.5 py-0 rounded-md border border-green-100 min-w-[20px]">{row.TC_sales}</span>
+                                            ) : (
+                                                <span className="opacity-20">-</span>
+                                            )}
+                                        </td>
+                                        <td className="py-1 px-3 text-xs font-bold text-red-600 text-center">
+                                            {row.SGS_sales > 0 ? (
+                                                <span className="inline-block bg-red-50 px-1.5 py-0 rounded-md border border-red-100 min-w-[20px]">{row.SGS_sales}</span>
+                                            ) : (
+                                                <span className="opacity-20">-</span>
+                                            )}
+                                        </td>
+                                        <td className="py-1 px-3 text-xs font-black text-stone-700 text-center">
+                                            <span className="inline-block bg-stone-100 px-1.5 py-0 rounded-md border border-stone-200 min-w-[20px]">{row.total_sales}</span>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                        <tfoot className="border-t-2 border-stone-100">
+                            <tr className="bg-stone-50/50">
+                                <td className="py-2 pr-4 pl-2 text-[9px] font-black text-stone-700 uppercase italic border-r border-stone-50">Totais</td>
+                                <td className="py-2 px-3 text-[13px] font-black text-green-600 text-center">
+                                    {dailyCompDataSales.reduce((acc, row) => acc + row.TC_sales, 0)}
+                                </td>
+                                <td className="py-2 px-3 text-[13px] font-black text-red-600 text-center">
+                                    {dailyCompDataSales.reduce((acc, row) => acc + row.SGS_sales, 0)}
+                                </td>
+                                <td className="py-2 px-3 text-[13px] font-black text-stone-800 text-center">
+                                    {dailyCompDataSales.reduce((acc, row) => acc + row.total_sales, 0)}
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </Card>
 
             {/* NOVOS GRÁFICOS: QUANDO OS ORÇAMENTOS RETORNAM */}
@@ -3922,32 +4008,44 @@ function ComparisonScreen({ data }) {
                 <div className="flex justify-between items-center mb-4">
                     <h4 className="font-bold text-stone-700 text-sm uppercase">Quando os orçamentos retornam</h4>
                     <div className="flex gap-4 text-[11px] font-black">
-                        <span className="text-orange-600 flex items-center gap-1.5"><div className="w-2 h-2 bg-orange-600 rounded-full shadow-sm"></div> TC</span>
-                        <span className="text-red-900 flex items-center gap-1.5"><div className="w-2 h-2 bg-[#991b1b] rounded-full shadow-sm"></div> SGS</span>
+                        <span className="text-green-600 flex items-center gap-1.5"><div className="w-2 h-2 bg-green-600 rounded-full shadow-sm"></div> TC</span>
+                        <span className="text-red-600 flex items-center gap-1.5"><div className="w-2 h-2 bg-red-600 rounded-full shadow-sm"></div> SGS</span>
                     </div>
                 </div>
-                <div className="h-48">
+                <div className="h-48 -mx-3">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={dailyCompDataReturns} margin={{ top: 25, right: 10, left: -20, bottom: 0 }} barGap={0} barCategoryGap="85%">
+                        <BarChart data={dailyCompDataReturns} margin={{ top: 25, right: 0, left: -25, bottom: 50 }} barGap={0} barCategoryGap="85%">
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
-                            <XAxis dataKey="day" tick={{ fontSize: 9, fontWeight: 'bold' }} axisLine={false} tickLine={false} />
+                            <XAxis 
+                                dataKey="day" 
+                                axisLine={false} 
+                                tickLine={false} 
+                                interval={0} 
+                                tick={(props) => {
+                                    const { x, y, payload } = props;
+                                    const dayData = dailyCompDataReturns.find(d => d.day === payload.value);
+                                    return (
+                                        <g transform={`translate(${x},${y})`}>
+                                            <text x={0} y={0} dy={16} textAnchor="middle" fill="#44403c" fontSize={8} fontWeight="bold">{payload.value}</text>
+                                            <text x={0} y={0} dy={28} textAnchor="middle" fill="#16a34a" fontSize={9} fontWeight="900">{dayData?.TC_returns || ''}</text>
+                                            <text x={0} y={0} dy={40} textAnchor="middle" fill="#dc2626" fontSize={9} fontWeight="900">{dayData?.SGS_returns || ''}</text>
+                                        </g>
+                                    );
+                                }}
+                            />
                             <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
-                            <Bar dataKey="TC_returns" name="TC" fill="#ea580c" radius={[1, 1, 0, 0]} barSize={4}>
-                                <LabelList dataKey="TC_returns" position="top" offset={12} formatter={(v) => v > 0 ? v : ''} style={{ fill: '#ea580c', fontSize: '8px', fontWeight: 'bold' }} />
-                            </Bar>
-                            <Bar dataKey="SGS_returns" name="SGS" fill="#991b1b" radius={[1, 1, 0, 0]} barSize={4}>
-                                <LabelList dataKey="SGS_returns" position="top" offset={2} formatter={(v) => v > 0 ? v : ''} style={{ fill: '#991b1b', fontSize: '8px', fontWeight: 'bold' }} />
-                            </Bar>
+                            <Bar dataKey="TC_returns" name="TC" fill="#16a34a" radius={[1, 1, 0, 0]} barSize={4} />
+                            <Bar dataKey="SGS_returns" name="SGS" fill="#dc2626" radius={[1, 1, 0, 0]} barSize={4} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
                 {dailyMetrics && (
                     <div className="mt-4 flex flex-col gap-3">
                         {/* TC Metrics */}
-                        <div className="grid grid-cols-2 gap-2 p-2 bg-orange-50/50 rounded-xl border border-orange-100">
+                        <div className="grid grid-cols-2 gap-2 p-2 bg-green-50/50 rounded-xl border border-green-100">
                             <div className="flex flex-col">
-                                <p className="text-[8px] font-black text-orange-600 uppercase tracking-wider">dia c/ mais retornos</p>
-                                <p className="text-xs font-black text-orange-800">Dia {dailyMetrics.TC.maxReturnsDay} <span className="text-[10px] font-bold opacity-60">({dailyMetrics.TC.maxReturnsVal} ret)</span></p>
+                                <p className="text-[8px] font-black text-green-600 uppercase tracking-wider">dia c/ mais retornos</p>
+                                <p className="text-xs font-black text-green-800">Dia {dailyMetrics.TC.maxReturnsDay} <span className="text-[10px] font-bold opacity-60">({dailyMetrics.TC.maxReturnsVal} ret)</span></p>
                             </div>
                             <div className="flex flex-col">
                                 <p className="text-[8px] font-black text-stone-400 uppercase tracking-wider">dia c/ menos retornos</p>
@@ -3973,7 +4071,7 @@ function ComparisonScreen({ data }) {
                 <div className="flex justify-between items-center mb-4">
                     <h4 className="font-bold text-stone-700 text-sm uppercase">Perfil de Vendas (%)</h4>
                     <div className="flex gap-4 text-[11px] font-black">
-                        <span className="text-orange-600 flex items-center gap-1.5"><div className="w-3 h-3 bg-orange-600 rounded-full shadow-sm"></div> TC</span>
+                        <span className="text-green-600 flex items-center gap-1.5"><div className="w-3 h-3 bg-green-600 rounded-full shadow-sm"></div> TC</span>
                         <span className="text-red-600 flex items-center gap-1.5"><div className="w-3 h-3 bg-red-600 rounded-full shadow-sm"></div> SGS</span>
                     </div>
                 </div>
@@ -3984,8 +4082,8 @@ function ComparisonScreen({ data }) {
                             <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold' }} />
                             <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
 
-                            <Bar dataKey="TC" fill="#ea580c" radius={[4, 4, 0, 0]} barSize={40}>
-                                <LabelList dataKey="TC" position="top" formatter={(v) => `${v}%`} style={{ fill: '#c2410c', fontSize: '11px', fontWeight: 'bold' }} />
+                            <Bar dataKey="TC" fill="#16a34a" radius={[4, 4, 0, 0]} barSize={40}>
+                                <LabelList dataKey="TC" position="top" formatter={(v) => `${v}%`} style={{ fill: '#166534', fontSize: '11px', fontWeight: 'bold' }} />
                             </Bar>
                             <Bar dataKey="SGS" fill="#dc2626" radius={[4, 4, 0, 0]} barSize={40}>
                                 <LabelList dataKey="SGS" position="top" formatter={(v) => `${v}%`} style={{ fill: '#991b1b', fontSize: '11px', fontWeight: 'bold' }} />
@@ -4000,7 +4098,7 @@ function ComparisonScreen({ data }) {
                 <div className="flex justify-between items-center mb-4">
                     <h4 className="font-bold text-stone-700 text-sm uppercase">Perfil de Retornos (%)</h4>
                     <div className="flex gap-4 text-[11px] font-black">
-                        <span className="text-orange-600 flex items-center gap-1.5"><div className="w-3 h-3 bg-orange-600 rounded-full shadow-sm"></div> TC</span>
+                        <span className="text-green-600 flex items-center gap-1.5"><div className="w-3 h-3 bg-green-600 rounded-full shadow-sm"></div> TC</span>
                         <span className="text-red-600 flex items-center gap-1.5"><div className="w-3 h-3 bg-red-600 rounded-full shadow-sm"></div> SGS</span>
                     </div>
                 </div>
@@ -4011,8 +4109,8 @@ function ComparisonScreen({ data }) {
                             <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold' }} />
                             <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
 
-                            <Bar dataKey="TC" fill="#ea580c" radius={[4, 4, 0, 0]} barSize={40}>
-                                <LabelList dataKey="TC" position="top" formatter={(v) => `${v}%`} style={{ fill: '#c2410c', fontSize: '11px', fontWeight: 'bold' }} />
+                            <Bar dataKey="TC" fill="#16a34a" radius={[4, 4, 0, 0]} barSize={40}>
+                                <LabelList dataKey="TC" position="top" formatter={(v) => `${v}%`} style={{ fill: '#166534', fontSize: '11px', fontWeight: 'bold' }} />
                             </Bar>
                             <Bar dataKey="SGS" fill="#dc2626" radius={[4, 4, 0, 0]} barSize={40}>
                                 <LabelList dataKey="SGS" position="top" formatter={(v) => `${v}%`} style={{ fill: '#991b1b', fontSize: '11px', fontWeight: 'bold' }} />
@@ -4032,8 +4130,8 @@ function ComparisonScreen({ data }) {
                             <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold' }} />
                             <YAxis tick={{ fontSize: 10 }} />
 
-                            <Bar dataKey="TC" fill="#ea580c" radius={[4, 4, 0, 0]} barSize={30}>
-                                <LabelList dataKey="TC" position="top" style={{ fill: '#c2410c', fontSize: '10px', fontWeight: 'bold' }} />
+                            <Bar dataKey="TC" fill="#16a34a" radius={[4, 4, 0, 0]} barSize={30}>
+                                <LabelList dataKey="TC" position="top" style={{ fill: '#166534', fontSize: '10px', fontWeight: 'bold' }} />
                             </Bar>
                             <Bar dataKey="SGS" fill="#dc2626" radius={[4, 4, 0, 0]} barSize={30}>
                                 <LabelList dataKey="SGS" position="top" style={{ fill: '#991b1b', fontSize: '10px', fontWeight: 'bold' }} />
@@ -4044,7 +4142,7 @@ function ComparisonScreen({ data }) {
                 <div className="mt-4 flex justify-around text-xs border-t border-stone-100 pt-2">
                     <div className="text-center">
                         <span className="block font-bold text-stone-500">Taxa Retorno TC</span>
-                        <span className="text-lg font-black text-orange-600">
+                        <span className="text-lg font-black text-green-600">
                             {compStats.TC.orcamentos > 0 ? Math.round((compStats.TC.retornos / compStats.TC.orcamentos) * 100) : 0}%
                         </span>
                     </div>
@@ -4071,8 +4169,8 @@ function ComparisonScreen({ data }) {
                             <Bar dataKey="TC" fill="#16a34a" radius={[4, 4, 0, 0]} barSize={30}>
                                 <LabelList dataKey="TC" position="top" style={{ fill: '#14532d', fontSize: '10px', fontWeight: 'bold' }} />
                             </Bar>
-                            <Bar dataKey="SGS" fill="#4ade80" radius={[4, 4, 0, 0]} barSize={30}>
-                                <LabelList dataKey="SGS" position="top" style={{ fill: '#14532d', fontSize: '10px', fontWeight: 'bold' }} />
+                            <Bar dataKey="SGS" fill="#dc2626" radius={[4, 4, 0, 0]} barSize={30}>
+                                <LabelList dataKey="SGS" position="top" style={{ fill: '#991b1b', fontSize: '10px', fontWeight: 'bold' }} />
                             </Bar>
                         </BarChart>
                     </ResponsiveContainer>
@@ -4093,8 +4191,8 @@ function ComparisonScreen({ data }) {
                             <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 11, fontWeight: 'bold' }} />
 
                             <Legend iconSize={8} wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
-                            <Bar name="Cliente (%)" dataKey="rateCli" fill="#ea580c" radius={[0, 4, 4, 0]} barSize={15}>
-                                <LabelList dataKey="rateCli" position="right" formatter={(v) => `${v}%`} style={{ fill: '#9a3412', fontSize: '10px', fontWeight: 'bold' }} />
+                             <Bar name="Cliente (%)" dataKey="rateCli" fill="#ea580c" radius={[0, 4, 4, 0]} barSize={15}>
+                                <LabelList dataKey="rateCli" position="right" formatter={(v) => `${v}%`} style={{ fill: '#c2410c', fontSize: '10px', fontWeight: 'bold' }} />
                             </Bar>
                             <Bar name="Novo (%)" dataKey="rateNew" fill="#78716c" radius={[0, 4, 4, 0]} barSize={15}>
                                 <LabelList dataKey="rateNew" position="right" formatter={(v) => `${v}%`} style={{ fill: '#44403c', fontSize: '10px' }} />
@@ -4113,7 +4211,7 @@ function ComparisonScreen({ data }) {
                 <div className="space-y-8">
                     {/* Loja TC */}
                     <div>
-                        <h5 className="text-sm font-black text-orange-600 uppercase mb-3 px-2 border-l-4 border-orange-500">Três Corações (TC)</h5>
+                        <h5 className="text-sm font-black text-green-600 uppercase mb-3 px-2 border-l-4 border-green-500">Três Corações (TC)</h5>
                         <div className="space-y-2">
                             <div className="grid grid-cols-6 text-[9px] font-bold text-stone-400 border-b border-stone-100 pb-2 text-center">
                                 <div className="text-left col-span-2">Nome</div>
@@ -4130,7 +4228,7 @@ function ComparisonScreen({ data }) {
                                         <span className="text-[9px] text-stone-400 font-medium">de {s.atendimentos} atd</span>
                                     </div>
                                     <div><span className={`font-bold px-2 py-1 rounded ${s.conversion >= 30 ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-600'}`}>{s.conversion}%</span></div>
-                                    <div className="font-medium text-orange-700">{s.rateCli}%</div>
+                                    <div className="font-medium text-green-700">{s.rateCli}%</div>
                                     <div className="font-medium text-stone-500">{s.rateNew}%</div>
                                 </div>
                             ))}
@@ -4156,7 +4254,7 @@ function ComparisonScreen({ data }) {
                                         <span className="text-[9px] text-stone-400 font-medium">de {s.atendimentos} atd</span>
                                     </div>
                                     <div><span className={`font-bold px-2 py-1 rounded ${s.conversion >= 30 ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-600'}`}>{s.conversion}%</span></div>
-                                    <div className="font-medium text-orange-700">{s.rateCli}%</div>
+                                    <div className="font-medium text-red-700">{s.rateCli}%</div>
                                     <div className="font-medium text-stone-500">{s.rateNew}%</div>
                                 </div>
                             ))}
