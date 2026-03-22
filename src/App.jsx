@@ -1107,6 +1107,56 @@ function TrendsScreen({ data, storeConfig }) {
                     </div>
                 </div>
 
+                {/* Grafico 4: % de Novos Clientes */}
+                <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
+                    <div className="p-4 border-b border-stone-100 bg-stone-50/50">
+                        <h4 className="font-bold text-stone-700 text-sm uppercase">% de Novos Clientes</h4>
+                        <p className="text-[10px] text-stone-400 mt-1">Percentual de novos clientes sobre o total de vendas</p>
+                    </div>
+                    <div className="px-1 py-4 h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={yearlyData} margin={{ top: 25, right: 0, left: -15, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.5} />
+                                <XAxis dataKey="name" tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} />
+                                <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
+
+                                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
+                                <Line type="monotone" dataKey="TC_novosClientesPerc" name="TC" stroke="#16a34a" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }}>
+                                    <LabelList 
+                                        dataKey="TC_novosClientesPerc" 
+                                        content={(props) => {
+                                            const { x, y, value, index } = props;
+                                            const otherVal = yearlyData[index]?.SGS_novosClientesPerc || 0;
+                                            const isHigher = value >= otherVal;
+                                            return (
+                                                <text x={x} y={y} dy={isHigher ? -12 : 22} fill="#16a34a" fontSize="10" fontWeight="bold" textAnchor="middle">
+                                                    {value}%
+                                                </text>
+                                            );
+                                        }}
+                                    />
+                                </Line>
+                                <Line type="monotone" dataKey="SGS_novosClientesPerc" name="SGS" stroke="#dc2626" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }}>
+                                    <LabelList 
+                                        dataKey="SGS_novosClientesPerc" 
+                                        content={(props) => {
+                                            const { x, y, value, index } = props;
+                                            const otherVal = yearlyData[index]?.TC_novosClientesPerc || 0;
+                                            const isHigher = value > otherVal;
+                                            return (
+                                                <text x={x} y={y} dy={isHigher ? -12 : 22} fill="#dc2626" fontSize="10" fontWeight="bold" textAnchor="middle">
+                                                    {value}%
+                                                </text>
+                                            );
+                                        }}
+                                    />
+                                </Line>
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+
                 {/* Novos Gráficos Solicitados */}
 
 
@@ -3946,9 +3996,9 @@ function ComparisonScreen({ data }) {
                         <thead>
                             <tr className="border-b border-stone-100">
                                 <th className="py-1 pr-4 pl-2 text-[10px] font-black text-stone-500 uppercase tracking-tight">Data</th>
-                                <th className="py-1 px-3 text-[10px] font-black text-green-600 uppercase tracking-tight text-center">Vendas TC</th>
-                                <th className="py-1 px-3 text-[10px] font-black text-red-600 uppercase tracking-tight text-center">Vendas SGS</th>
-                                <th className="py-1 px-3 text-[10px] font-black text-stone-700 uppercase tracking-tight text-center">Total</th>
+                                <th className="py-1 px-1.5 text-[10px] font-black text-green-600 uppercase tracking-tight text-center">TC</th>
+                                <th className="py-1 px-1.5 text-[10px] font-black text-red-600 uppercase tracking-tight text-center">SGS</th>
+                                <th className="py-1 px-1.5 text-[10px] font-black text-stone-700 uppercase tracking-tight text-center">Total</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-stone-50">
@@ -3964,21 +4014,21 @@ function ComparisonScreen({ data }) {
                                             <span className="font-black text-stone-400 mr-1">{row.day}</span>
                                             <span className="text-[9px] uppercase opacity-70">({weekday})</span>
                                         </td>
-                                        <td className="py-1 px-3 text-xs font-bold text-green-600 text-center">
+                                        <td className="py-1 px-1.5 text-xs font-bold text-green-600 text-center">
                                             {row.TC_sales > 0 ? (
                                                 <span className="inline-block bg-green-50 px-1.5 py-0 rounded-md border border-green-100 min-w-[20px]">{row.TC_sales}</span>
                                             ) : (
                                                 <span className="opacity-20">-</span>
                                             )}
                                         </td>
-                                        <td className="py-1 px-3 text-xs font-bold text-red-600 text-center">
+                                        <td className="py-1 px-1.5 text-xs font-bold text-red-600 text-center">
                                             {row.SGS_sales > 0 ? (
                                                 <span className="inline-block bg-red-50 px-1.5 py-0 rounded-md border border-red-100 min-w-[20px]">{row.SGS_sales}</span>
                                             ) : (
                                                 <span className="opacity-20">-</span>
                                             )}
                                         </td>
-                                        <td className="py-1 px-3 text-xs font-black text-stone-700 text-center">
+                                        <td className="py-1 px-1.5 text-xs font-black text-stone-700 text-center">
                                             <span className="inline-block bg-stone-100 px-1.5 py-0 rounded-md border border-stone-200 min-w-[20px]">{row.total_sales}</span>
                                         </td>
                                     </tr>
@@ -3988,13 +4038,13 @@ function ComparisonScreen({ data }) {
                         <tfoot className="border-t-2 border-stone-100">
                             <tr className="bg-stone-50/50">
                                 <td className="py-2 pr-4 pl-2 text-[9px] font-black text-stone-700 uppercase italic border-r border-stone-50">Totais</td>
-                                <td className="py-2 px-3 text-[13px] font-black text-green-600 text-center">
+                                <td className="py-2 px-1.5 text-[13px] font-black text-green-600 text-center">
                                     {dailyCompDataSales.reduce((acc, row) => acc + row.TC_sales, 0)}
                                 </td>
-                                <td className="py-2 px-3 text-[13px] font-black text-red-600 text-center">
+                                <td className="py-2 px-1.5 text-[13px] font-black text-red-600 text-center">
                                     {dailyCompDataSales.reduce((acc, row) => acc + row.SGS_sales, 0)}
                                 </td>
-                                <td className="py-2 px-3 text-[13px] font-black text-stone-800 text-center">
+                                <td className="py-2 px-1.5 text-[13px] font-black text-stone-800 text-center">
                                     {dailyCompDataSales.reduce((acc, row) => acc + row.total_sales, 0)}
                                 </td>
                             </tr>
@@ -4185,10 +4235,24 @@ function ComparisonScreen({ data }) {
 
                 <div className="h-[500px]">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={staffEfficiency} layout="vertical" margin={{ top: 10, right: 30, left: 0, bottom: 10 }} barGap={8}>
+                        <BarChart data={staffEfficiency} layout="vertical" margin={{ top: 10, right: 30, left: 10, bottom: 10 }} barGap={2}>
                             <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                             <XAxis type="number" hide />
-                            <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 11, fontWeight: 'bold' }} />
+                            <YAxis 
+                                dataKey="name" 
+                                type="category" 
+                                width={110} 
+                                tick={(props) => {
+                                    const { x, y, payload } = props;
+                                    const item = staffEfficiency.find(s => s.name === payload.value);
+                                    return (
+                                        <g transform={`translate(${x},${y})`}>
+                                            <text x={-10} y={0} dy={-4} textAnchor="end" fill="#44403c" fontSize={11} fontWeight="bold">{payload.value}</text>
+                                            <text x={-10} y={0} dy={10} textAnchor="end" fill="#ea580c" fontSize={9} fontWeight="900">{item?.conversion}% total</text>
+                                        </g>
+                                    );
+                                }}
+                            />
 
                             <Legend iconSize={8} wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
                              <Bar name="Cliente (%)" dataKey="rateCli" fill="#ea580c" radius={[0, 4, 4, 0]} barSize={15}>
