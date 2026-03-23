@@ -20,6 +20,7 @@ import {
     FileText,
     Store,
     TrendingUp,
+    TrendingDown,
     Target,
     ChevronDown,
     Filter,
@@ -906,11 +907,13 @@ function TrendsScreen({ data, storeConfig }) {
         const stats = {
             TC: {
                 weekday: Array(7).fill(0),
+                salesWeekday: Array(7).fill(0),
                 manha: 0, tarde: 0,
                 weeks: {}
             },
             SGS: {
                 weekday: Array(7).fill(0),
+                salesWeekday: Array(7).fill(0),
                 manha: 0, tarde: 0,
                 weeks: {}
             }
@@ -925,6 +928,11 @@ function TrendsScreen({ data, storeConfig }) {
             const dayIdx = item.date.getDay();
             if (dayIdx === 0) return; // Skip Sunday
             stats[store].weekday[dayIdx - 1]++;
+
+            // Vendas por dia da semana
+            if (item.category === 'comercial' && (item.action === 'venda' || item.action === 'retorno')) {
+                stats[store].salesWeekday[dayIdx - 1]++;
+            }
 
             // Period (manha/tarde)
             const period = item.period || (item.date.getHours() < 12 ? 'manha' : 'tarde');
@@ -969,11 +977,31 @@ function TrendsScreen({ data, storeConfig }) {
             };
         };
 
+        const getPeakSalesDay = (store) => {
+            const flow = stats[store].weekday;
+            const sales = stats[store].salesWeekday;
+            
+            // Calcula eficiência por dia
+            const efficiencies = flow.map((f, idx) => f > 0 ? (sales[idx] / f) : 0);
+            
+            const maxEff = Math.max(...efficiencies);
+            // Filtra dias com fluxo para pegar a menor eficiência real
+            const validEfficiencies = efficiencies.filter((eff, idx) => flow[idx] > 0);
+            const minEff = validEfficiencies.length > 0 ? Math.min(...validEfficiencies) : 0;
+
+            return {
+                peakSalesDay: daysOfWeek[efficiencies.indexOf(maxEff)],
+                quietSalesDay: daysOfWeek[efficiencies.indexOf(minEff)]
+            };
+        };
+
         const formatWeekdayData = () => {
             return daysOfWeek.map((label, idx) => ({
                 name: label,
                 TC: stats.TC.weekday[idx],
-                SGS: stats.SGS.weekday[idx]
+                TC_salesPerc: stats.TC.weekday[idx] > 0 ? Math.round((stats.TC.salesWeekday[idx] / stats.TC.weekday[idx]) * 100) : 0,
+                SGS: stats.SGS.weekday[idx],
+                SGS_salesPerc: stats.SGS.weekday[idx] > 0 ? Math.round((stats.SGS.salesWeekday[idx] / stats.SGS.weekday[idx]) * 100) : 0
             }));
         };
 
@@ -983,6 +1011,7 @@ function TrendsScreen({ data, storeConfig }) {
                 ...getPeakDay('TC'),
                 ...getPeakWeek('TC'),
                 ...getVolumeDay('TC'),
+                ...getPeakSalesDay('TC'),
                 manhaPerc: stats.TC.manha + stats.TC.tarde > 0 ? Math.round((stats.TC.manha / (stats.TC.manha + stats.TC.tarde)) * 100) : 0,
                 tardePerc: stats.TC.manha + stats.TC.tarde > 0 ? Math.round((stats.TC.tarde / (stats.TC.manha + stats.TC.tarde)) * 100) : 0,
             },
@@ -990,6 +1019,7 @@ function TrendsScreen({ data, storeConfig }) {
                 ...getPeakDay('SGS'),
                 ...getPeakWeek('SGS'),
                 ...getVolumeDay('SGS'),
+                ...getPeakSalesDay('SGS'),
                 manhaPerc: stats.SGS.manha + stats.SGS.tarde > 0 ? Math.round((stats.SGS.manha / (stats.SGS.manha + stats.SGS.tarde)) * 100) : 0,
                 tardePerc: stats.SGS.manha + stats.SGS.tarde > 0 ? Math.round((stats.SGS.tarde / (stats.SGS.manha + stats.SGS.tarde)) * 100) : 0,
             }
@@ -1409,11 +1439,11 @@ function TrendsScreen({ data, storeConfig }) {
                         {/* Linha 1: Gráfico de Dia da Semana (Largura Total) */}
                         <div className="bg-white rounded-3xl shadow-sm border border-stone-100 overflow-hidden">
                             <div className="p-5 border-b border-stone-100 bg-stone-50/30">
-                                <h4 className="font-bold text-stone-700 text-sm uppercase">Fluxo por Dia da Semana</h4>
+                                <h4 className="font-bold text-stone-700 text-sm uppercase">Fluxo por Dia da Semana e Eficiência em Vendas</h4>
                             </div>
                             <div className="px-1 py-6 h-80">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={peakAnalysis.weekdayData} margin={{ top: 20, right: 0, left: 0, bottom: 65 }} barGap={0} barCategoryGap="70%">
+                                    <BarChart data={peakAnalysis.weekdayData} margin={{ top: 20, right: 0, left: 0, bottom: 95 }} barGap={0} barCategoryGap="70%">
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
                                         <XAxis 
                                             dataKey="name" 
@@ -1425,8 +1455,17 @@ function TrendsScreen({ data, storeConfig }) {
                                                 return (
                                                     <g transform={`translate(${x},${y})`}>
                                                         <text x={0} y={0} dy={16} textAnchor="middle" fill="#44403c" fontSize={10} fontWeight="bold">{payload.value}</text>
+                                                        
+                                                        {/* Fluxo */}
                                                         <text x={0} y={0} dy={32} textAnchor="middle" fill="#16a34a" fontSize={11} fontWeight="900">{dayData?.TC}</text>
                                                         <text x={0} y={0} dy={46} textAnchor="middle" fill="#dc2626" fontSize={11} fontWeight="900">{dayData?.SGS}</text>
+                                                        
+                                                        {/* Separador ou Espaço */}
+                                                        <text x={0} y={0} dy={58} textAnchor="middle" fill="#e7e5e4" fontSize={8} fontWeight="bold">———</text>
+
+                                                        {/* Porcentagens de Venda */}
+                                                        <text x={0} y={0} dy={72} textAnchor="middle" fill="#166534" fontSize={10} fontWeight="black">{dayData?.TC_salesPerc}%</text>
+                                                        <text x={0} y={0} dy={86} textAnchor="middle" fill="#991b1b" fontSize={10} fontWeight="black">{dayData?.SGS_salesPerc}%</text>
                                                     </g>
                                                 );
                                             }}
@@ -1536,6 +1575,31 @@ function TrendsScreen({ data, storeConfig }) {
                                             <span className="text-xs font-bold text-green-600/70">{peakAnalysis.TC.quietVolDay}</span>
                                             <span className="text-stone-300 font-light">/</span>
                                             <span className="text-xs font-bold text-red-600/70">{peakAnalysis.SGS.quietVolDay}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* NOVAS MÉTRICAS DE DIA DA SEMANA DE VENDAS */}
+                                    <div className="p-3 bg-stone-50/50 rounded-xl border border-stone-100 flex justify-between items-center">
+                                        <div className="flex items-center gap-2">
+                                            <TrendingUp className="w-3 h-3 text-green-600" />
+                                            <span className="text-[8px] font-bold text-stone-400 uppercase tracking-tight">Dia da Semana com mais vendas</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-black text-green-700">{peakAnalysis.TC.peakSalesDay}</span>
+                                            <span className="text-stone-300 font-light">/</span>
+                                            <span className="text-xs font-black text-red-700">{peakAnalysis.SGS.peakSalesDay}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-3 bg-stone-50/50 rounded-xl border border-stone-100 flex justify-between items-center opacity-75">
+                                        <div className="flex items-center gap-2">
+                                            <TrendingDown className="w-3 h-3 text-red-500" />
+                                            <span className="text-[8px] font-bold text-stone-400 uppercase tracking-tight">Dia da semana com menos vendas</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-bold text-green-600/70">{peakAnalysis.TC.quietSalesDay}</span>
+                                            <span className="text-stone-300 font-light">/</span>
+                                            <span className="text-xs font-bold text-red-600/70">{peakAnalysis.SGS.quietSalesDay}</span>
                                         </div>
                                     </div>
                                 </div>
