@@ -946,6 +946,12 @@ function TrendsScreen({ data, storeConfig }) {
             // Day of Month Volume
             if (!stats[store].dayOfMonth) stats[store].dayOfMonth = {};
             stats[store].dayOfMonth[dayNum] = (stats[store].dayOfMonth[dayNum] || 0) + 1;
+
+            // Vendas por dia do mês (Tendência Histórica)
+            if (!stats[store].salesDayOfMonth) stats[store].salesDayOfMonth = {};
+            if (item.category === 'comercial' && (item.action === 'venda' || item.action === 'retorno')) {
+                stats[store].salesDayOfMonth[dayNum] = (stats[store].salesDayOfMonth[dayNum] || 0) + 1;
+            }
         });
 
         const getPeakDay = (store) => {
@@ -1005,6 +1011,15 @@ function TrendsScreen({ data, storeConfig }) {
             }));
         };
 
+        const salesTrendData = Array.from({ length: 31 }, (_, i) => {
+            const day = i + 1;
+            return {
+                day,
+                TC: stats.TC.salesDayOfMonth?.[day] || 0,
+                SGS: stats.SGS.salesDayOfMonth?.[day] || 0
+            };
+        });
+
         return {
             weekdayData: formatWeekdayData(),
             TC: {
@@ -1022,7 +1037,10 @@ function TrendsScreen({ data, storeConfig }) {
                 ...getPeakSalesDay('SGS'),
                 manhaPerc: stats.SGS.manha + stats.SGS.tarde > 0 ? Math.round((stats.SGS.manha / (stats.SGS.manha + stats.SGS.tarde)) * 100) : 0,
                 tardePerc: stats.SGS.manha + stats.SGS.tarde > 0 ? Math.round((stats.SGS.tarde / (stats.SGS.manha + stats.SGS.tarde)) * 100) : 0,
-            }
+            },
+            salesTrendData,
+            maxSalesTrendTC: Math.max(...salesTrendData.map(d => d.TC), 0),
+            maxSalesTrendSGS: Math.max(...salesTrendData.map(d => d.SGS), 0)
         };
     }, [data]);
 
@@ -1392,6 +1410,68 @@ function TrendsScreen({ data, storeConfig }) {
                                     />
                                 </Line>
                             </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Gráfico NOVO: Tendência de Vendas por Dia do Mês */}
+                <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
+                    <div className="p-4 border-b border-stone-100 bg-stone-50/50">
+                        <h4 className="font-bold text-stone-700 text-sm uppercase">Movimento de vendas ao longo do mês</h4>
+                        <p className="text-[10px] text-stone-400 mt-1">Tendência histórica de vendas por dia do mês (acumulado)</p>
+                    </div>
+                    <div className="px-1 py-4 h-80">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart 
+                                data={peakAnalysis.salesTrendData} 
+                                margin={{ top: 10, right: 0, left: 0, bottom: 45 }}
+                                barGap={0}
+                                barCategoryGap="70%"
+                            >
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+                                <XAxis 
+                                    dataKey="day" 
+                                    axisLine={false}
+                                    tickLine={false}
+                                    interval={0}
+                                    tick={(props) => {
+                                        const { x, y, payload } = props;
+                                        const dayData = peakAnalysis.salesTrendData.find(d => d.day === payload.value);
+                                        const isPeakTC = dayData?.TC === peakAnalysis.maxSalesTrendTC && peakAnalysis.maxSalesTrendTC > 0;
+                                        const isPeakSGS = dayData?.SGS === peakAnalysis.maxSalesTrendSGS && peakAnalysis.maxSalesTrendSGS > 0;
+                                        
+                                        return (
+                                            <g transform={`translate(${x},${y})`}>
+                                                {/* Dia do Mês */}
+                                                <text x={0} y={0} dy={14} textAnchor="middle" fill="#78716c" fontSize={7} fontWeight="bold">{payload.value}</text>
+                                                
+                                                {/* Vendas TC com destaque se for pico */}
+                                                <g transform="translate(0, 22)">
+                                                    {isPeakTC && (
+                                                        <rect x={-7} y={-5} width={14} height={9} fill="#16a34a" rx={1} />
+                                                    )}
+                                                    <text x={0} y={1.5} textAnchor="middle" fill={isPeakTC ? "white" : "#16a34a"} fontSize={7} fontWeight="900">
+                                                        {dayData?.TC ?? 0}
+                                                    </text>
+                                                </g>
+
+                                                {/* Vendas SGS com destaque se for pico */}
+                                                <g transform="translate(0, 34)">
+                                                    {isPeakSGS && (
+                                                        <rect x={-7} y={-5} width={14} height={9} fill="#dc2626" rx={1} />
+                                                    )}
+                                                    <text x={0} y={1.5} textAnchor="middle" fill={isPeakSGS ? "white" : "#dc2626"} fontSize={7} fontWeight="900">
+                                                        {dayData?.SGS ?? 0}
+                                                    </text>
+                                                </g>
+                                            </g>
+                                        );
+                                    }}
+                                />
+                                <YAxis tick={{ fontSize: 9 }} hide />
+                                <Bar dataKey="TC" name="TC" fill="#16a34a" radius={0} barSize={3} isAnimationActive={false} />
+                                <Bar dataKey="SGS" name="SGS" fill="#dc2626" radius={0} barSize={3} isAnimationActive={false} />
+                            </BarChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
