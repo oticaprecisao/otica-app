@@ -145,13 +145,24 @@ const DEFAULT_CONFIG = {
         TC: {
             id: 'TC',
             name: 'Três Corações',
-            staff: ['Ana Laura', 'Elaine', 'Ketlin', 'Eleonora', 'Paulo Habel'],
+            staff: [
+                { name: 'Ana Laura', active: true },
+                { name: 'Elaine', active: true },
+                { name: 'Ketlin', active: true },
+                { name: 'Eleonora', active: false },
+                { name: 'Paulo Habel', active: true }
+            ],
             password: null // Bloqueado, depende do Firebase
         },
         SGS: {
             id: 'SGS',
             name: 'São Gonçalo do Sapucaí',
-            staff: ['Vitoria', 'Roberta', 'Fernanda', 'Kawane'],
+            staff: [
+                { name: 'Vitoria', active: true },
+                { name: 'Roberta', active: true },
+                { name: 'Fernanda', active: true },
+                { name: 'Kawane', active: true }
+            ],
             password: null // Bloqueado, depende do Firebase
         }
     }
@@ -219,7 +230,7 @@ const generateMockData = async (storeConfig) => {
     let count = 0;
 
     for (const storeKey of ['TC', 'SGS']) {
-        const staffList = storeConfig.stores[storeKey].staff;
+        const staffList = storeConfig.stores[storeKey].staff.filter(s => s.active).map(s => s.name);
 
         for (let i = 0; i < 40; i++) {
             const date = randomDate();
@@ -395,7 +406,7 @@ function EditEntryModal({ entry, onClose, onSave, storeData, isNew = false }) {
     const [message, setMessage] = useState(entry?.message || '');
     const [saving, setSaving] = useState(false);
 
-    const staffList = storeData?.staff || [];
+    const staffList = storeData?.staff.filter(s => s.active).map(s => s.name) || [];
 
     const handleSave = async () => {
         setSaving(true);
@@ -605,15 +616,25 @@ function SettingsModal({ config, onClose, onUpdateConfig, onClearToday, currentS
 
     const handleAddStaff = () => {
         if (newStaffName.trim()) {
-            const updatedStore = { ...store, staff: [...store.staff, newStaffName.trim()] };
+            const updatedStaff = [...store.staff, { name: newStaffName.trim(), active: true }];
+            const updatedStore = { ...store, staff: updatedStaff };
             const newConfig = { ...config, stores: { ...config.stores, [currentStore]: updatedStore } };
             onUpdateConfig(newConfig);
             setNewStaffName("");
         }
     };
 
+    const handleToggleStaffActive = (nameToToggle) => {
+        const updatedStaff = store.staff.map(s =>
+            s.name === nameToToggle ? { ...s, active: !s.active } : s
+        );
+        const updatedStore = { ...store, staff: updatedStaff };
+        const newConfig = { ...config, stores: { ...config.stores, [currentStore]: updatedStore } };
+        onUpdateConfig(newConfig);
+    };
+
     const confirmRemoveStaff = (nameToRemove) => {
-        const updatedStaff = store.staff.filter(name => name !== nameToRemove);
+        const updatedStaff = store.staff.filter(s => s.name !== nameToRemove);
         const updatedStore = { ...store, staff: updatedStaff };
         const newConfig = { ...config, stores: { ...config.stores, [currentStore]: updatedStore } };
         onUpdateConfig(newConfig);
@@ -695,17 +716,25 @@ function SettingsModal({ config, onClose, onUpdateConfig, onClearToday, currentS
                             </div>
 
                             <div className="max-h-48 overflow-y-auto space-y-2">
-                                {store.staff.map(name => (
-                                    <div key={name} className="flex justify-between items-center p-3 bg-stone-50 rounded-lg border border-stone-100">
-                                        <span className="font-medium text-stone-700">{name}</span>
-                                        {confirmDeleteStaff === name ? (
+                                {store.staff.map(s => (
+                                    <div key={s.name} className="flex justify-between items-center p-3 bg-stone-50 rounded-lg border border-stone-100">
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                onClick={() => handleToggleStaffActive(s.name)}
+                                                className={`w-9 h-5 rounded-full relative transition-colors duration-200 outline-none ${s.active ? 'bg-green-500' : 'bg-stone-300'}`}
+                                            >
+                                                <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform duration-200 ${s.active ? 'translate-x-[1.125rem]' : 'translate-x-0.5'}`} />
+                                            </button>
+                                            <span className={`font-bold text-sm ${s.active ? 'text-stone-700' : 'text-stone-400'}`}>{s.name}</span>
+                                        </div>
+                                        {confirmDeleteStaff === s.name ? (
                                             <div className="flex gap-2">
-                                                <button onClick={() => confirmRemoveStaff(name)} className="text-xs bg-red-600 text-white px-2 py-1 rounded">Sim</button>
+                                                <button onClick={() => confirmRemoveStaff(s.name)} className="text-xs bg-red-600 text-white px-2 py-1 rounded">Sim</button>
                                                 <button onClick={() => setConfirmDeleteStaff(null)} className="text-xs bg-stone-300 text-stone-700 px-2 py-1 rounded">Não</button>
                                             </div>
                                         ) : (
                                             <button
-                                                onClick={() => setConfirmDeleteStaff(name)}
+                                                onClick={() => setConfirmDeleteStaff(s.name)}
                                                 className="text-red-400 hover:text-red-600 p-1"
                                             >
                                                 <Trash className="w-4 h-4" />
@@ -2178,7 +2207,8 @@ function EntryScreen({ storeData, onSave, entries, onDelete, onUpdate }) {
                             <Users className="w-4 h-4" /> Atendimentos Comerciais
                         </h3>
 
-                        {storeData.staff.map(attendantName => {
+                        {storeData.staff.map(s => {
+                            const attendantName = typeof s === 'string' ? s : s.name;
                             const staffEntries = todayEntries.filter(e => e.category === 'comercial' && e.attendant === attendantName);
                             if (staffEntries.length === 0) return null;
 
@@ -2320,17 +2350,17 @@ function EntryScreen({ storeData, onSave, entries, onDelete, onUpdate }) {
                 <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                     <p className="text-lg font-bold text-stone-700">Atendente:</p>
                     <div className="grid grid-cols-1 gap-4">
-                        {storeData.staff.map((name) => (
+                        {storeData.staff.filter(s => s.active).map((s) => (
                             <Button
-                                key={name}
+                                key={s.name}
                                 variant="secondary"
                                 className="justify-start text-xl py-6 px-6 border-l-8 border-l-transparent hover:border-l-orange-600 hover:bg-orange-50 transition-all shadow-sm"
-                                onClick={() => { setTempData({ ...tempData, attendant: name }); setStep('commercial_action'); }}
+                                onClick={() => { setTempData({ ...tempData, attendant: s.name }); setStep('commercial_action'); }}
                             >
                                 <div className={`w-12 h-12 rounded-full ${THEME.primaryLight} flex items-center justify-center text-lg font-black ${THEME.accentText} mr-4 shadow-inner`}>
-                                    {name.substring(0, 2).toUpperCase()}
+                                    {s.name.substring(0, 2).toUpperCase()}
                                 </div>
-                                {name}
+                                {s.name}
                             </Button>
                         ))}
                     </div>
@@ -2499,9 +2529,15 @@ function DashboardScreen({ data, storeData }) {
             whatsappBreakdown: {}
         };
 
-        // Inicializa atendentes para hoje
-        storeData.staff.forEach(name => {
-            stats.attendantBreakdown[name] = { atendimentos: 0, vendas: 0, orcamentos: 0, retornos: 0 };
+        // Inicializa atendentes para hoje: mostra se ativo OU se tiver dado hoje
+        storeData.staff.forEach(s => {
+            const name = typeof s === 'string' ? s : s.name;
+            const isActive = typeof s === 'string' ? true : s.active;
+            const hasData = todayData.some(e => e.attendant === name);
+
+            if (isActive || hasData) {
+                stats.attendantBreakdown[name] = { atendimentos: 0, vendas: 0, orcamentos: 0, retornos: 0 };
+            }
         });
 
         todayData.forEach(entry => {
@@ -2611,13 +2647,19 @@ function DashboardScreen({ data, storeData }) {
             weekCounts: {}
         };
 
-        storeData.staff.forEach(name => {
-            metrics.attendantStats[name] = {
-                orcCli: 0, orcNew: 0,
-                vendaCli: 0, vendaNew: 0,
-                retornoCli: 0, retornoNew: 0,
-                totalGeralAtendente: 0
-            };
+        storeData.staff.forEach(s => {
+            const name = typeof s === 'string' ? s : s.name;
+            const isActive = typeof s === 'string' ? true : s.active;
+            const hasData = filteredData.some(e => e.attendant === name);
+
+            if (isActive || hasData) {
+                metrics.attendantStats[name] = {
+                    orcCli: 0, orcNew: 0,
+                    vendaCli: 0, vendaNew: 0,
+                    retornoCli: 0, retornoNew: 0,
+                    totalGeralAtendente: 0
+                };
+            }
         });
 
         filteredData.forEach(entry => {
@@ -2890,19 +2932,27 @@ function DashboardScreen({ data, storeData }) {
             };
         });
 
-    const attendantFunnelList = Object.keys(storeData.staff).map(idx => storeData.staff[idx]).map(name => {
-        const monthStats = stats.attendantStats[name] || { totalGeralAtendente: 0, orcCli: 0, orcNew: 0, vendaCli: 0, vendaNew: 0 };
-        const todayStatsAtt = todayStats.attendantBreakdown[name] || { atendimentos: 0, orcamentos: 0, vendas: 0 };
-        return {
-            name: name.split(' ')[0],
-            month: {
-                atend: monthStats.totalGeralAtendente,
-                orc: monthStats.orcCli + monthStats.orcNew,
-                venda: monthStats.vendaCli + monthStats.vendaNew
-            },
-            today: todayStatsAtt
-        };
-    });
+    const attendantFunnelList = storeData.staff
+        .map(s => {
+            const name = typeof s === 'string' ? s : s.name;
+            const monthStats = stats.attendantStats[name] || { totalGeralAtendente: 0, orcCli: 0, orcNew: 0, vendaCli: 0, vendaNew: 0 };
+            const todayStatsAtt = todayStats.attendantBreakdown[name] || { atendimentos: 0, orcamentos: 0, vendas: 0 };
+            return {
+                name: name.split(' ')[0],
+                fullName: name,
+                active: typeof s === 'string' ? true : s.active,
+                month: {
+                    atend: monthStats.totalGeralAtendente,
+                    orc: monthStats.orcCli + monthStats.orcNew,
+                    venda: monthStats.vendaCli + monthStats.vendaNew
+                },
+                today: todayStatsAtt
+            };
+        })
+        .filter(item => {
+            // Regra: Mostra se estiver ativo OU se tiver algum dado no mês
+            return item.active || item.month.atend > 0;
+        });
 
     const totalHoje = todayStats.servicos + todayStats.atendimentos;
 
@@ -4513,9 +4563,17 @@ export default function App() {
 
                 Object.keys(DEFAULT_CONFIG.stores).forEach(sId => {
                     if (merged.stores[sId]) {
-                        const remoteStaff = merged.stores[sId].staff || [];
+                        // Migração: Converter staff de string[] para {name, active}[]
+                        let remoteStaff = merged.stores[sId].staff || [];
+                        remoteStaff = remoteStaff.map(s => typeof s === 'string' ? { name: s, active: true } : s);
+                        
                         const defaultStaff = DEFAULT_CONFIG.stores[sId].staff;
-                        merged.stores[sId].staff = [...new Set([...remoteStaff, ...defaultStaff])];
+                        
+                        // Merge staff: mantém todos os remotos (convertidos) e adiciona novos do default se não existirem
+                        const existingNames = new Set(remoteStaff.map(s => s.name));
+                        const missingFromDefault = defaultStaff.filter(s => !existingNames.has(s.name));
+                        
+                        merged.stores[sId].staff = [...remoteStaff, ...missingFromDefault];
                     } else {
                         merged.stores[sId] = { ...DEFAULT_CONFIG.stores[sId] };
                     }
