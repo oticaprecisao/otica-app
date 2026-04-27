@@ -1276,10 +1276,10 @@ function TrendsScreen({ data, storeConfig }) {
                         <h4 className="font-bold text-stone-700 text-sm uppercase">Eficiência das Atendentes (Mês a Mês)</h4>
                         <p className="text-[10px] text-stone-400 mt-1">Vendas / Atendimentos (%). Use a tabela abaixo para selecionar e comparar as atendentes no gráfico.</p>
                     </div>
-                    <div className="px-1 py-4 h-64">
+                    <div className="px-1 py-4 h-80 sm:h-96">
                         {(selectedStaff === null ? uniqueStaff.slice(0, 3) : selectedStaff).length === 0 ? (
                             <div className="w-full h-full flex items-center justify-center text-stone-400 text-sm">
-                                Selecione pelo menos um atendente acima.
+                                Selecione pelo menos um atendente abaixo.
                             </div>
                         ) : (
                             <ResponsiveContainer width="100%" height="100%">
@@ -1291,7 +1291,6 @@ function TrendsScreen({ data, storeConfig }) {
                                         contentStyle={{ borderRadius: '8px', fontSize: '12px', border: '1px solid #e7e5e4', padding: '10px' }}
                                         formatter={(value, name) => [`${value}%`, name.replace('_eficiencia', '')]}
                                     />
-                                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} formatter={(value) => value.replace('_eficiencia', '')} />
                                     {uniqueStaff.map((staff, idx) => {
                                         const activeStaff = selectedStaff === null ? uniqueStaff.slice(0, 3) : selectedStaff;
                                         if (!activeStaff.includes(staff)) return null;
