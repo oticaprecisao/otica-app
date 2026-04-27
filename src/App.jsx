@@ -977,7 +977,15 @@ function TrendsScreen({ data, storeConfig }) {
             }
         });
 
-        const staffArray = Array.from(staffSet).sort();
+        const staffArray = Array.from(staffSet).sort((a, b) => {
+            const statsA = totals[a] || { atendimentos: 0, vendas: 0 };
+            const statsB = totals[b] || { atendimentos: 0, vendas: 0 };
+            const efA = statsA.atendimentos > 0 ? (statsA.vendas / statsA.atendimentos) : 0;
+            const efB = statsB.atendimentos > 0 ? (statsB.vendas / statsB.atendimentos) : 0;
+            if (efB !== efA) return efB - efA;
+            if (statsB.vendas !== statsA.vendas) return statsB.vendas - statsA.vendas;
+            return a.localeCompare(b);
+        });
 
         const processedData = Object.values(months)
             .sort((a, b) => a.key.localeCompare(b.key))
