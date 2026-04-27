@@ -4242,6 +4242,30 @@ function ComparisonScreen({ data }) {
                                     {dailyCompDataSales.reduce((acc, row) => acc + row.total_sales, 0)}
                                 </td>
                             </tr>
+                            <tr className="bg-stone-50/80 border-t border-stone-100">
+                                <td className="py-1.5 pr-4 pl-2 text-[8px] font-bold text-stone-500 uppercase italic border-r border-stone-50">Média/Dia</td>
+                                <td className="py-1.5 px-1.5 text-[10px] font-bold text-green-600/80 text-center">
+                                    {(() => {
+                                        const total = dailyCompDataSales.reduce((acc, row) => acc + row.TC_sales, 0);
+                                        const days = dailyCompDataSales.filter(row => row.TC_sales > 0).length;
+                                        return days > 0 ? (total / days).toFixed(1).replace('.', ',') : '-';
+                                    })()}
+                                </td>
+                                <td className="py-1.5 px-1.5 text-[10px] font-bold text-red-600/80 text-center">
+                                    {(() => {
+                                        const total = dailyCompDataSales.reduce((acc, row) => acc + row.SGS_sales, 0);
+                                        const days = dailyCompDataSales.filter(row => row.SGS_sales > 0).length;
+                                        return days > 0 ? (total / days).toFixed(1).replace('.', ',') : '-';
+                                    })()}
+                                </td>
+                                <td className="py-1.5 px-1.5 text-[10px] font-bold text-stone-600 text-center">
+                                    {(() => {
+                                        const total = dailyCompDataSales.reduce((acc, row) => acc + row.total_sales, 0);
+                                        const days = dailyCompDataSales.filter(row => row.total_sales > 0).length;
+                                        return days > 0 ? (total / days).toFixed(1).replace('.', ',') : '-';
+                                    })()}
+                                </td>
+                            </tr>
                         </tfoot>
                     </table>
                 </div>
