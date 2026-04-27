@@ -938,6 +938,54 @@ function TrendsScreen({ data, storeConfig }) {
             }));
     }, [data]);
 
+    const { staffYearlyData, uniqueStaff } = useMemo(() => {
+        const months = {};
+        const staffSet = new Set();
+
+        data.forEach(item => {
+            const d = item.date;
+            if (!d || typeof d.getFullYear !== 'function') return;
+            if (item.category !== 'comercial' || !item.attendant) return;
+
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            staffSet.add(item.attendant);
+
+            if (!months[key]) {
+                months[key] = {
+                    key,
+                    name: `${d.toLocaleString('pt-BR', { month: 'short' })}/${d.getFullYear().toString().substr(2)}`,
+                    staffStats: {}
+                };
+            }
+
+            if (!months[key].staffStats[item.attendant]) {
+                months[key].staffStats[item.attendant] = { atendimentos: 0, vendas: 0 };
+            }
+
+            months[key].staffStats[item.attendant].atendimentos++;
+            if (item.action === 'venda' || item.action === 'retorno') {
+                months[key].staffStats[item.attendant].vendas++;
+            }
+        });
+
+        const staffArray = Array.from(staffSet).sort();
+
+        const processedData = Object.values(months)
+            .sort((a, b) => a.key.localeCompare(b.key))
+            .map(m => {
+                const res = { name: m.name, key: m.key };
+                staffArray.forEach(staff => {
+                    const stats = m.staffStats[staff] || { atendimentos: 0, vendas: 0 };
+                    res[`${staff}_eficiencia`] = stats.atendimentos > 0 
+                        ? Math.round((stats.vendas / stats.atendimentos) * 100) 
+                        : null;
+                });
+                return res;
+            });
+
+        return { staffYearlyData: processedData, uniqueStaff: staffArray };
+    }, [data]);
+
     const peakAnalysis = useMemo(() => {
         const daysOfWeek = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
         const stats = {
@@ -1208,6 +1256,41 @@ function TrendsScreen({ data, storeConfig }) {
                                         }}
                                     />
                                 </Line>
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Grafico de Eficiência das Atendentes */}
+                <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
+                    <div className="p-4 border-b border-stone-100 bg-stone-50/50">
+                        <h4 className="font-bold text-stone-700 text-sm uppercase">Eficiência das Atendentes (Mês a Mês)</h4>
+                        <p className="text-[10px] text-stone-400 mt-1">Vendas / Atendimentos (%). Passe o mouse nas linhas para ver os detalhes.</p>
+                    </div>
+                    <div className="px-1 py-4 h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={staffYearlyData} margin={{ top: 15, right: 10, left: -15, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.5} />
+                                <XAxis dataKey="name" tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} />
+                                <YAxis tick={{ fontSize: 10 }} tickFormatter={(val) => `${val}%`} />
+                                <Tooltip 
+                                    contentStyle={{ borderRadius: '8px', fontSize: '12px', border: '1px solid #e7e5e4', padding: '10px' }}
+                                    formatter={(value, name) => [`${value}%`, name.replace('_eficiencia', '')]}
+                                />
+                                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} formatter={(value) => value.replace('_eficiencia', '')} />
+                                {uniqueStaff.map((staff, idx) => (
+                                    <Line 
+                                        key={staff}
+                                        type="monotone" 
+                                        dataKey={`${staff}_eficiencia`} 
+                                        name={staff} 
+                                        stroke={['#16a34a', '#dc2626', '#ca8a04', '#2563eb', '#9333ea', '#db2777', '#ea580c', '#14b8a6', '#6366f1'][idx % 9]} 
+                                        strokeWidth={2.5} 
+                                        dot={{ r: 3 }} 
+                                        activeDot={{ r: 6 }}
+                                        connectNulls={true}
+                                    />
+                                ))}
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
