@@ -883,7 +883,9 @@ function TrendsScreen({ data, storeConfig }) {
                     key,
                     name: `${d.toLocaleString('pt-BR', { month: 'short' })}/${d.getFullYear().toString().substr(2)}`,
                     TC_vendas: 0, TC_orcamentos: 0, TC_novosClientes: 0, TC_atendimentos: 0, TC_servicos: 0, TC_volumeTotal: 0, TC_retornos_only: 0,
-                    SGS_vendas: 0, SGS_orcamentos: 0, SGS_novosClientes: 0, SGS_atendimentos: 0, SGS_servicos: 0, SGS_volumeTotal: 0, SGS_retornos_only: 0
+                    SGS_vendas: 0, SGS_orcamentos: 0, SGS_novosClientes: 0, SGS_atendimentos: 0, SGS_servicos: 0, SGS_volumeTotal: 0, SGS_retornos_only: 0,
+                    TC_daysWithSales: new Set(),
+                    SGS_daysWithSales: new Set()
                 };
             }
 
@@ -892,7 +894,10 @@ function TrendsScreen({ data, storeConfig }) {
                 months[key][storePrefix + 'atendimentos']++;
 
                 // Vendas e Orçamentos
-                if (item.action === 'venda' || item.action === 'retorno') months[key][storePrefix + 'vendas']++;
+                if (item.action === 'venda' || item.action === 'retorno') {
+                    months[key][storePrefix + 'vendas']++;
+                    months[key][storePrefix + 'daysWithSales'].add(d.getDate());
+                }
                 if (item.action === 'orcamento') months[key][storePrefix + 'orcamentos']++;
                 if (item.action === 'retorno') months[key][storePrefix + 'retornos_only']++;
 
@@ -914,6 +919,8 @@ function TrendsScreen({ data, storeConfig }) {
             .sort((a, b) => a.key.localeCompare(b.key))
             .map(m => ({
                 ...m,
+                TC_media_vendas: m.TC_daysWithSales.size > 0 ? Number((m.TC_vendas / m.TC_daysWithSales.size).toFixed(1)) : 0,
+                SGS_media_vendas: m.SGS_daysWithSales.size > 0 ? Number((m.SGS_vendas / m.SGS_daysWithSales.size).toFixed(1)) : 0,
                 TC_taxa: m.TC_vendas + m.TC_orcamentos > 0 ? Math.round((m.TC_vendas / (m.TC_vendas + m.TC_orcamentos)) * 100) : 0,
                 SGS_taxa: m.SGS_vendas + m.SGS_orcamentos > 0 ? Math.round((m.SGS_vendas / (m.SGS_vendas + m.SGS_orcamentos)) * 100) : 0,
                 TC_eficiencia: m.TC_atendimentos > 0 ? Math.round((m.TC_vendas / m.TC_atendimentos) * 100) : 0,
@@ -1144,6 +1151,54 @@ function TrendsScreen({ data, storeConfig }) {
                                         content={(props) => {
                                             const { x, y, value, index } = props;
                                             const otherVal = yearlyData[index]?.TC_vendas || 0;
+                                            const isHigher = value > otherVal;
+                                            return (
+                                                <text x={x} y={y} dy={isHigher ? -12 : 22} fill="#dc2626" fontSize="10" fontWeight="bold" textAnchor="middle">
+                                                    {value}
+                                                </text>
+                                            );
+                                        }}
+                                    />
+                                </Line>
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Grafico 2 - Media Vendas */}
+                <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
+                    <div className="p-4 border-b border-stone-100 bg-stone-50/50">
+                        <h4 className="font-bold text-stone-700 text-sm uppercase">Média de Vendas por Dia</h4>
+                    </div>
+                    <div className="px-1 py-4 h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={yearlyData} margin={{ top: 25, right: 0, left: -15, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.5} />
+                                <XAxis dataKey="name" tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} />
+                                <YAxis tick={{ fontSize: 10 }} />
+
+                                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
+                                <Line type="monotone" dataKey="TC_media_vendas" name="TC" stroke="#16a34a" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }}>
+                                    <LabelList 
+                                        dataKey="TC_media_vendas" 
+                                        content={(props) => {
+                                            const { x, y, value, index } = props;
+                                            const otherVal = yearlyData[index]?.SGS_media_vendas || 0;
+                                            const isHigher = value >= otherVal;
+                                            return (
+                                                <text x={x} y={y} dy={isHigher ? -12 : 22} fill="#16a34a" fontSize="10" fontWeight="bold" textAnchor="middle">
+                                                    {value}
+                                                </text>
+                                            );
+                                        }}
+                                    />
+                                </Line>
+                                <Line type="monotone" dataKey="SGS_media_vendas" name="SGS" stroke="#dc2626" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }}>
+                                    <LabelList 
+                                        dataKey="SGS_media_vendas" 
+                                        content={(props) => {
+                                            const { x, y, value, index } = props;
+                                            const otherVal = yearlyData[index]?.TC_media_vendas || 0;
                                             const isHigher = value > otherVal;
                                             return (
                                                 <text x={x} y={y} dy={isHigher ? -12 : 22} fill="#dc2626" fontSize="10" fontWeight="bold" textAnchor="middle">
