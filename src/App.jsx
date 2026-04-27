@@ -870,6 +870,8 @@ function InsightsPanel({ stats }) {
 
 // --- Tela de Tendências Comparativas ---
 function TrendsScreen({ data, storeConfig }) {
+    const [selectedStaff, setSelectedStaff] = useState(null);
+
     const yearlyData = useMemo(() => {
         const months = {};
 
@@ -938,9 +940,10 @@ function TrendsScreen({ data, storeConfig }) {
             }));
     }, [data]);
 
-    const { staffYearlyData, uniqueStaff } = useMemo(() => {
+    const { staffYearlyData, uniqueStaff, staffTotals } = useMemo(() => {
         const months = {};
         const staffSet = new Set();
+        const totals = {};
 
         data.forEach(item => {
             const d = item.date;
@@ -949,6 +952,11 @@ function TrendsScreen({ data, storeConfig }) {
 
             const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
             staffSet.add(item.attendant);
+
+            if (!totals[item.attendant]) {
+                totals[item.attendant] = { atendimentos: 0, vendas: 0 };
+            }
+            totals[item.attendant].atendimentos++;
 
             if (!months[key]) {
                 months[key] = {
@@ -965,6 +973,7 @@ function TrendsScreen({ data, storeConfig }) {
             months[key].staffStats[item.attendant].atendimentos++;
             if (item.action === 'venda' || item.action === 'retorno') {
                 months[key].staffStats[item.attendant].vendas++;
+                totals[item.attendant].vendas++;
             }
         });
 
@@ -983,7 +992,7 @@ function TrendsScreen({ data, storeConfig }) {
                 return res;
             });
 
-        return { staffYearlyData: processedData, uniqueStaff: staffArray };
+        return { staffYearlyData: processedData, uniqueStaff: staffArray, staffTotals: totals };
     }, [data]);
 
     const peakAnalysis = useMemo(() => {
@@ -1265,37 +1274,111 @@ function TrendsScreen({ data, storeConfig }) {
                 <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
                     <div className="p-4 border-b border-stone-100 bg-stone-50/50">
                         <h4 className="font-bold text-stone-700 text-sm uppercase">Eficiência das Atendentes (Mês a Mês)</h4>
-                        <p className="text-[10px] text-stone-400 mt-1">Vendas / Atendimentos (%). Passe o mouse nas linhas para ver os detalhes.</p>
+                        <p className="text-[10px] text-stone-400 mt-1">Vendas / Atendimentos (%). Use a tabela abaixo para selecionar e comparar as atendentes no gráfico.</p>
                     </div>
                     <div className="px-1 py-4 h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={staffYearlyData} margin={{ top: 15, right: 10, left: -15, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.5} />
-                                <XAxis dataKey="name" tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} />
-                                <YAxis tick={{ fontSize: 10 }} tickFormatter={(val) => `${val}%`} />
-                                <Tooltip 
-                                    contentStyle={{ borderRadius: '8px', fontSize: '12px', border: '1px solid #e7e5e4', padding: '10px' }}
-                                    formatter={(value, name) => [`${value}%`, name.replace('_eficiencia', '')]}
-                                />
-                                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} formatter={(value) => value.replace('_eficiencia', '')} />
-                                {uniqueStaff.map((staff, idx) => (
-                                    <Line 
-                                        key={staff}
-                                        type="monotone" 
-                                        dataKey={`${staff}_eficiencia`} 
-                                        name={staff} 
-                                        stroke={['#16a34a', '#dc2626', '#ca8a04', '#2563eb', '#9333ea', '#db2777', '#ea580c', '#14b8a6', '#6366f1'][idx % 9]} 
-                                        strokeWidth={2.5} 
-                                        dot={{ r: 3 }} 
-                                        activeDot={{ r: 6 }}
-                                        connectNulls={true}
+                        {(selectedStaff === null ? uniqueStaff.slice(0, 3) : selectedStaff).length === 0 ? (
+                            <div className="w-full h-full flex items-center justify-center text-stone-400 text-sm">
+                                Selecione pelo menos um atendente acima.
+                            </div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={staffYearlyData} margin={{ top: 15, right: 10, left: -15, bottom: 5 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.5} />
+                                    <XAxis dataKey="name" tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} />
+                                    <YAxis tick={{ fontSize: 10 }} tickFormatter={(val) => `${val}%`} />
+                                    <Tooltip 
+                                        contentStyle={{ borderRadius: '8px', fontSize: '12px', border: '1px solid #e7e5e4', padding: '10px' }}
+                                        formatter={(value, name) => [`${value}%`, name.replace('_eficiencia', '')]}
                                     />
-                                ))}
-                            </LineChart>
-                        </ResponsiveContainer>
+                                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} formatter={(value) => value.replace('_eficiencia', '')} />
+                                    {uniqueStaff.map((staff, idx) => {
+                                        const activeStaff = selectedStaff === null ? uniqueStaff.slice(0, 3) : selectedStaff;
+                                        if (!activeStaff.includes(staff)) return null;
+                                        return (
+                                            <Line 
+                                                key={staff}
+                                                type="monotone" 
+                                                dataKey={`${staff}_eficiencia`} 
+                                                name={staff} 
+                                                stroke={['#16a34a', '#dc2626', '#ca8a04', '#2563eb', '#9333ea', '#db2777', '#ea580c', '#14b8a6', '#6366f1'][idx % 9]} 
+                                                strokeWidth={2.5} 
+                                                dot={{ r: 3 }} 
+                                                activeDot={{ r: 6 }}
+                                                connectNulls={true}
+                                            />
+                                        )
+                                    })}
+                                </LineChart>
+                            </ResponsiveContainer>
+                        )}
+                    </div>
+                    
+                    {/* Tabela de Atendentes (Filtro e Dados Totais) */}
+                    <div className="border-t border-stone-100">
+                        <div className="bg-stone-50 p-3 border-b border-stone-100 flex justify-between items-center">
+                            <span className="text-xs font-bold text-stone-600 uppercase">Dados do Período Selecionado</span>
+                            <span className="text-[10px] text-stone-400">Toque na linha para exibir no gráfico</span>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-xs">
+                                <thead className="bg-white text-stone-500 uppercase border-b border-stone-100">
+                                    <tr>
+                                        <th className="px-3 py-2 w-10 text-center">Exibir</th>
+                                        <th className="px-3 py-2">Atendente</th>
+                                        <th className="px-3 py-2 text-right">Atend.</th>
+                                        <th className="px-3 py-2 text-right">Vendas</th>
+                                        <th className="px-3 py-2 text-right">Média</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-stone-50">
+                                    {uniqueStaff.map((staff, idx) => {
+                                        const activeStaff = selectedStaff === null ? uniqueStaff.slice(0, 3) : selectedStaff;
+                                        const isSelected = activeStaff.includes(staff);
+                                        const color = ['#16a34a', '#dc2626', '#ca8a04', '#2563eb', '#9333ea', '#db2777', '#ea580c', '#14b8a6', '#6366f1'][idx % 9];
+                                        
+                                        const stats = staffTotals[staff] || { atendimentos: 0, vendas: 0 };
+                                        const eficiencia = stats.atendimentos > 0 ? Math.round((stats.vendas / stats.atendimentos) * 100) : 0;
+                                        
+                                        return (
+                                            <tr 
+                                                key={staff} 
+                                                className={`cursor-pointer transition-colors ${isSelected ? 'bg-orange-50/20' : 'hover:bg-stone-50'}`}
+                                                onClick={() => {
+                                                    if (isSelected) {
+                                                        setSelectedStaff(activeStaff.filter(s => s !== staff));
+                                                    } else {
+                                                        setSelectedStaff([...activeStaff, staff]);
+                                                    }
+                                                }}
+                                            >
+                                                <td className="px-3 py-2.5 text-center align-middle">
+                                                    <div 
+                                                        className={`w-4 h-4 rounded-sm border flex items-center justify-center mx-auto transition-colors`}
+                                                        style={{ 
+                                                            backgroundColor: isSelected ? color : 'transparent',
+                                                            borderColor: isSelected ? color : '#d6d3d1'
+                                                        }}
+                                                    >
+                                                        {isSelected && <CircleCheck className="w-3 h-3 text-white" />}
+                                                    </div>
+                                                </td>
+                                                <td className="px-3 py-2.5 font-medium text-stone-700 align-middle">
+                                                    {staff}
+                                                </td>
+                                                <td className="px-3 py-2.5 text-right text-stone-500 align-middle">{stats.atendimentos}</td>
+                                                <td className="px-3 py-2.5 text-right font-medium text-stone-700 align-middle">{stats.vendas}</td>
+                                                <td className="px-3 py-2.5 text-right font-bold align-middle" style={{ color: isSelected ? color : '#78716c' }}>
+                                                    {eficiencia}%
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-
 
                 {/* Grafico 3 */}
                 <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
