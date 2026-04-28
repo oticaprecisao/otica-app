@@ -1009,12 +1009,14 @@ function TrendsScreen({ data, storeConfig }) {
             TC: {
                 weekday: Array(7).fill(0),
                 salesWeekday: Array(7).fill(0),
+                uniqueDatesByWeekday: Array(7).fill(null).map(() => new Set()),
                 manha: 0, tarde: 0,
                 weeks: {}
             },
             SGS: {
                 weekday: Array(7).fill(0),
                 salesWeekday: Array(7).fill(0),
+                uniqueDatesByWeekday: Array(7).fill(null).map(() => new Set()),
                 manha: 0, tarde: 0,
                 weeks: {}
             }
@@ -1029,6 +1031,10 @@ function TrendsScreen({ data, storeConfig }) {
             const dayIdx = item.date.getDay();
             if (dayIdx === 0) return; // Skip Sunday
             stats[store].weekday[dayIdx - 1]++;
+
+            // Track unique dates to calculate average per weekday
+            const dateStr = `${item.date.getFullYear()}-${item.date.getMonth()}-${item.date.getDate()}`;
+            stats[store].uniqueDatesByWeekday[dayIdx - 1].add(dateStr);
 
             // Vendas por dia da semana
             if (item.category === 'comercial' && (item.action === 'venda' || item.action === 'retorno')) {
@@ -1103,13 +1109,21 @@ function TrendsScreen({ data, storeConfig }) {
         };
 
         const formatWeekdayData = () => {
-            return daysOfWeek.map((label, idx) => ({
-                name: label,
-                TC: stats.TC.weekday[idx],
-                TC_salesPerc: stats.TC.weekday[idx] > 0 ? Math.round((stats.TC.salesWeekday[idx] / stats.TC.weekday[idx]) * 100) : 0,
-                SGS: stats.SGS.weekday[idx],
-                SGS_salesPerc: stats.SGS.weekday[idx] > 0 ? Math.round((stats.SGS.salesWeekday[idx] / stats.SGS.weekday[idx]) * 100) : 0
-            }));
+            return daysOfWeek.map((label, idx) => {
+                const tcUniqueDaysCount = stats.TC.uniqueDatesByWeekday[idx].size;
+                const sgsUniqueDaysCount = stats.SGS.uniqueDatesByWeekday[idx].size;
+
+                return {
+                    name: label,
+                    TC: stats.TC.weekday[idx],
+                    TC_avg: tcUniqueDaysCount > 0 ? Math.round(stats.TC.weekday[idx] / tcUniqueDaysCount) : 0,
+                    TC_salesPerc: stats.TC.weekday[idx] > 0 ? Math.round((stats.TC.salesWeekday[idx] / stats.TC.weekday[idx]) * 100) : 0,
+                    
+                    SGS: stats.SGS.weekday[idx],
+                    SGS_avg: sgsUniqueDaysCount > 0 ? Math.round(stats.SGS.weekday[idx] / sgsUniqueDaysCount) : 0,
+                    SGS_salesPerc: stats.SGS.weekday[idx] > 0 ? Math.round((stats.SGS.salesWeekday[idx] / stats.SGS.weekday[idx]) * 100) : 0
+                };
+            });
         };
 
         const salesTrendData = Array.from({ length: 31 }, (_, i) => {
@@ -1778,9 +1792,9 @@ function TrendsScreen({ data, storeConfig }) {
                             <div className="p-5 border-b border-stone-100 bg-stone-50/30">
                                 <h4 className="font-bold text-stone-700 text-sm uppercase">Fluxo por Dia da Semana e Eficiência em Vendas</h4>
                             </div>
-                            <div className="px-1 py-6 h-80">
+                            <div className="px-1 py-6 h-96">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={peakAnalysis.weekdayData} margin={{ top: 20, right: 0, left: 0, bottom: 95 }} barGap={0} barCategoryGap="70%">
+                                    <BarChart data={peakAnalysis.weekdayData} margin={{ top: 20, right: 0, left: 0, bottom: 125 }} barGap={0} barCategoryGap="70%">
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
                                         <XAxis 
                                             dataKey="name" 
@@ -1793,16 +1807,20 @@ function TrendsScreen({ data, storeConfig }) {
                                                     <g transform={`translate(${x},${y})`}>
                                                         <text x={0} y={0} dy={16} textAnchor="middle" fill="#44403c" fontSize={10} fontWeight="bold">{payload.value}</text>
                                                         
-                                                        {/* Fluxo */}
+                                                        {/* Fluxo Total */}
                                                         <text x={0} y={0} dy={32} textAnchor="middle" fill="#16a34a" fontSize={11} fontWeight="900">{dayData?.TC}</text>
                                                         <text x={0} y={0} dy={46} textAnchor="middle" fill="#dc2626" fontSize={11} fontWeight="900">{dayData?.SGS}</text>
                                                         
+                                                        {/* Fluxo Médio Diário */}
+                                                        <text x={0} y={0} dy={60} textAnchor="middle" fill="#22c55e" fontSize={9} fontWeight="semibold">{dayData?.TC_avg} med</text>
+                                                        <text x={0} y={0} dy={72} textAnchor="middle" fill="#ef4444" fontSize={9} fontWeight="semibold">{dayData?.SGS_avg} med</text>
+
                                                         {/* Separador ou Espaço */}
-                                                        <text x={0} y={0} dy={58} textAnchor="middle" fill="#e7e5e4" fontSize={8} fontWeight="bold">———</text>
+                                                        <text x={0} y={0} dy={84} textAnchor="middle" fill="#e7e5e4" fontSize={8} fontWeight="bold">———</text>
 
                                                         {/* Porcentagens de Venda */}
-                                                        <text x={0} y={0} dy={72} textAnchor="middle" fill="#166534" fontSize={10} fontWeight="black">{dayData?.TC_salesPerc}%</text>
-                                                        <text x={0} y={0} dy={86} textAnchor="middle" fill="#991b1b" fontSize={10} fontWeight="black">{dayData?.SGS_salesPerc}%</text>
+                                                        <text x={0} y={0} dy={98} textAnchor="middle" fill="#166534" fontSize={10} fontWeight="black">{dayData?.TC_salesPerc}%</text>
+                                                        <text x={0} y={0} dy={112} textAnchor="middle" fill="#991b1b" fontSize={10} fontWeight="black">{dayData?.SGS_salesPerc}%</text>
                                                     </g>
                                                 );
                                             }}
