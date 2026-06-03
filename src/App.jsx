@@ -886,10 +886,14 @@ function TrendsScreen({ data, storeConfig }) {
                     name: `${d.toLocaleString('pt-BR', { month: 'short' })}/${d.getFullYear().toString().substr(2)}`,
                     TC_vendas: 0, TC_orcamentos: 0, TC_novosClientes: 0, TC_atendimentos: 0, TC_servicos: 0, TC_volumeTotal: 0, TC_retornos_only: 0,
                     SGS_vendas: 0, SGS_orcamentos: 0, SGS_novosClientes: 0, SGS_atendimentos: 0, SGS_servicos: 0, SGS_volumeTotal: 0, SGS_retornos_only: 0,
-                    TC_daysWithSales: new Set(),
-                    SGS_daysWithSales: new Set()
+                    TC_daysWithData: new Set(),
+                    SGS_daysWithData: new Set()
                 };
             }
+
+            // Acumula qualquer dia com dados para o divisor das médias (por loja)
+            const globalPrefixData = item.store === 'TC' ? 'TC_' : 'SGS_';
+            months[key][globalPrefixData + 'daysWithData'].add(d.getDate());
 
             if (item.category === 'comercial') {
                 const storePrefix = item.store === 'TC' ? 'TC_' : 'SGS_';
@@ -898,7 +902,6 @@ function TrendsScreen({ data, storeConfig }) {
                 // Vendas e Orçamentos
                 if (item.action === 'venda' || item.action === 'retorno') {
                     months[key][storePrefix + 'vendas']++;
-                    months[key][storePrefix + 'daysWithSales'].add(d.getDate());
                 }
                 if (item.action === 'orcamento') months[key][storePrefix + 'orcamentos']++;
                 if (item.action === 'retorno') months[key][storePrefix + 'retornos_only']++;
@@ -921,8 +924,8 @@ function TrendsScreen({ data, storeConfig }) {
             .sort((a, b) => a.key.localeCompare(b.key))
             .map(m => ({
                 ...m,
-                TC_media_vendas: m.TC_daysWithSales.size > 0 ? Number((m.TC_vendas / m.TC_daysWithSales.size).toFixed(1)) : 0,
-                SGS_media_vendas: m.SGS_daysWithSales.size > 0 ? Number((m.SGS_vendas / m.SGS_daysWithSales.size).toFixed(1)) : 0,
+                TC_media_vendas: m.TC_daysWithData.size > 0 ? Number((m.TC_vendas / m.TC_daysWithData.size).toFixed(1)) : 0,
+                SGS_media_vendas: m.SGS_daysWithData.size > 0 ? Number((m.SGS_vendas / m.SGS_daysWithData.size).toFixed(1)) : 0,
                 TC_taxa: m.TC_vendas + m.TC_orcamentos > 0 ? Math.round((m.TC_vendas / (m.TC_vendas + m.TC_orcamentos)) * 100) : 0,
                 SGS_taxa: m.SGS_vendas + m.SGS_orcamentos > 0 ? Math.round((m.SGS_vendas / (m.SGS_vendas + m.SGS_orcamentos)) * 100) : 0,
                 TC_eficiencia: m.TC_atendimentos > 0 ? Math.round((m.TC_vendas / m.TC_atendimentos) * 100) : 0,
